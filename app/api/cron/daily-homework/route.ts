@@ -1,0 +1,156 @@
+import { createAdminClient } from "@/lib/supabase/server";
+import { generateDailyHomework } from "@/lib/ai/homework";
+import { generateDailyStudyPlan } from "@/lib/ai/planner";
+import { NextResponse } from "next/server";
+import type { SubjectId } from "@/types";
+
+/**
+ * Vercel Cron 등에서 매시간 호출됩니다.
+ * 각 사용자의 settings.homework_time이 현재 시각(±5분)과 일치하면
+ * 오늘의 숙제와 학습 플래너를 생성합니다.
+ * vercel.json의 crons 설정과 짝을 이룹니다.
+ */
+export async function GET(request: Request) {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const admin = createAdminClient();
+  const today = new Date().toISOString().slice(0, 10);
+  const currentHour = new Date().getUTCHours();
+
+  const { data: dueUsers } = await admin
+    .from("settings")
+    .select("user_id, homework_time, profiles(grade_level, target_study_minutes, exam_date)")
+    .filter("homework_time", "gte", `${String(currentHour).padStart(2, "0")}:00`)
+    .filter("homework_time", "lt", `${String(currentHour + 1).padStart(2, "0")}:00`);
+
+  const results: { user_id: string; status: string }[] = [];
+
+  for (const row of dueUsers ?? []) {
+    try {
+      const userId = row.user_id as string;
+      const profile = row.profiles as unknown as {
+        grade_level: string;
+        target_study_minutes: number;
+        exam_date: string | null;
+      };
+
+      const { data: existingHw } = await admin
+        .from("homeworks")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("date", today)
+        .maybeSingle();
+
+      if (!existingHw) {
+        const { data: diagnostics } = await admin
+          .from("diagnostic_results")
+          .select("subject_id, weak_units")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
+
+        const weakBySubject = new Map<SubjectId, string[]>();
+        for (const d of diagnostics ?? []) {
+          if (!weakBySubject.has(d.subject_id)) {
+            weakBySubject.set(d.subject_id, ((d.weak_units as { name: string }[]) ?? []).map((u) => u.name));
+          }
+        }
+
+        const generated = await generateDailyHomework({
+          gradeLevel: profile?.grade_level ?? "중2",
+          weakUnitsBySubject: [...weakBySubject.entries()].map(([subject, units]) => ({ subject, units })),
+          wrongQuestionSummaries: [],
+          targetMinutes: profile?.target_study_minutes ?? 60,
+        });
+
+        const { data: homework } = await admin
+          .from("homeworks")
+          .insert({ user_id: userId, date: today, status: "pending", ai_rationale: generated.rationale })
+          .select("id")
+          .single();
+
+        for (const [i, item] of generated.items.entries()) {
+          const { data: question } = await admin
+            .from("questions")
+            .insert({
+              subject_id: item.subject_id,
+              type: item.type,
+              difficulty: item.difficulty,
+              content: item.content,
+              choices: item.choices,
+              answer: item.answer,
+              explanation: item.explanation,
+              source: "ai_generated",
+            })
+            .select("id")
+            .single();
+
+          await admin.from("homework_items").insert({
+            homework_id: homework!.id,
+            question_id: question!.id,
+            subject_id: item.subject_id,
+            category: item.category,
+            order_index: i,
+          });
+        }
+      }
+
+      const { data: existingPlan } = await admin
+        .from("study_plans")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("date", today)
+        .maybeSingle();
+
+      if (!existingPlan) {
+        const { data: diagnostics } = await admin
+          .from("diagnostic_results")
+          .select("subject_id, weak_units")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
+
+        const weakBySubject = new Map<SubjectId, string[]>();
+        for (const d of diagnostics ?? []) {
+          if (!weakBySubject.has(d.subject_id)) {
+            weakBySubject.set(d.subject_id, ((d.weak_units as { name: string }[]) ?? []).map((u) => u.name));
+          }
+        }
+
+        const plan = await generateDailyStudyPlan({
+          gradeLevel: profile?.grade_level ?? "중2",
+          examDate: profile?.exam_date ?? null,
+          targetMinutes: profile?.target_study_minutes ?? 60,
+          weakUnitsBySubject: [...weakBySubject.entries()].map(([subject, units]) => ({ subject, units })),
+          yesterdayIncomplete: [],
+        });
+
+        const totalMinutes = plan.items.reduce((s, i) => s + i.planned_minutes, 0);
+        const { data: planRow } = await admin
+          .from("study_plans")
+          .insert({ user_id: userId, date: today, total_planned_minutes: totalMinutes, ai_summary: plan.summary })
+          .select("id")
+          .single();
+
+        await admin.from("study_plan_items").insert(
+          plan.items.map((item, idx) => ({
+            plan_id: planRow!.id,
+            subject_id: item.subject_id,
+            title: item.title,
+            planned_minutes: item.planned_minutes,
+            priority: item.priority,
+            type: item.type,
+            order_index: idx,
+          }))
+        );
+      }
+
+      results.push({ user_id: userId, status: "ok" });
+    } catch (e) {
+      results.push({ user_id: row.user_id as string, status: `error: ${(e as Error).message}` });
+    }
+  }
+
+  return NextResponse.json({ processed: results.length, results });
+}

@@ -1,0 +1,84 @@
+import { createAdminClient } from "@/lib/supabase/server";
+import { generateDailyFeedback } from "@/lib/ai/feedback";
+import { NextResponse } from "next/server";
+
+/** Vercel Cron에서 매일 23:30 (KST) 경 1회 호출됩니다. */
+export async function GET(request: Request) {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const admin = createAdminClient();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const { data: profiles } = await admin.from("profiles").select("id, nickname, target_study_minutes, streak_days");
+  const results: { user_id: string; status: string }[] = [];
+
+  for (const profile of profiles ?? []) {
+    try {
+      const { data: existing } = await admin
+        .from("daily_feedback")
+        .select("id")
+        .eq("user_id", profile.id)
+        .eq("date", today)
+        .maybeSingle();
+      if (existing) {
+        results.push({ user_id: profile.id, status: "skipped" });
+        continue;
+      }
+
+      const { data: sessions } = await admin
+        .from("study_sessions")
+        .select("focus_minutes")
+        .eq("user_id", profile.id)
+        .gte("started_at", `${today}T00:00:00`);
+      const studyMinutes = (sessions ?? []).reduce((s: number, x: { focus_minutes: number | null }) => s + (x.focus_minutes ?? 0), 0);
+
+      if (studyMinutes === 0) {
+        results.push({ user_id: profile.id, status: "no_activity" });
+        continue;
+      }
+
+      const { data: homework } = await admin
+        .from("homeworks")
+        .select("id, homework_items(is_correct)")
+        .eq("user_id", profile.id)
+        .eq("date", today)
+        .maybeSingle();
+
+      const items = homework?.homework_items ?? [];
+      const answered = items.filter((i: { is_correct: boolean | null }) => i.is_correct !== null);
+      const correct = items.filter((i: { is_correct: boolean | null }) => i.is_correct === true);
+      const completionRate = items.length ? Math.round((answered.length / items.length) * 100) : 0;
+      const correctRate = answered.length ? Math.round((correct.length / answered.length) * 100) : 0;
+
+      const generated = await generateDailyFeedback({
+        nickname: profile.nickname,
+        studyMinutes,
+        targetMinutes: profile.target_study_minutes ?? 60,
+        homeworkCompletionRate: completionRate,
+        correctRate,
+        improvedUnits: [],
+        weakUnits: [],
+        streakDays: profile.streak_days ?? 0,
+      });
+
+      await admin.from("daily_feedback").insert({
+        user_id: profile.id,
+        date: today,
+        study_minutes: studyMinutes,
+        goal_achievement_rate: generated.goal_achievement_rate,
+        improved_units: [],
+        recommended_next: generated.recommended_next,
+        ai_message: generated.ai_message,
+      });
+
+      results.push({ user_id: profile.id, status: "ok" });
+    } catch (e) {
+      results.push({ user_id: profile.id, status: `error: ${(e as Error).message}` });
+    }
+  }
+
+  return NextResponse.json({ processed: results.length, results });
+}
