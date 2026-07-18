@@ -24,6 +24,7 @@ export default async function ProfilePage() {
   const t = await getTranslations("profile");
   const tc = await getTranslations("common");
   const ts = await getTranslations("subjects");
+  const tp = await getTranslations("plan");
 
   const [{ data: profile }, { data: stats }, { data: badgeCount }, { data: totalSessions }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
@@ -42,9 +43,12 @@ export default async function ProfilePage() {
         <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-background bg-secondary text-3xl font-bold">
           {profile?.nickname?.[0] ?? "?"}
         </div>
-        <div className="pb-1">
-          <h1 className="text-xl font-bold">{profile?.nickname}</h1>
-          <p className="text-sm text-muted-foreground">{profile?.grade_level}</p>
+        <div className="flex flex-1 items-end justify-between pb-1">
+          <div>
+            <h1 className="text-xl font-bold">{profile?.nickname}</h1>
+            <p className="text-sm text-muted-foreground">{profile?.grade_level}</p>
+          </div>
+          <Badge variant="secondary">{tp(profile?.plan ?? "free")}</Badge>
         </div>
       </div>
 

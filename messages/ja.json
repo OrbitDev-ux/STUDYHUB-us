@@ -269,9 +269,17 @@
       "messageLabel": "メンテナンス案内メッセージ（任意）",
       "messagePlaceholder": "例：本日24時までメンテナンスを実施します。",
       "enableButton": "メンテナンスモードをオンにする",
-      "disableButton": "メンテナンスモードをオフにする"
+      "disableButton": "メンテナンスモードをオフにする",
+      "userPlanTitle": "管理者：ユーザープラン管理",
+      "userPlanDesc": "メールでユーザーを検索し、プランを手動で変更します（入金確認後に操作）。",
+      "emailPlaceholder": "user@example.com",
+      "searchButton": "検索",
+      "notFound": "該当するユーザーが見つかりません。",
+      "currentPlan": "現在のプラン"
     },
-    "homeworkQuestionCount": "宿題の問題数（5〜30問）"
+    "homeworkQuestionCount": "宿題の問題数（5〜30問）",
+    "myPlan": "マイプラン",
+    "homeworkQuestionCountHint": "現在のプランでは最大{max}問まで設定できます。"
   },
   "notFound": {
     "message": "ページが見つかりません。",
@@ -280,5 +288,10 @@
   "maintenance": {
     "title": "メンテナンス中です",
     "defaultMessage": "より良いサービスのためメンテナンスを行っています。しばらくしてから再度アクセスしてください。"
+  },
+  "plan": {
+    "free": "フリー",
+    "basic": "ベーシック",
+    "pro": "プロ"
   }
 }

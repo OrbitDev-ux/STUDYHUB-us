@@ -7,6 +7,7 @@ import { generateDailyHomework } from "@/lib/ai/homework";
 import { insertHomeworkItems } from "@/lib/homework/persist";
 import { awardXP, checkAndAwardBadges } from "@/lib/gamification/xp";
 import { todayKST } from "@/lib/utils/date";
+import { planLimits } from "@/lib/plan";
 import type { SubjectId } from "@/types";
 
 /** 오늘 숙제가 없으면 AI로 생성해서 DB에 저장 (사용자가 처음 /homework 접속 시 or 크론에서도 호출) */
@@ -29,7 +30,7 @@ export async function ensureTodayHomework() {
   if (existing) return existing.id as string;
 
   const [{ data: profile }, { data: settings }, { data: diagnostics }, { data: wrongAnswers }] = await Promise.all([
-    supabase.from("profiles").select("grade_level, target_study_minutes").eq("id", user.id).single(),
+    supabase.from("profiles").select("grade_level, target_study_minutes, plan").eq("id", user.id).single(),
     supabase.from("settings").select("homework_question_count").eq("user_id", user.id).single(),
     supabase
       .from("diagnostic_results")
@@ -61,12 +62,15 @@ export async function ensureTodayHomework() {
     content: (w.questions as unknown as { content: string })?.content ?? "",
   }));
 
+  // 설정 저장 이후 플랜이 강등됐을 수도 있으므로 생성 시점에도 다시 상한을 적용한다.
+  const questionCount = Math.min(settings?.homework_question_count ?? 10, planLimits(profile?.plan).homeworkQuestionMax);
+
   const generated = await generateDailyHomework({
     gradeLevel: profile?.grade_level ?? "중2",
     weakUnitsBySubject: [...weakBySubject.entries()].map(([subject, units]) => ({ subject, units })),
     wrongQuestionSummaries: wrongSummaries,
     targetMinutes: profile?.target_study_minutes ?? 60,
-    questionCount: settings?.homework_question_count ?? 10,
+    questionCount,
   });
 
   const admin = createAdminClient();
