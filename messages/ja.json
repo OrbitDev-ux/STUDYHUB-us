@@ -260,10 +260,24 @@
     "linked": "連携済み",
     "premium": "プレミアム",
     "unlink": "連携解除",
-    "linkDiscord": "Discordアカウントを連携する"
+    "linkDiscord": "Discordアカウントを連携する",
+    "admin": {
+      "title": "管理者：サーバーメンテナンス",
+      "desc": "メンテナンスモードをオンにすると、管理者以外の全ユーザーにメンテナンスページが表示されます。",
+      "enabled": "メンテナンスモード：オン",
+      "disabled": "メンテナンスモード：オフ",
+      "messageLabel": "メンテナンス案内メッセージ（任意）",
+      "messagePlaceholder": "例：本日24時までメンテナンスを実施します。",
+      "enableButton": "メンテナンスモードをオンにする",
+      "disableButton": "メンテナンスモードをオフにする"
+    }
   },
   "notFound": {
     "message": "ページが見つかりません。",
     "goHome": "ホームに戻る"
+  },
+  "maintenance": {
+    "title": "メンテナンス中です",
+    "defaultMessage": "より良いサービスのためメンテナンスを行っています。しばらくしてから再度アクセスしてください。"
   }
 }

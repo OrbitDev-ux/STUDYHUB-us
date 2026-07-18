@@ -260,10 +260,24 @@
     "linked": "已绑定",
     "premium": "高级",
     "unlink": "解除绑定",
-    "linkDiscord": "绑定Discord账号"
+    "linkDiscord": "绑定Discord账号",
+    "admin": {
+      "title": "管理员：服务器维护",
+      "desc": "开启维护模式后，除管理员外的所有用户都会看到维护页面。",
+      "enabled": "维护模式：开启",
+      "disabled": "维护模式：关闭",
+      "messageLabel": "维护提示信息（可选）",
+      "messagePlaceholder": "例：今晚12点前进行服务器维护。",
+      "enableButton": "开启维护模式",
+      "disableButton": "关闭维护模式"
+    }
   },
   "notFound": {
     "message": "找不到页面。",
     "goHome": "返回首页"
+  },
+  "maintenance": {
+    "title": "系统维护中",
+    "defaultMessage": "我们正在进行系统维护以提供更好的服务，请稍后再来。"
   }
 }

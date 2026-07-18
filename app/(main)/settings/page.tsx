@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { updateSettings, startDiscordLink, unlinkDiscord } from "./actions";
+import { updateSettings, startDiscordLink, unlinkDiscord, setMaintenanceMode } from "./actions";
 
 export async function generateMetadata() {
   const t = await getTranslations("settings");
@@ -22,11 +22,19 @@ export default async function SettingsPage() {
 
   const t = await getTranslations("settings");
   const tc = await getTranslations("common");
+  const ta = await getTranslations("settings.admin");
 
-  const [{ data: settings }, { data: discordLink }] = await Promise.all([
+  const [{ data: settings }, { data: discordLink }, { data: profile }] = await Promise.all([
     supabase.from("settings").select("*").eq("user_id", user.id).single(),
     supabase.from("discord_links").select("*").eq("user_id", user.id).maybeSingle(),
+    supabase.from("profiles").select("role").eq("id", user.id).single(),
   ]);
+
+  const isAdmin = profile?.role === "admin";
+
+  const { data: appSettings } = isAdmin
+    ? await supabase.from("app_settings").select("*").eq("id", true).single()
+    : { data: null };
 
   return (
     <div className="flex flex-col gap-6">
@@ -110,6 +118,42 @@ export default async function SettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      {isAdmin && (
+        <Card className="border-warning/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              {ta("title")}
+              <Badge variant={appSettings?.maintenance_mode ? "warning" : "outline"} className="text-[10px]">
+                {appSettings?.maintenance_mode ? ta("enabled") : ta("disabled")}
+              </Badge>
+            </CardTitle>
+            <CardDescription>{ta("desc")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form action={setMaintenanceMode} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="message">{ta("messageLabel")}</Label>
+                <Input
+                  id="message"
+                  name="message"
+                  defaultValue={appSettings?.maintenance_message ?? ""}
+                  placeholder={ta("messagePlaceholder")}
+                />
+              </div>
+              {appSettings?.maintenance_mode ? (
+                <Button type="submit" name="enabled" value="off" variant="outline" className="self-start">
+                  {ta("disableButton")}
+                </Button>
+              ) : (
+                <Button type="submit" name="enabled" value="on" variant="destructive" className="self-start">
+                  {ta("enableButton")}
+                </Button>
+              )}
+            </form>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
