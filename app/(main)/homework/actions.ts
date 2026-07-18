@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { generateDailyHomework } from "@/lib/ai/homework";
 import { insertHomeworkItems } from "@/lib/homework/persist";
-import { awardXP } from "@/lib/gamification/xp";
+import { awardXP, checkAndAwardBadges } from "@/lib/gamification/xp";
 import { todayKST } from "@/lib/utils/date";
 import type { SubjectId } from "@/types";
 
@@ -166,8 +166,11 @@ export async function completeHomeworkIfDone(homeworkId: string) {
     .select("is_correct")
     .eq("homework_id", homeworkId);
 
-  const allAnswered = (items ?? []).every((i) => i.is_correct !== null);
+  const list = items ?? [];
+  const allAnswered = list.length > 0 && list.every((i) => i.is_correct !== null);
   if (allAnswered) {
     await supabase.from("homeworks").update({ status: "completed" }).eq("id", homeworkId);
+    // 숙제 완료 수 기반 배지(homework_100) 판정
+    await checkAndAwardBadges(supabase);
   }
 }
