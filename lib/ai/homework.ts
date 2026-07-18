@@ -26,8 +26,18 @@ interface HomeworkGenerationInput {
 export async function generateDailyHomework(
   input: HomeworkGenerationInput
 ): Promise<{ rationale: string; items: GeneratedHomeworkItem[] }> {
-  const reviewCount = Math.max(0, Math.min(5, Math.round(input.questionCount * 0.2)));
+  // 최근 오답이 없으면(예: 크론 경로는 항상 빈 배열로 호출) 복습 문제를 요구하지 않는다.
+  // 데이터 없이 "오답 복습 N개 필수"를 강제하면 AI가 없는 오답을 지어내게 된다.
+  const reviewCount =
+    input.wrongQuestionSummaries.length === 0
+      ? 0
+      : Math.max(0, Math.min(5, Math.round(input.questionCount * 0.2), input.wrongQuestionSummaries.length));
   const newCount = input.questionCount - reviewCount;
+
+  const reviewGuide =
+    reviewCount > 0
+      ? `- 그 중 ${reviewCount}문제는 최근 오답을 변형하여 재출제 (category: "오답복습")\n- 나머지 ${newCount}문제는`
+      : `- 최근 오답 데이터가 없으므로 오답 복습 문제는 포함하지 마세요.\n- ${newCount}문제 전부`;
 
   return callAIForJSON<{ rationale: string; items: GeneratedHomeworkItem[] }>({
     system:
@@ -39,8 +49,7 @@ export async function generateDailyHomework(
 
 위 정보를 바탕으로 오늘의 숙제를 총 ${input.questionCount}문제로 생성하세요. 구성 가이드:
 - 총 문제 수는 반드시 ${input.questionCount}개여야 합니다.
-- 그 중 ${reviewCount}문제는 최근 오답을 변형하여 재출제 (category: "오답복습")
-- 나머지 ${newCount}문제는 취약 단원 위주의 신규 문제로, 수학/영어/사회/과학에 균형 있게 배분
+${reviewGuide} 취약 단원 위주의 신규 문제로, 수학/영어/사회/과학에 균형 있게 배분
   (영어는 단어 문제(category: "단어")와 문법 문제(category: "신규")를 섞어도 됩니다)
 - category는 "신규" 또는 "오답복습" 또는 "단어" 중 하나
 
