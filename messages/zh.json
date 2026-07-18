@@ -209,7 +209,8 @@
     "todayFeedback": "今日反馈",
     "recommendedNext": "明日推荐",
     "recentHistory": "最近学习记录",
-    "noHistory": "暂无记录。"
+    "noHistory": "暂无记录。",
+    "studyMinutesLabel": "学习时间"
   },
   "rank": {
     "title": "排行榜与徽章",
@@ -280,7 +281,8 @@
     },
     "homeworkQuestionCount": "作业题目数量（5~30题）",
     "myPlan": "我的方案",
-    "homeworkQuestionCountHint": "当前方案最多可设置 {max} 道题目。"
+    "homeworkQuestionCountHint": "当前方案最多可设置 {max} 道题目。",
+    "notificationsHint": "绑定Discord账号后，每天生成作业·计划·反馈时会通过私信通知你。"
   },
   "notFound": {
     "message": "找不到页面。",

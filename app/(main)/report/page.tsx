@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Sparkles, TrendingUp } from "lucide-react";
 import { planLimits } from "@/lib/plan";
+import { StudyChart } from "@/components/report/study-chart";
 
 export async function generateMetadata() {
   const t = await getTranslations("report");
@@ -74,8 +75,10 @@ export default async function ReportPage() {
             <TrendingUp className="h-4 w-4" /> {t("recentHistory")}
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-2">
+        <CardContent className="flex flex-col gap-4">
           {(history ?? []).length === 0 && <p className="text-sm text-muted-foreground">{t("noHistory")}</p>}
+          {/* history는 최신순이라 slice(0, 30)이 최근 30일치. 차트가 너무 빽빽해지지 않게 상한을 둔다. */}
+          {(history ?? []).length > 0 && <StudyChart history={(history ?? []).slice(0, 30)} />}
           {(history ?? []).map((h) => (
             <div key={h.id} className="flex items-center justify-between border-b border-border py-2 text-sm last:border-0">
               <span className="text-muted-foreground">{h.date}</span>

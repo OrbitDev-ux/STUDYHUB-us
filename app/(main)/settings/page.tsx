@@ -95,15 +95,18 @@ export default async function SettingsPage() {
                 />
               </div>
             </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                name="notification_enabled"
-                defaultChecked={settings?.notification_enabled ?? true}
-                className="h-4 w-4 rounded border-input"
-              />
-              {t("notifications")}
-            </label>
+            <div className="flex flex-col gap-1">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="notification_enabled"
+                  defaultChecked={settings?.notification_enabled ?? true}
+                  className="h-4 w-4 rounded border-input"
+                />
+                {t("notifications")}
+              </label>
+              <p className="pl-6 text-xs text-muted-foreground">{t("notificationsHint")}</p>
+            </div>
             <Button type="submit" className="self-start">
               {tc("save")}
             </Button>

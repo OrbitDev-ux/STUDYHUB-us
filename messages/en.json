@@ -209,7 +209,8 @@
     "todayFeedback": "Today's Feedback",
     "recommendedNext": "Recommended for tomorrow",
     "recentHistory": "Recent Study History",
-    "noHistory": "No history yet."
+    "noHistory": "No history yet.",
+    "studyMinutesLabel": "Study time"
   },
   "rank": {
     "title": "Rank & Badges",
@@ -280,7 +281,8 @@
     },
     "homeworkQuestionCount": "Homework question count (5-30)",
     "myPlan": "My Plan",
-    "homeworkQuestionCountHint": "Your current plan allows up to {max} questions."
+    "homeworkQuestionCountHint": "Your current plan allows up to {max} questions.",
+    "notificationsHint": "If your Discord is linked, we'll DM you whenever daily homework, planner, or feedback is generated."
   },
   "notFound": {
     "message": "Page not found.",

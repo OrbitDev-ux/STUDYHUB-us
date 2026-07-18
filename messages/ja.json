@@ -209,7 +209,8 @@
     "todayFeedback": "今日のフィードバック",
     "recommendedNext": "明日のおすすめ",
     "recentHistory": "最近の学習履歴",
-    "noHistory": "記録がありません。"
+    "noHistory": "記録がありません。",
+    "studyMinutesLabel": "勉強時間"
   },
   "rank": {
     "title": "ランキング＆バッジ",
@@ -280,7 +281,8 @@
     },
     "homeworkQuestionCount": "宿題の問題数（5〜30問）",
     "myPlan": "マイプラン",
-    "homeworkQuestionCountHint": "現在のプランでは最大{max}問まで設定できます。"
+    "homeworkQuestionCountHint": "現在のプランでは最大{max}問まで設定できます。",
+    "notificationsHint": "Discordを連携しておくと、毎日の宿題・プランナー・フィードバックが生成されるたびにDMでお知らせします。"
   },
   "notFound": {
     "message": "ページが見つかりません。",
