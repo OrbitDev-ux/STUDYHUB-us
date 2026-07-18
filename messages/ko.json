@@ -1,0 +1,304 @@
+{
+  "common": {
+    "login": "로그인",
+    "signup": "회원가입",
+    "logout": "로그아웃",
+    "save": "저장",
+    "cancel": "취소",
+    "email": "이메일",
+    "password": "비밀번호",
+    "nickname": "닉네임",
+    "coins": "코인",
+    "streak": "연속학습",
+    "correct": "정답이에요!",
+    "predictedGrade": "예상 등급",
+    "goalAchievementRate": "목표 달성률",
+    "minutes": "{n}분",
+    "hours": "{n}시간",
+    "levelBadge": "Lv.{level}",
+    "daysSuffix": "{days}일",
+    "toggleTheme": "다크모드 전환",
+    "toggleLanguage": "언어 선택"
+  },
+  "subjects": {
+    "math": "수학",
+    "english": "영어",
+    "social": "사회",
+    "science": "과학"
+  },
+  "nav": {
+    "dashboard": "대시보드",
+    "homework": "오늘의 숙제",
+    "planner": "학습 플래너",
+    "timer": "타이머",
+    "wrongNotes": "오답노트",
+    "report": "AI 리포트",
+    "rank": "랭킹/배지",
+    "profile": "프로필"
+  },
+  "topbar": {
+    "greeting": "안녕하세요, <b>{nickname}</b>님",
+    "levelTooltip": "다음 레벨까지 {remaining}XP ({percent}%)"
+  },
+  "landing": {
+    "navSignup": "무료로 시작하기",
+    "badge": "매일 공부를 관리해주는 AI 과외 선생님",
+    "heroTitleLine1": "AI가 실력을 진단하고,",
+    "heroTitleLine2": "매일 공부를 설계해드려요",
+    "heroSubtitle": "진단평가부터 예상 등급, 취약점 분석, 숙제와 학습 계획까지 — StudyHub가 매일 당신의 개인 과외 선생님이 되어드립니다.",
+    "ctaPrimary": "무료 진단받기",
+    "footer": "© {year} StudyHub. All rights reserved.",
+    "features": {
+      "diagnostic": {
+        "title": "AI 진단평가",
+        "desc": "가입 직후 4과목 실력을 진단하고 예상 등급을 계산해요."
+      },
+      "weakness": {
+        "title": "취약점 분석",
+        "desc": "어떤 단원이 왜 약한지 AI가 원인과 학습 방향을 알려줘요."
+      },
+      "homework": {
+        "title": "매일 AI 숙제",
+        "desc": "취약 단원 위주로 매일 아침 자동으로 숙제가 생성돼요."
+      },
+      "timer": {
+        "title": "포모도로 타이머",
+        "desc": "집중 시간을 측정하고 휴식까지 관리해줘요."
+      },
+      "streak": {
+        "title": "연속 학습 스트릭",
+        "desc": "XP, 코인, 배지로 공부 습관을 게임처럼 만들어요."
+      },
+      "feedback": {
+        "title": "일일 AI 피드백",
+        "desc": "오늘 공부를 요약하고 내일 할 일을 추천해줘요."
+      }
+    }
+  },
+  "auth": {
+    "loginSubtitle": "오늘도 AI 과외 선생님과 함께 시작해요",
+    "orEmailLogin": "또는 이메일로 로그인",
+    "loginError": "이메일 또는 비밀번호가 올바르지 않습니다.",
+    "noAccount": "아직 계정이 없나요?",
+    "signupSubtitle": "가입 후 바로 AI 진단평가를 시작해요",
+    "orEmailSignup": "또는 이메일로 가입",
+    "nicknamePlaceholder": "공부왕",
+    "passwordHint": "8자 이상 입력해주세요",
+    "signupError": "가입 중 문제가 발생했어요. 다시 시도해주세요.",
+    "signupSubmit": "가입하고 진단평가 시작하기",
+    "haveAccount": "이미 계정이 있나요?",
+    "continueWithGoogle": "Google로 계속하기",
+    "continueWithDiscord": "Discord로 계속하기",
+    "checkEmail": {
+      "title": "이메일을 확인해주세요",
+      "description": "인증 링크를 보내드렸어요. 이메일의 링크를 클릭하면 가입이 완료됩니다."
+    }
+  },
+  "onboarding": {
+    "title": "반가워요! 몇 가지만 알려주세요",
+    "subtitle": "AI가 맞춤형 진단평가와 학습 계획을 준비할게요",
+    "gradeLevel": "학년",
+    "selectPlaceholder": "선택해주세요",
+    "targetMinutes": "목표 공부 시간 (분/일)",
+    "targetScore": "목표 성적",
+    "targetScorePlaceholder": "예: 전 과목 A, 상위 10%",
+    "examDate": "시험 날짜 (선택)",
+    "submit": "다음: AI 진단평가 시작하기",
+    "grades": {
+      "초4": "초등 4학년",
+      "초5": "초등 5학년",
+      "초6": "초등 6학년",
+      "중1": "중학 1학년",
+      "중2": "중학 2학년",
+      "중3": "중학 3학년",
+      "고1": "고등 1학년",
+      "고2": "고등 2학년",
+      "고3": "고등 3학년"
+    },
+    "pageTitle": "프로필 설정"
+  },
+  "diagnostic": {
+    "introTitle": "AI 진단평가를 시작할게요",
+    "introDesc": "수학, 영어, 사회, 과학 4과목을 순서대로 진단해요. 과목당 약 2~3분이면 충분해요.",
+    "start": "진단평가 시작하기",
+    "progressBadge": "{current} / {total} · {subject}",
+    "questionProgress": "{current} / {total}",
+    "preparing": "문제를 준비하고 있어요",
+    "subjectQuiz": "{subject} 진단평가",
+    "analyzing": "AI가 실력을 분석하고 있어요",
+    "subjectResult": "{subject} 진단 결과",
+    "loadingQuestions": "AI가 맞춤 문제를 출제하고 있어요...",
+    "loadingAnalysis": "정오답 패턴을 분석해서 예상 등급을 계산하고 있어요...",
+    "nextSubject": "다음 과목 진단받기",
+    "goDashboard": "대시보드로 이동",
+    "pageTitle": "AI 진단평가"
+  },
+  "dashboard": {
+    "greeting": "오늘도 화이팅이에요, {nickname}님 👋",
+    "subtitle": "AI가 오늘의 학습 현황을 정리했어요.",
+    "todayMinutesLabel": "오늘 공부 시간",
+    "todayMinutesSub": "목표 {target}분",
+    "streakLabel": "연속 학습",
+    "streakSub": "꾸준함이 실력이에요",
+    "homeworkRateLabel": "숙제 완료율",
+    "homeworkRateSub": "{answered}/{total}문제",
+    "goalRateLabel": "목표 달성률",
+    "goalRateSub": "오늘 기준",
+    "goalCardTitle": "오늘 목표 달성률",
+    "goalCaption": "{studied}분 / {target}분 ({rate}%)",
+    "noDiagnostic": "아직 진단평가 결과가 없어요.",
+    "weakUnitsTitle": "취약 단원",
+    "noWeakUnits": "취약 단원이 아직 없어요.",
+    "goHomework": "오늘의 숙제 풀기",
+    "goPlanner": "학습 플래너 보기"
+  },
+  "homework": {
+    "title": "오늘의 AI 숙제",
+    "subtitle": "취약 단원 위주로 AI가 자동 생성했어요.",
+    "rationaleTitle": "AI의 숙제 구성 이유",
+    "completedProgress": "{completed} / {total} 완료",
+    "wrongAnswer": "오답: {answer}",
+    "categories": {
+      "신규": "신규",
+      "오답복습": "오답복습",
+      "단어": "단어"
+    }
+  },
+  "planner": {
+    "title": "오늘의 AI 학습 플래너",
+    "subtitle": "시험 일정과 취약점을 고려해 AI가 계획을 세웠어요.",
+    "summaryTitle": "오늘의 계획 요약",
+    "totalTime": "총 계획 시간: {minutes}분",
+    "priorityLabel": "우선순위 {level}",
+    "priority": {
+      "high": "높음",
+      "medium": "보통",
+      "low": "여유"
+    },
+    "reviewBadge": "복습",
+    "toggleComplete": "완료 체크"
+  },
+  "timer": {
+    "title": "공부 타이머",
+    "subtitle": "25분 집중, 5분 휴식으로 몰입해요.",
+    "focusLabel": "집중 시간",
+    "breakLabel": "휴식 시간",
+    "pause": "일시정지",
+    "start": "시작",
+    "stopAndSave": "종료 및 저장",
+    "sessionTotal": "이번 세션 누적 집중 시간: {minutes}분"
+  },
+  "wrongNotes": {
+    "title": "오답노트",
+    "subtitle": "틀린 문제를 복습하고 유사 문제로 재도전해요.",
+    "empty": "아직 오답이 없어요. 숙제를 풀어보세요!",
+    "needsReview": "복습이 필요해요 ({count})",
+    "mastered": "극복했어요 ({count})",
+    "wrongCount": "{count}회 오답",
+    "myAnswer": "내가 쓴 답:",
+    "correctAnswer": "정답:",
+    "generateSimilar": "AI로 유사 문제 생성해서 재도전하기",
+    "masteredMessage": "이 개념을 극복했어요!",
+    "wrongAgain": "다시 틀렸어요"
+  },
+  "report": {
+    "title": "AI 일일 피드백",
+    "subtitle": "오늘 하루를 AI가 요약하고 코칭해드려요.",
+    "empty": "아직 오늘의 학습 기록이 없어요. 숙제를 풀거나 타이머를 사용하면 피드백이 생성돼요.",
+    "todayFeedback": "오늘의 피드백",
+    "recommendedNext": "내일 추천",
+    "recentHistory": "최근 학습 기록",
+    "noHistory": "기록이 없어요.",
+    "studyMinutesLabel": "공부 시간"
+  },
+  "rank": {
+    "title": "랭킹 & 배지",
+    "subtitle": "꾸준함이 곧 실력이에요. XP를 모아 순위를 올려보세요.",
+    "xpRanking": "XP 랭킹",
+    "me": "나",
+    "xpValue": "{xp} XP",
+    "badges": "배지",
+    "badgeInfo": {
+      "streak_7": {
+        "name": "7일 연속 학습",
+        "desc": "7일 연속으로 공부했어요"
+      },
+      "streak_30": {
+        "name": "30일 연속 학습",
+        "desc": "30일 연속으로 공부했어요"
+      },
+      "homework_100": {
+        "name": "숙제 마스터",
+        "desc": "숙제 100개 완료"
+      },
+      "early_bird": {
+        "name": "얼리버드",
+        "desc": "오전 7시 전 학습 5회"
+      }
+    }
+  },
+  "profile": {
+    "totalStudyTime": "누적 공부시간",
+    "subjectSkills": "과목별 실력",
+    "noDiagnostic": "아직 진단 결과가 없어요.",
+    "badgeCount": "배지 {count}개",
+    "editProfile": "프로필 수정",
+    "bio": "소개",
+    "bioPlaceholder": "한 줄 소개를 남겨보세요"
+  },
+  "settings": {
+    "title": "설정",
+    "subtitle": "학습 환경을 나에게 맞게 조정해요.",
+    "studySettings": "학습 설정",
+    "studySettingsDesc": "매일 숙제 생성 시각과 타이머 기본값을 설정해요",
+    "homeworkTime": "매일 숙제 생성 시각",
+    "focusMinutes": "집중 시간(분)",
+    "breakMinutes": "휴식 시간(분)",
+    "notifications": "알림 받기",
+    "discordLink": "Discord 연동",
+    "discordLinkDesc": "Discord 계정을 연동하면 XP·배지가 동기화되고 프리미엄 역할이 지급돼요",
+    "linked": "연동됨",
+    "premium": "프리미엄",
+    "unlink": "연동 해제",
+    "linkDiscord": "Discord 계정 연동하기",
+    "admin": {
+      "title": "관리자: 서버 점검",
+      "desc": "점검 모드를 켜면 관리자를 제외한 모든 사용자에게 점검 안내 페이지가 표시됩니다.",
+      "enabled": "점검 모드 켜짐",
+      "disabled": "점검 모드 꺼짐",
+      "messageLabel": "점검 안내 메시지 (선택)",
+      "messagePlaceholder": "예: 오늘 밤 12시까지 서버 점검이 진행됩니다.",
+      "enableButton": "점검 모드 켜기",
+      "disableButton": "점검 모드 끄기",
+      "userPlanTitle": "관리자: 사용자 플랜 관리",
+      "userPlanDesc": "이메일로 사용자를 찾아 플랜을 직접 변경합니다 (결제 확인 후 수동 반영).",
+      "emailPlaceholder": "user@example.com",
+      "searchButton": "검색",
+      "notFound": "해당 이메일의 사용자를 찾을 수 없어요.",
+      "currentPlan": "현재 플랜",
+      "discordNotifyHint": "설정돼 있으면 Discord 채널로도 점검 시작/종료 알림이 전송돼요 (DISCORD_MAINTENANCE_WEBHOOK_URL)."
+    },
+    "homeworkQuestionCount": "숙제 문제 수 (5~30문제)",
+    "myPlan": "내 플랜",
+    "homeworkQuestionCountHint": "현재 플랜에서는 최대 {max}문제까지 설정할 수 있어요.",
+    "notificationsHint": "Discord 계정을 연동해두면 매일 숙제·플래너·피드백이 생성될 때 DM으로 알려드려요."
+  },
+  "notFound": {
+    "message": "페이지를 찾을 수 없어요.",
+    "goHome": "홈으로 돌아가기"
+  },
+  "maintenance": {
+    "title": "점검 중입니다",
+    "defaultMessage": "더 나은 서비스를 위해 점검을 진행하고 있어요. 잠시 후 다시 방문해주세요."
+  },
+  "plan": {
+    "free": "Free",
+    "basic": "Basic",
+    "pro": "Pro",
+    "compareTitle": "플랜 비교",
+    "homeworkLimitLabel": "숙제 문제 수",
+    "reportLimitLabel": "AI 리포트 보관 기간",
+    "yourPlan": "현재 플랜",
+    "questionsValue": "{max}문제"
+  }
+}

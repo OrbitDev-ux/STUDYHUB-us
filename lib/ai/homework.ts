@@ -1,4 +1,5 @@
 import { callAIForJSON } from "./client";
+import { planLimits } from "@/lib/plan";
 import type { SubjectId } from "@/types";
 
 export interface GeneratedHomeworkItem {
@@ -18,12 +19,32 @@ interface HomeworkGenerationInput {
   weakUnitsBySubject: { subject: SubjectId; units: string[] }[];
   wrongQuestionSummaries: { subject: SubjectId; unit: string; content: string }[];
   targetMinutes: number;
+  /** 사용자가 설정 페이지에서 요청한 총 문제 수 (settings.homework_question_count) — 플랜 상한으로 클램프된다 */
+  requestedQuestionCount: number;
+  plan: string | null | undefined;
 }
 
-/** 매일 숙제 자동 생성 — 취약 단원 + 오답 복습 위주 */
+/** 매일 숙제 자동 생성 — 취약 단원 + 오답 복습 위주, 총 문제 수는 사용자 설정(플랜 상한 이내)을 따른다 */
 export async function generateDailyHomework(
   input: HomeworkGenerationInput
 ): Promise<{ rationale: string; items: GeneratedHomeworkItem[] }> {
+  // 호출부마다 플랜 상한을 따로 적용하면 클램프를 빼먹은 경로가 생길 수 있으므로,
+  // 생성 함수 자체에서 항상 적용한다.
+  const questionCount = Math.min(input.requestedQuestionCount, planLimits(input.plan).homeworkQuestionMax);
+
+  // 최근 오답이 없으면(예: 크론 경로는 항상 빈 배열로 호출) 복습 문제를 요구하지 않는다.
+  // 데이터 없이 "오답 복습 N개 필수"를 강제하면 AI가 없는 오답을 지어내게 된다.
+  const reviewCount =
+    input.wrongQuestionSummaries.length === 0
+      ? 0
+      : Math.max(0, Math.min(5, Math.round(questionCount * 0.2), input.wrongQuestionSummaries.length));
+  const newCount = questionCount - reviewCount;
+
+  const reviewGuide =
+    reviewCount > 0
+      ? `- 그 중 ${reviewCount}문제는 최근 오답을 변형하여 재출제 (category: "오답복습")\n- 나머지 ${newCount}문제는`
+      : `- 최근 오답 데이터가 없으므로 오답 복습 문제는 포함하지 마세요.\n- ${newCount}문제 전부`;
+
   return callAIForJSON<{ rationale: string; items: GeneratedHomeworkItem[] }>({
     system:
       "당신은 학생 개인별 취약점에 맞춰 매일 숙제를 설계하는 AI 과외 선생님입니다. 신규 문제와 오답 복습을 균형 있게 배치합니다.",
@@ -32,10 +53,10 @@ export async function generateDailyHomework(
 과목별 취약 단원: ${JSON.stringify(input.weakUnitsBySubject)}
 최근 오답: ${JSON.stringify(input.wrongQuestionSummaries)}
 
-위 정보를 바탕으로 오늘의 숙제를 생성하세요. 구성 가이드:
-- 수학: 취약 단원 위주 문제 8~10문제
-- 영어: 단어 15~20개 또는 문법 문제
-- 오답 복습: 최근 오답 중 3~5문제를 변형하여 재출제
+위 정보를 바탕으로 오늘의 숙제를 총 ${questionCount}문제로 생성하세요. 구성 가이드:
+- 총 문제 수는 반드시 ${questionCount}개여야 합니다.
+${reviewGuide} 취약 단원 위주의 신규 문제로, 수학/영어/사회/과학에 균형 있게 배분
+  (영어는 단어 문제(category: "단어")와 문법 문제(category: "신규")를 섞어도 됩니다)
 - category는 "신규" 또는 "오답복습" 또는 "단어" 중 하나
 
 JSON 스키마:
@@ -55,7 +76,7 @@ JSON 스키마:
     }
   ]
 }`,
-    maxTokens: 4000,
+    maxTokens: Math.min(8000, 1500 + questionCount * 220),
   });
 }
 

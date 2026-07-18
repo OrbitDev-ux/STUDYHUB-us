@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { NAV_ITEMS } from "./nav-items";
 import { cn } from "@/lib/utils/cn";
 import { Flame } from "lucide-react";
@@ -9,6 +10,8 @@ import type { Profile } from "@/types";
 
 export function SideNav({ profile }: { profile: Profile | null }) {
   const pathname = usePathname();
+  const t = useTranslations("nav");
+  const tc = useTranslations("common");
 
   return (
     <aside className="hidden w-60 shrink-0 flex-col border-r border-border px-4 py-6 md:flex">
@@ -19,7 +22,9 @@ export function SideNav({ profile }: { profile: Profile | null }) {
       {profile && (
         <div className="mb-6 flex items-center gap-2 rounded-xl bg-secondary px-3 py-2.5 text-sm">
           <Flame className="h-4 w-4 text-warning" />
-          <span className="font-medium">{profile.streak_days}일 연속</span>
+          <span className="font-medium">
+            {tc("streak")} {tc("daysSuffix", { days: profile.streak_days })}
+          </span>
         </div>
       )}
 
@@ -38,7 +43,7 @@ export function SideNav({ profile }: { profile: Profile | null }) {
               )}
             >
               <item.icon className="h-4 w-4" />
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           );
         })}

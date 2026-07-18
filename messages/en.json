@@ -1,0 +1,304 @@
+{
+  "common": {
+    "login": "Log in",
+    "signup": "Sign up",
+    "logout": "Log out",
+    "save": "Save",
+    "cancel": "Cancel",
+    "email": "Email",
+    "password": "Password",
+    "nickname": "Nickname",
+    "coins": "Coins",
+    "streak": "Streak",
+    "correct": "Correct!",
+    "predictedGrade": "Predicted Grade",
+    "goalAchievementRate": "Goal Achievement Rate",
+    "minutes": "{n} min",
+    "hours": "{n} hr",
+    "levelBadge": "Lv.{level}",
+    "daysSuffix": "{days} days",
+    "toggleTheme": "Toggle dark mode",
+    "toggleLanguage": "Select language"
+  },
+  "subjects": {
+    "math": "Math",
+    "english": "English",
+    "social": "Social Studies",
+    "science": "Science"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "homework": "Today's Homework",
+    "planner": "Study Planner",
+    "timer": "Timer",
+    "wrongNotes": "Wrong Notes",
+    "report": "AI Report",
+    "rank": "Rank/Badges",
+    "profile": "Profile"
+  },
+  "topbar": {
+    "greeting": "Hi, <b>{nickname}</b>",
+    "levelTooltip": "{remaining}XP to next level ({percent}%)"
+  },
+  "landing": {
+    "navSignup": "Get started free",
+    "badge": "Your AI tutor that manages your study every day",
+    "heroTitleLine1": "AI diagnoses your level,",
+    "heroTitleLine2": "and designs your daily study plan",
+    "heroSubtitle": "From diagnostics to predicted grades, weak-point analysis, homework, and study plans — StudyHub is your personal tutor, every single day.",
+    "ctaPrimary": "Get a free diagnostic",
+    "footer": "© {year} StudyHub. All rights reserved.",
+    "features": {
+      "diagnostic": {
+        "title": "AI Diagnostic Test",
+        "desc": "Right after signup, we assess your level in 4 subjects and predict your grade."
+      },
+      "weakness": {
+        "title": "Weak-Point Analysis",
+        "desc": "AI explains why a unit is weak and points you in the right direction."
+      },
+      "homework": {
+        "title": "Daily AI Homework",
+        "desc": "Homework is auto-generated every morning, focused on your weak units."
+      },
+      "timer": {
+        "title": "Pomodoro Timer",
+        "desc": "Track focus time and manage breaks for you."
+      },
+      "streak": {
+        "title": "Study Streaks",
+        "desc": "XP, coins, and badges turn study habits into a game."
+      },
+      "feedback": {
+        "title": "Daily AI Feedback",
+        "desc": "AI summarizes today and recommends what to do tomorrow."
+      }
+    }
+  },
+  "auth": {
+    "loginSubtitle": "Start today with your AI tutor",
+    "orEmailLogin": "Or log in with email",
+    "loginError": "Incorrect email or password.",
+    "noAccount": "Don't have an account?",
+    "signupSubtitle": "Start your AI diagnostic right after signing up",
+    "orEmailSignup": "Or sign up with email",
+    "nicknamePlaceholder": "StudyMaster",
+    "passwordHint": "Use at least 8 characters",
+    "signupError": "Something went wrong during signup. Please try again.",
+    "signupSubmit": "Sign up and start diagnostic",
+    "haveAccount": "Already have an account?",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithDiscord": "Continue with Discord",
+    "checkEmail": {
+      "title": "Check your email",
+      "description": "We've sent you a verification link. Click the link in your email to complete signup."
+    }
+  },
+  "onboarding": {
+    "title": "Welcome! Tell us a bit about yourself",
+    "subtitle": "AI will prepare a tailored diagnostic and study plan",
+    "gradeLevel": "Grade",
+    "selectPlaceholder": "Please select",
+    "targetMinutes": "Target study time (min/day)",
+    "targetScore": "Target score",
+    "targetScorePlaceholder": "e.g. All A's, top 10%",
+    "examDate": "Exam date (optional)",
+    "submit": "Next: Start AI diagnostic",
+    "grades": {
+      "초4": "Elementary 4",
+      "초5": "Elementary 5",
+      "초6": "Elementary 6",
+      "중1": "Middle 1",
+      "중2": "Middle 2",
+      "중3": "Middle 3",
+      "고1": "High 1",
+      "고2": "High 2",
+      "고3": "High 3"
+    },
+    "pageTitle": "Profile Setup"
+  },
+  "diagnostic": {
+    "introTitle": "Let's start your AI diagnostic",
+    "introDesc": "We'll assess Math, English, Social Studies, and Science in order. Each subject takes about 2-3 minutes.",
+    "start": "Start diagnostic",
+    "progressBadge": "{current} / {total} · {subject}",
+    "questionProgress": "{current} / {total}",
+    "preparing": "Preparing your questions",
+    "subjectQuiz": "{subject} diagnostic",
+    "analyzing": "AI is analyzing your results",
+    "subjectResult": "{subject} results",
+    "loadingQuestions": "AI is generating personalized questions...",
+    "loadingAnalysis": "Analyzing your answer patterns to predict your grade...",
+    "nextSubject": "Next subject",
+    "goDashboard": "Go to dashboard",
+    "pageTitle": "AI Diagnostic"
+  },
+  "dashboard": {
+    "greeting": "Let's do this, {nickname} 👋",
+    "subtitle": "AI has summarized today's study status.",
+    "todayMinutesLabel": "Today's Study Time",
+    "todayMinutesSub": "Goal {target} min",
+    "streakLabel": "Streak",
+    "streakSub": "Consistency is strength",
+    "homeworkRateLabel": "Homework Completion",
+    "homeworkRateSub": "{answered}/{total} questions",
+    "goalRateLabel": "Goal Achievement",
+    "goalRateSub": "Today",
+    "goalCardTitle": "Today's Goal Achievement",
+    "goalCaption": "{studied} min / {target} min ({rate}%)",
+    "noDiagnostic": "No diagnostic results yet.",
+    "weakUnitsTitle": "Weak Units",
+    "noWeakUnits": "No weak units yet.",
+    "goHomework": "Do today's homework",
+    "goPlanner": "View study planner"
+  },
+  "homework": {
+    "title": "Today's AI Homework",
+    "subtitle": "Auto-generated by AI, focused on your weak units.",
+    "rationaleTitle": "Why AI chose this homework",
+    "completedProgress": "{completed} / {total} done",
+    "wrongAnswer": "Wrong: {answer}",
+    "categories": {
+      "신규": "New",
+      "오답복습": "Review",
+      "단어": "Vocabulary"
+    }
+  },
+  "planner": {
+    "title": "Today's AI Study Planner",
+    "subtitle": "AI planned this considering your exam schedule and weak points.",
+    "summaryTitle": "Today's Plan Summary",
+    "totalTime": "Total planned time: {minutes} min",
+    "priorityLabel": "Priority {level}",
+    "priority": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "reviewBadge": "Review",
+    "toggleComplete": "Toggle complete"
+  },
+  "timer": {
+    "title": "Study Timer",
+    "subtitle": "Focus for 25 minutes, break for 5 — get in the zone.",
+    "focusLabel": "Focus time",
+    "breakLabel": "Break time",
+    "pause": "Pause",
+    "start": "Start",
+    "stopAndSave": "Stop and save",
+    "sessionTotal": "This session's total focus time: {minutes} min"
+  },
+  "wrongNotes": {
+    "title": "Wrong Notes",
+    "subtitle": "Review the questions you got wrong and retry similar ones.",
+    "empty": "No wrong answers yet. Try some homework!",
+    "needsReview": "Needs review ({count})",
+    "mastered": "Mastered ({count})",
+    "wrongCount": "Wrong {count}x",
+    "myAnswer": "Your answer:",
+    "correctAnswer": "Correct answer:",
+    "generateSimilar": "Generate a similar question with AI and retry",
+    "masteredMessage": "You've mastered this concept!",
+    "wrongAgain": "Wrong again"
+  },
+  "report": {
+    "title": "AI Daily Feedback",
+    "subtitle": "AI summarizes and coaches you on today.",
+    "empty": "No study record for today yet. Do some homework or use the timer to generate feedback.",
+    "todayFeedback": "Today's Feedback",
+    "recommendedNext": "Recommended for tomorrow",
+    "recentHistory": "Recent Study History",
+    "noHistory": "No history yet.",
+    "studyMinutesLabel": "Study time"
+  },
+  "rank": {
+    "title": "Rank & Badges",
+    "subtitle": "Consistency is skill. Earn XP and climb the ranks.",
+    "xpRanking": "XP Ranking",
+    "me": "Me",
+    "xpValue": "{xp} XP",
+    "badges": "Badges",
+    "badgeInfo": {
+      "streak_7": {
+        "name": "7-Day Streak",
+        "desc": "Studied 7 days in a row"
+      },
+      "streak_30": {
+        "name": "30-Day Streak",
+        "desc": "Studied 30 days in a row"
+      },
+      "homework_100": {
+        "name": "Homework Master",
+        "desc": "Completed 100 homework problems"
+      },
+      "early_bird": {
+        "name": "Early Bird",
+        "desc": "Studied before 7am, 5 times"
+      }
+    }
+  },
+  "profile": {
+    "totalStudyTime": "Total Study Time",
+    "subjectSkills": "Skills by Subject",
+    "noDiagnostic": "No diagnostic results yet.",
+    "badgeCount": "{count} badges",
+    "editProfile": "Edit Profile",
+    "bio": "Bio",
+    "bioPlaceholder": "Add a short bio"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Tune your study environment to fit you.",
+    "studySettings": "Study Settings",
+    "studySettingsDesc": "Set your daily homework generation time and default timer values",
+    "homeworkTime": "Daily homework generation time",
+    "focusMinutes": "Focus time (min)",
+    "breakMinutes": "Break time (min)",
+    "notifications": "Receive notifications",
+    "discordLink": "Discord Integration",
+    "discordLinkDesc": "Linking Discord syncs XP/badges and grants a premium role",
+    "linked": "Linked",
+    "premium": "Premium",
+    "unlink": "Unlink",
+    "linkDiscord": "Link Discord account",
+    "admin": {
+      "title": "Admin: Server Maintenance",
+      "desc": "When maintenance mode is on, every user except admins sees a maintenance page.",
+      "enabled": "Maintenance mode ON",
+      "disabled": "Maintenance mode OFF",
+      "messageLabel": "Maintenance message (optional)",
+      "messagePlaceholder": "e.g. Maintenance until midnight tonight.",
+      "enableButton": "Turn on maintenance mode",
+      "disableButton": "Turn off maintenance mode",
+      "userPlanTitle": "Admin: Manage User Plans",
+      "userPlanDesc": "Find a user by email and change their plan manually (after confirming payment).",
+      "emailPlaceholder": "user@example.com",
+      "searchButton": "Search",
+      "notFound": "No user found with that email.",
+      "currentPlan": "Current plan",
+      "discordNotifyHint": "If configured, a Discord channel also gets notified when maintenance starts/ends (DISCORD_MAINTENANCE_WEBHOOK_URL)."
+    },
+    "homeworkQuestionCount": "Homework question count (5-30)",
+    "myPlan": "My Plan",
+    "homeworkQuestionCountHint": "Your current plan allows up to {max} questions.",
+    "notificationsHint": "If your Discord is linked, we'll DM you whenever daily homework, planner, or feedback is generated."
+  },
+  "notFound": {
+    "message": "Page not found.",
+    "goHome": "Back to home"
+  },
+  "maintenance": {
+    "title": "Under Maintenance",
+    "defaultMessage": "We're performing maintenance to make things better. Please check back shortly."
+  },
+  "plan": {
+    "free": "Free",
+    "basic": "Basic",
+    "pro": "Pro",
+    "compareTitle": "Compare Plans",
+    "homeworkLimitLabel": "Homework Questions",
+    "reportLimitLabel": "AI Report History",
+    "yourPlan": "Your Plan",
+    "questionsValue": "{max} questions"
+  }
+}

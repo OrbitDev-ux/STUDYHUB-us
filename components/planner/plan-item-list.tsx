@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { togglePlanItem } from "@/app/(main)/planner/actions";
@@ -17,10 +18,12 @@ interface PlanItem {
   subject_label: string;
 }
 
-const PRIORITY_LABEL = { 1: "높음", 2: "보통", 3: "여유" } as const;
+const PRIORITY_KEY = { 1: "high", 2: "medium", 3: "low" } as const;
 const PRIORITY_VARIANT = { 1: "warning", 2: "secondary", 3: "outline" } as const;
 
 export function PlanItemList({ items }: { items: PlanItem[] }) {
+  const t = useTranslations("planner");
+  const tc = useTranslations("common");
   const [localItems, setLocalItems] = useState(items);
   const [, startTransition] = useTransition();
 
@@ -37,7 +40,7 @@ export function PlanItemList({ items }: { items: PlanItem[] }) {
       {localItems.map((item) => (
         <Card key={item.id} className={cn(item.completed && "opacity-60")}>
           <CardContent className="flex items-center gap-3 p-4">
-            <button onClick={() => toggle(item)} aria-label="완료 체크">
+            <button onClick={() => toggle(item)} aria-label={t("toggleComplete")}>
               {item.completed ? (
                 <CheckCircle2 className="h-5 w-5 text-success" />
               ) : (
@@ -51,15 +54,15 @@ export function PlanItemList({ items }: { items: PlanItem[] }) {
                   {item.subject_label}
                 </Badge>
                 <Badge variant={PRIORITY_VARIANT[item.priority]} className="text-[10px]">
-                  우선순위 {PRIORITY_LABEL[item.priority]}
+                  {t("priorityLabel", { level: t(`priority.${PRIORITY_KEY[item.priority]}`) })}
                 </Badge>
                 {item.type === "review" && (
                   <Badge variant="secondary" className="text-[10px]">
-                    복습
+                    {t("reviewBadge")}
                   </Badge>
                 )}
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">{item.planned_minutes}분</p>
+              <p className="mt-1 text-xs text-muted-foreground">{tc("minutes", { n: item.planned_minutes })}</p>
             </div>
           </CardContent>
         </Card>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2, CheckCircle2, XCircle } from "lucide-react";
@@ -25,6 +26,8 @@ export function WrongNoteDetail({
   mastered: boolean;
   similarQuestions: SimilarQuestion[];
 }) {
+  const t = useTranslations("wrongNotes");
+  const tc = useTranslations("common");
   const [questions, setQuestions] = useState(similarQuestions);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Record<string, { correct: boolean; explanation: string; answer: string }>>({});
@@ -50,12 +53,12 @@ export function WrongNoteDetail({
       {!isMastered && (
         <Button onClick={handleGenerate} disabled={loading} className="w-full gap-2">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          AI로 유사 문제 생성해서 재도전하기
+          {t("generateSimilar")}
         </Button>
       )}
       {isMastered && (
         <div className="flex items-center gap-2 rounded-xl bg-success/10 p-3 text-sm text-success">
-          <CheckCircle2 className="h-4 w-4" /> 이 개념을 극복했어요!
+          <CheckCircle2 className="h-4 w-4" /> {t("masteredMessage")}
         </div>
       )}
 
@@ -88,7 +91,7 @@ export function WrongNoteDetail({
                   >
                     {result.correct ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <XCircle className="mt-0.5 h-4 w-4 shrink-0" />}
                     <div>
-                      <p className="font-medium">{result.correct ? "정답이에요!" : "다시 틀렸어요"}</p>
+                      <p className="font-medium">{result.correct ? tc("correct") : t("wrongAgain")}</p>
                       <p className="mt-1 text-foreground/80">{result.explanation}</p>
                     </div>
                   </div>

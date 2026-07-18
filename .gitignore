@@ -5,4 +5,8 @@ node_modules
 *.log
 .DS_Store
 dist
+<<<<<<< HEAD
 supabase/.temp/
+=======
+tsconfig.tsbuildinfo
+>>>>>>> acc2f703bc8de370bbc376ec211a696b54d9c0b1

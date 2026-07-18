@@ -18,18 +18,18 @@ export interface GeneratedQuestion {
   difficulty: number;
 }
 
-/** 1. 진단평가 문항 생성 */
+/** 1. 진단평가 문항 생성. count는 호출부(fetchDiagnosticQuestions)에서 매번 20~30 사이로 무작위 지정한다. */
 export async function generateDiagnosticQuestions(
   subject: SubjectId,
   gradeLevel: string,
-  count = 8
+  count = 20
 ): Promise<GeneratedQuestion[]> {
   const result = await callAIForJSON<{ questions: GeneratedQuestion[] }>({
     system:
       "당신은 한국 공교육 커리큘럼에 정통한 진단평가 출제 전문가입니다. 학생의 실력을 정확히 진단할 수 있도록 난이도가 고르게 분포된 문제를 출제합니다.",
     prompt: `학년: ${gradeLevel}
 과목: ${SUBJECT_NAMES[subject]}
-다음 JSON 스키마로 진단평가 문항 ${count}개를 생성하세요. 난이도(1~5)는 골고루 분포시키고, 각 문항은 서로 다른 단원을 다루세요.
+다음 JSON 스키마로 진단평가 문항 ${count}개를 생성하세요. 난이도(1~5)는 골고루 분포시키고, 여러 단원에 걸쳐 골고루 출제하세요 (같은 단원이 반복돼도 되지만 한두 단원에 몰리지 않게 하세요).
 {
   "questions": [
     {
@@ -43,7 +43,7 @@ export async function generateDiagnosticQuestions(
     }
   ]
 }`,
-    maxTokens: 4000,
+    maxTokens: Math.min(8000, 1200 + count * 220),
   });
   return result.questions;
 }

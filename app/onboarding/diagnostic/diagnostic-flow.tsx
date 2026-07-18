@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,17 +13,15 @@ import type { GeneratedQuestion } from "@/lib/ai/diagnostic";
 import type { SubjectId } from "@/types";
 import { Loader2, CheckCircle2 } from "lucide-react";
 
-const SUBJECTS: { id: SubjectId; label: string }[] = [
-  { id: "math", label: "수학" },
-  { id: "english", label: "영어" },
-  { id: "social", label: "사회" },
-  { id: "science", label: "과학" },
-];
+const SUBJECT_IDS: SubjectId[] = ["math", "english", "social", "science"];
 
 type Phase = "loading" | "answering" | "grading" | "result";
 
 export function DiagnosticFlow() {
   const router = useRouter();
+  const t = useTranslations("diagnostic");
+  const tc = useTranslations("common");
+  const ts = useTranslations("subjects");
   const [subjectIndex, setSubjectIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("loading");
   const [questions, setQuestions] = useState<GeneratedQuestion[]>([]);
@@ -33,13 +32,14 @@ export function DiagnosticFlow() {
   );
   const [started, setStarted] = useState(false);
 
-  const subject = SUBJECTS[subjectIndex]!;
+  const subjectId = SUBJECT_IDS[subjectIndex]!;
+  const subjectLabel = ts(subjectId);
 
   async function loadSubject() {
     setPhase("loading");
     setQIndex(0);
     setAnswers([]);
-    const qs = await fetchDiagnosticQuestions(subject.id);
+    const qs = await fetchDiagnosticQuestions(subjectId);
     setQuestions(qs);
     setPhase("answering");
   }
@@ -57,7 +57,7 @@ export function DiagnosticFlow() {
         correct: next[i] === q.answer,
         difficulty: q.difficulty,
       }));
-      const result = await submitDiagnosticResult({ subject: subject.id, answered });
+      const result = await submitDiagnosticResult({ subject: subjectId, answered });
       setSummary({
         grade: result.analysis.predicted_grade,
         band: result.analysis.percentile_band,
@@ -68,7 +68,7 @@ export function DiagnosticFlow() {
   }
 
   function handleNextSubject() {
-    if (subjectIndex + 1 < SUBJECTS.length) {
+    if (subjectIndex + 1 < SUBJECT_IDS.length) {
       setSubjectIndex(subjectIndex + 1);
       loadSubject();
     } else {
@@ -81,10 +81,8 @@ export function DiagnosticFlow() {
     return (
       <Card className="w-full max-w-lg animate-slide-up">
         <CardHeader>
-          <CardTitle>AI 진단평가를 시작할게요</CardTitle>
-          <CardDescription>
-            수학, 영어, 사회, 과학 4과목을 순서대로 진단해요. 과목당 약 2~3분이면 충분해요.
-          </CardDescription>
+          <CardTitle>{t("introTitle")}</CardTitle>
+          <CardDescription>{t("introDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button
@@ -94,7 +92,7 @@ export function DiagnosticFlow() {
               loadSubject();
             }}
           >
-            진단평가 시작하기
+            {t("start")}
           </Button>
         </CardContent>
       </Card>
@@ -106,11 +104,11 @@ export function DiagnosticFlow() {
       <CardHeader>
         <div className="mb-2 flex items-center justify-between">
           <Badge variant="secondary">
-            {subjectIndex + 1} / {SUBJECTS.length} · {subject.label}
+            {t("progressBadge", { current: subjectIndex + 1, total: SUBJECT_IDS.length, subject: subjectLabel })}
           </Badge>
           {phase === "answering" && (
             <span className="text-xs text-muted-foreground">
-              {qIndex + 1} / {questions.length}
+              {t("questionProgress", { current: qIndex + 1, total: questions.length })}
             </span>
           )}
         </div>
@@ -118,10 +116,10 @@ export function DiagnosticFlow() {
           <Progress value={((qIndex + 1) / Math.max(questions.length, 1)) * 100} />
         )}
         <CardTitle className="pt-2">
-          {phase === "loading" && "문제를 준비하고 있어요"}
-          {phase === "answering" && `${subject.label} 진단평가`}
-          {phase === "grading" && "AI가 실력을 분석하고 있어요"}
-          {phase === "result" && `${subject.label} 진단 결과`}
+          {phase === "loading" && t("preparing")}
+          {phase === "answering" && t("subjectQuiz", { subject: subjectLabel })}
+          {phase === "grading" && t("analyzing")}
+          {phase === "result" && t("subjectResult", { subject: subjectLabel })}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -136,7 +134,7 @@ export function DiagnosticFlow() {
             >
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">
-                {phase === "loading" ? "AI가 맞춤 문제를 출제하고 있어요..." : "정오답 패턴을 분석해서 예상 등급을 계산하고 있어요..."}
+                {phase === "loading" ? t("loadingQuestions") : t("loadingAnalysis")}
               </p>
             </motion.div>
           )}
@@ -175,7 +173,7 @@ export function DiagnosticFlow() {
               <div className="flex items-center gap-3 rounded-xl bg-accent p-4">
                 <CheckCircle2 className="h-6 w-6 text-accent-foreground" />
                 <div>
-                  <p className="text-sm text-muted-foreground">예상 등급</p>
+                  <p className="text-sm text-muted-foreground">{tc("predictedGrade")}</p>
                   <p className="text-xl font-bold">
                     {summary.grade} <span className="text-sm font-normal text-muted-foreground">({summary.band})</span>
                   </p>
@@ -183,7 +181,7 @@ export function DiagnosticFlow() {
               </div>
               <p className="text-sm leading-relaxed text-muted-foreground">{summary.message}</p>
               <Button onClick={handleNextSubject}>
-                {subjectIndex + 1 < SUBJECTS.length ? "다음 과목 진단받기" : "대시보드로 이동"}
+                {subjectIndex + 1 < SUBJECT_IDS.length ? t("nextSubject") : t("goDashboard")}
               </Button>
             </motion.div>
           )}

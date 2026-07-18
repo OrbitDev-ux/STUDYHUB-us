@@ -10,7 +10,7 @@ AI가 실력을 진단하고, 예상 등급을 계산하고, 취약점을 분석
 | Backend | Next.js Server Actions, Route Handlers |
 | Database | Supabase PostgreSQL (Row Level Security) |
 | Auth | Supabase Auth (Email/Password, Google OAuth, Discord OAuth) |
-| AI | Anthropic API (`claude-sonnet-4-6`) |
+| AI | Anthropic API (`claude-sonnet-4-6`, 기본값) 또는 GLM API (`glm-5.2-lite`, Z.ai) — `AI_PROVIDER` 환경변수로 전환 |
 | 배포 | Vercel, Docker |
 
 ## 폴더 구조
@@ -49,10 +49,28 @@ npm install
 
 ### 2. Supabase 프로젝트 생성
 1. [supabase.com](https://supabase.com)에서 새 프로젝트 생성
-2. SQL Editor에서 `supabase/migrations/0001_init.sql` → `0002_leaderboard_and_xp_fix.sql` 순서대로 실행
-   (테이블/RLS/시드 데이터 생성 후, 레벨/XP/리더보드용 함수 추가)
+2. SQL Editor에서 `supabase/migrations/0001_init.sql` → `0002_leaderboard_and_xp_fix.sql` → `0003_lock_down_profiles_columns.sql` → `0004_badges_and_coins.sql` → `0005_maintenance_mode.sql` → `0006_homework_question_count.sql` → `0007_pricing_plans.sql` → `0008_discord_premium_sync.sql` → `0009_is_admin_helper.sql` 순서대로 실행
+   (테이블/RLS/시드 데이터 생성 → 레벨/XP/리더보드 함수 → profiles 컬럼 권한 강화 → 배지/코인 지급 함수 → 점검 모드 테이블/함수 → 숙제 문제 수 설정 컬럼 → 유료 플랜 컬럼/함수 → Discord 프리미엄 역할 플랜 연동 → 관리자 권한 체크 공용 함수로 통합)
 3. Authentication > Providers에서 Google, Discord OAuth 활성화 (선택)
 4. Project Settings > API에서 URL / anon key / service_role key 확인
+5. (선택) 관리자 계정 지정: 첫 관리자를 만드는 UI는 없습니다. 가입 후 SQL Editor에서 직접
+   `update public.profiles set role = 'admin' where id = '<user-uuid>';` 를 실행하세요.
+   관리자는 설정 페이지에서 서버 점검 모드를 켜고 끌 수 있고, 이메일로 사용자를 찾아
+   유료 플랜(Free/Basic/Pro)을 수동으로 변경할 수 있습니다. 아직 실제 결제(PG) 연동은
+   없어서, 결제 확인 후 관리자가 직접 반영하는 방식입니다. 플랜별 차이는
+   `lib/plan.ts`의 `PLAN_LIMITS`에서 관리합니다 (현재는 숙제 문제 수 상한, AI 리포트
+   기록 보관 기간).
+6. (선택) 점검 모드 Discord 알림: `.env.local`에 `DISCORD_MAINTENANCE_WEBHOOK_URL`을
+   설정하면 점검 모드를 켜고 끌 때마다 해당 Discord 채널로 알림이 전송됩니다.
+   (Discord 채널 설정 > 연동 > 웹훅에서 발급. 미설정 시 알림만 안 갈 뿐 점검 모드
+   자체는 정상 동작합니다.)
+7. (선택) 매일 알림 Discord DM: `DISCORD_BOT_TOKEN`을 설정하면(기존 Discord 계정
+   연동용 봇과 동일한 토큰) 설정 페이지에서 "알림 받기"를 켠 사용자에게 매일
+   숙제·플래너·피드백이 생성될 때마다 DM으로 알려줍니다. Discord 계정이 연동돼
+   있어야 하고, 봇이 해당 유저와 공통 서버에 있어야 DM 전송이 가능합니다
+   (Discord API 제약). 플랜이 Basic/Pro로 바뀌면 이미 연동된 계정의
+   `discord_links.premium_role_granted`도 자동으로 갱신됩니다 (실제 길드 역할
+   부여 자체는 여전히 별도 봇 백엔드의 몫입니다).
 
 ### 3. 환경 변수 설정
 ```bash

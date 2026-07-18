@@ -4,7 +4,10 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { generateDailyHomework } from "@/lib/ai/homework";
-import { awardXP } from "@/lib/gamification/xp";
+import { insertHomeworkItems } from "@/lib/homework/persist";
+import { getWeakUnitsBySubject } from "@/lib/homework/weak-units";
+import { awardXP, checkAndAwardBadges } from "@/lib/gamification/xp";
+import { todayKST } from "@/lib/utils/date";
 import type { SubjectId } from "@/types";
 
 /** 오늘 숙제가 없으면 AI로 생성해서 DB에 저장 (사용자가 처음 /homework 접속 시 or 크론에서도 호출) */
@@ -15,7 +18,7 @@ export async function ensureTodayHomework() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayKST();
 
   const { data: existing } = await supabase
     .from("homeworks")
@@ -26,13 +29,10 @@ export async function ensureTodayHomework() {
 
   if (existing) return existing.id as string;
 
-  const [{ data: profile }, { data: diagnostics }, { data: wrongAnswers }] = await Promise.all([
-    supabase.from("profiles").select("grade_level, target_study_minutes").eq("id", user.id).single(),
-    supabase
-      .from("diagnostic_results")
-      .select("subject_id, weak_units")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false }),
+  const [{ data: profile }, { data: settings }, weakUnitsBySubject, { data: wrongAnswers }] = await Promise.all([
+    supabase.from("profiles").select("grade_level, target_study_minutes, plan").eq("id", user.id).single(),
+    supabase.from("settings").select("homework_question_count").eq("user_id", user.id).single(),
+    getWeakUnitsBySubject(supabase, user.id),
     supabase
       .from("wrong_answers")
       .select("subject_id, unit_id, question_id, questions(content, unit_id, units(name))")
@@ -42,16 +42,6 @@ export async function ensureTodayHomework() {
       .limit(5),
   ]);
 
-  const weakBySubject = new Map<SubjectId, string[]>();
-  for (const d of diagnostics ?? []) {
-    if (!weakBySubject.has(d.subject_id)) {
-      weakBySubject.set(
-        d.subject_id,
-        ((d.weak_units as { name: string }[]) ?? []).map((u) => u.name)
-      );
-    }
-  }
-
   const wrongSummaries = (wrongAnswers ?? []).map((w) => ({
     subject: w.subject_id as SubjectId,
     unit: (w.questions as unknown as { units?: { name: string } })?.units?.name ?? "기타",
@@ -60,9 +50,12 @@ export async function ensureTodayHomework() {
 
   const generated = await generateDailyHomework({
     gradeLevel: profile?.grade_level ?? "중2",
-    weakUnitsBySubject: [...weakBySubject.entries()].map(([subject, units]) => ({ subject, units })),
+    weakUnitsBySubject,
     wrongQuestionSummaries: wrongSummaries,
     targetMinutes: profile?.target_study_minutes ?? 60,
+    // 설정 저장 이후 플랜이 강등됐을 수도 있으므로 상한 적용은 생성 함수 내부에서 이뤄진다.
+    requestedQuestionCount: settings?.homework_question_count ?? 10,
+    plan: profile?.plan,
   });
 
   const admin = createAdminClient();
@@ -75,48 +68,7 @@ export async function ensureTodayHomework() {
 
   if (hwError || !homework) throw new Error(hwError?.message ?? "숙제 생성 실패");
 
-  for (const [i, item] of generated.items.entries()) {
-    const { data: unit } = await admin
-      .from("units")
-      .select("id")
-      .eq("subject_id", item.subject_id)
-      .eq("name", item.unit_name)
-      .maybeSingle();
-
-    let unitId = unit?.id as string | undefined;
-    if (!unitId) {
-      const { data: newUnit } = await admin
-        .from("units")
-        .insert({ subject_id: item.subject_id, name: item.unit_name })
-        .select("id")
-        .single();
-      unitId = newUnit?.id;
-    }
-
-    const { data: question } = await admin
-      .from("questions")
-      .insert({
-        subject_id: item.subject_id,
-        unit_id: unitId,
-        type: item.type,
-        difficulty: item.difficulty,
-        content: item.content,
-        choices: item.choices,
-        answer: item.answer,
-        explanation: item.explanation,
-        source: "ai_generated",
-      })
-      .select("id")
-      .single();
-
-    await admin.from("homework_items").insert({
-      homework_id: homework.id,
-      question_id: question!.id,
-      subject_id: item.subject_id,
-      category: item.category,
-      order_index: i,
-    });
-  }
+  await insertHomeworkItems(admin, homework.id, generated.items);
 
   revalidatePath("/homework");
   return homework.id as string;
@@ -129,8 +81,26 @@ export async function submitHomeworkAnswer(itemId: string, questionId: string, u
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // 소유권 + 중복 제출 여부 확인. homework_items에는 user_id가 없으므로 homeworks를 조인해서 확인한다.
+  // 이 체크가 없으면 같은 itemId로 반복 호출(devtools 재전송 등)할 때마다 XP가 무한히 지급된다.
+  const { data: existingItem } = await supabase
+    .from("homework_items")
+    .select("id, question_id, is_correct, user_answer, homeworks!inner(user_id)")
+    .eq("id", itemId)
+    .eq("homeworks.user_id", user.id)
+    .maybeSingle();
+
+  if (!existingItem || existingItem.question_id !== questionId) {
+    throw new Error("문제를 찾을 수 없습니다.");
+  }
+
   const { data: question } = await supabase.from("questions").select("*").eq("id", questionId).single();
   if (!question) throw new Error("문제를 찾을 수 없습니다.");
+
+  if (existingItem.is_correct !== null) {
+    // 이미 채점된 문제 - XP를 다시 지급하지 않고 기존 결과만 반환한다.
+    return { isCorrect: existingItem.is_correct, explanation: question.explanation as string };
+  }
 
   const isCorrect = question.answer.trim() === userAnswer.trim();
 
@@ -187,8 +157,11 @@ export async function completeHomeworkIfDone(homeworkId: string) {
     .select("is_correct")
     .eq("homework_id", homeworkId);
 
-  const allAnswered = (items ?? []).every((i) => i.is_correct !== null);
+  const list = items ?? [];
+  const allAnswered = list.length > 0 && list.every((i) => i.is_correct !== null);
   if (allAnswered) {
     await supabase.from("homeworks").update({ status: "completed" }).eq("id", homeworkId);
+    // 숙제 완료 수 기반 배지(homework_100) 판정
+    await checkAndAwardBadges(supabase);
   }
 }
