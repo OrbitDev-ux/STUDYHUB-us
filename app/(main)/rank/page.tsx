@@ -3,8 +3,9 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Flame, Medal } from "lucide-react";
+import { Trophy, Flame, Medal, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { PLANS, PLAN_LIMITS } from "@/lib/plan";
 
 export async function generateMetadata() {
   const t = await getTranslations("rank");
@@ -31,13 +32,15 @@ export default async function RankPage() {
 
   const t = await getTranslations("rank");
   const tc = await getTranslations("common");
+  const tp = await getTranslations("plan");
 
-  const [{ data: topUsers }, { data: allBadges }, { data: myBadges }] = await Promise.all([
+  const [{ data: topUsers }, { data: allBadges }, { data: myBadges }, { data: profile }] = await Promise.all([
     supabase.rpc("get_leaderboard", { limit_count: 20 }) as unknown as Promise<{
       data: LeaderboardRow[] | null;
     }>,
     supabase.from("badges").select("*"),
     supabase.from("user_badges").select("badge_id").eq("user_id", user.id),
+    supabase.from("profiles").select("plan").eq("id", user.id).single(),
   ]);
 
   const earnedIds = new Set((myBadges ?? []).map((b) => b.badge_id));
@@ -112,6 +115,46 @@ export default async function RankPage() {
                 </div>
                 <p className="text-xs font-semibold">{name}</p>
                 <p className="text-[11px] text-muted-foreground">{description}</p>
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Sparkles className="h-4 w-4 text-primary" /> {tp("compareTitle")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {PLANS.map((plan) => {
+            const limits = PLAN_LIMITS[plan];
+            const isCurrent = (profile?.plan ?? "free") === plan;
+            return (
+              <div
+                key={plan}
+                className={cn(
+                  "flex flex-col gap-3 rounded-xl border p-4",
+                  isCurrent ? "border-primary bg-accent/50" : "border-border"
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold">{tp(plan)}</p>
+                  {isCurrent && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      {tp("yourPlan")}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                  <p>
+                    {tp("homeworkLimitLabel")}: {tp("questionsValue", { max: limits.homeworkQuestionMax })}
+                  </p>
+                  <p>
+                    {tp("reportLimitLabel")}: {tc("daysSuffix", { days: limits.reportHistoryLimit })}
+                  </p>
+                </div>
               </div>
             );
           })}

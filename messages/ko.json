@@ -292,6 +292,11 @@
   "plan": {
     "free": "Free",
     "basic": "Basic",
-    "pro": "Pro"
+    "pro": "Pro",
+    "compareTitle": "플랜 비교",
+    "homeworkLimitLabel": "숙제 문제 수",
+    "reportLimitLabel": "AI 리포트 보관 기간",
+    "yourPlan": "현재 플랜",
+    "questionsValue": "{max}문제"
   }
 }

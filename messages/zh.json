@@ -292,6 +292,11 @@
   "plan": {
     "free": "免费版",
     "basic": "基础版",
-    "pro": "专业版"
+    "pro": "专业版",
+    "compareTitle": "方案对比",
+    "homeworkLimitLabel": "作业题目数",
+    "reportLimitLabel": "AI报告保存期限",
+    "yourPlan": "当前方案",
+    "questionsValue": "{max}题"
   }
 }
