@@ -5,6 +5,7 @@ import { ensureTodayFeedback } from "./actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Sparkles, TrendingUp } from "lucide-react";
+import { planLimits } from "@/lib/plan";
 
 export async function generateMetadata() {
   const t = await getTranslations("report");
@@ -23,12 +24,15 @@ export default async function ReportPage() {
 
   const todayFeedback = await ensureTodayFeedback();
 
+  const { data: profile } = await supabase.from("profiles").select("plan").eq("id", user.id).single();
+  const historyLimit = planLimits(profile?.plan).reportHistoryLimit;
+
   const { data: history } = await supabase
     .from("daily_feedback")
     .select("*")
     .eq("user_id", user.id)
     .order("date", { ascending: false })
-    .limit(14);
+    .limit(historyLimit);
 
   return (
     <div className="flex flex-col gap-6">

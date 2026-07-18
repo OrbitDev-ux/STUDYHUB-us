@@ -3,6 +3,7 @@ import { generateDailyHomework } from "@/lib/ai/homework";
 import { generateDailyStudyPlan } from "@/lib/ai/planner";
 import { insertHomeworkItems } from "@/lib/homework/persist";
 import { todayKST, currentHourKST } from "@/lib/utils/date";
+import { planLimits } from "@/lib/plan";
 import { NextResponse } from "next/server";
 import type { SubjectId } from "@/types";
 
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
 
   const { data: dueUsers } = await admin
     .from("settings")
-    .select("user_id, homework_time, homework_question_count, profiles(grade_level, target_study_minutes, exam_date)")
+    .select("user_id, homework_time, homework_question_count, profiles(grade_level, target_study_minutes, exam_date, plan)")
     .filter("homework_time", "gte", `${String(currentHour).padStart(2, "0")}:00`)
     .filter("homework_time", "lt", `${String(currentHour + 1).padStart(2, "0")}:00`);
 
@@ -39,6 +40,7 @@ export async function GET(request: Request) {
         grade_level: string;
         target_study_minutes: number;
         exam_date: string | null;
+        plan: string;
       };
 
       const { data: existingHw } = await admin
@@ -67,7 +69,10 @@ export async function GET(request: Request) {
           weakUnitsBySubject: [...weakBySubject.entries()].map(([subject, units]) => ({ subject, units })),
           wrongQuestionSummaries: [],
           targetMinutes: profile?.target_study_minutes ?? 60,
-          questionCount: (row.homework_question_count as number | null) ?? 10,
+          questionCount: Math.min(
+            (row.homework_question_count as number | null) ?? 10,
+            planLimits(profile?.plan).homeworkQuestionMax
+          ),
         });
 
         const { data: homework } = await admin

@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { updateSettings, startDiscordLink, unlinkDiscord, setMaintenanceMode } from "./actions";
+import { AdminPlanManager } from "@/components/settings/admin-plan-manager";
+import { planLimits } from "@/lib/plan";
 
 export async function generateMetadata() {
   const t = await getTranslations("settings");
@@ -23,14 +25,16 @@ export default async function SettingsPage() {
   const t = await getTranslations("settings");
   const tc = await getTranslations("common");
   const ta = await getTranslations("settings.admin");
+  const tp = await getTranslations("plan");
 
   const [{ data: settings }, { data: discordLink }, { data: profile }] = await Promise.all([
     supabase.from("settings").select("*").eq("user_id", user.id).single(),
     supabase.from("discord_links").select("*").eq("user_id", user.id).maybeSingle(),
-    supabase.from("profiles").select("role").eq("id", user.id).single(),
+    supabase.from("profiles").select("role, plan").eq("id", user.id).single(),
   ]);
 
   const isAdmin = profile?.role === "admin";
+  const maxQuestions = planLimits(profile?.plan).homeworkQuestionMax;
 
   const { data: appSettings } = isAdmin
     ? await supabase.from("app_settings").select("*").eq("id", true).single()
@@ -38,9 +42,14 @@ export default async function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+        </div>
+        <Badge variant="secondary">
+          {t("myPlan")}: {tp(profile?.plan ?? "free")}
+        </Badge>
       </div>
 
       <Card>
@@ -61,9 +70,10 @@ export default async function SettingsPage() {
                 name="homework_question_count"
                 type="number"
                 min={5}
-                max={30}
-                defaultValue={settings?.homework_question_count ?? 10}
+                max={maxQuestions}
+                defaultValue={Math.min(settings?.homework_question_count ?? 10, maxQuestions)}
               />
+              <p className="text-xs text-muted-foreground">{t("homeworkQuestionCountHint", { max: maxQuestions })}</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
@@ -129,6 +139,18 @@ export default async function SettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      {isAdmin && (
+        <Card className="border-warning/50">
+          <CardHeader>
+            <CardTitle className="text-base">{ta("userPlanTitle")}</CardTitle>
+            <CardDescription>{ta("userPlanDesc")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AdminPlanManager />
+          </CardContent>
+        </Card>
+      )}
 
       {isAdmin && (
         <Card className="border-warning/50">

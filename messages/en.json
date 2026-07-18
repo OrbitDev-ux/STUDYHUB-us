@@ -269,9 +269,17 @@
       "messageLabel": "Maintenance message (optional)",
       "messagePlaceholder": "e.g. Maintenance until midnight tonight.",
       "enableButton": "Turn on maintenance mode",
-      "disableButton": "Turn off maintenance mode"
+      "disableButton": "Turn off maintenance mode",
+      "userPlanTitle": "Admin: Manage User Plans",
+      "userPlanDesc": "Find a user by email and change their plan manually (after confirming payment).",
+      "emailPlaceholder": "user@example.com",
+      "searchButton": "Search",
+      "notFound": "No user found with that email.",
+      "currentPlan": "Current plan"
     },
-    "homeworkQuestionCount": "Homework question count (5-30)"
+    "homeworkQuestionCount": "Homework question count (5-30)",
+    "myPlan": "My Plan",
+    "homeworkQuestionCountHint": "Your current plan allows up to {max} questions."
   },
   "notFound": {
     "message": "Page not found.",
@@ -280,5 +288,10 @@
   "maintenance": {
     "title": "Under Maintenance",
     "defaultMessage": "We're performing maintenance to make things better. Please check back shortly."
+  },
+  "plan": {
+    "free": "Free",
+    "basic": "Basic",
+    "pro": "Pro"
   }
 }

@@ -269,9 +269,17 @@
       "messageLabel": "维护提示信息（可选）",
       "messagePlaceholder": "例：今晚12点前进行服务器维护。",
       "enableButton": "开启维护模式",
-      "disableButton": "关闭维护模式"
+      "disableButton": "关闭维护模式",
+      "userPlanTitle": "管理员：用户方案管理",
+      "userPlanDesc": "通过邮箱查找用户并手动更改其方案（确认付款后操作）。",
+      "emailPlaceholder": "user@example.com",
+      "searchButton": "搜索",
+      "notFound": "未找到该邮箱对应的用户。",
+      "currentPlan": "当前方案"
     },
-    "homeworkQuestionCount": "作业题目数量（5~30题）"
+    "homeworkQuestionCount": "作业题目数量（5~30题）",
+    "myPlan": "我的方案",
+    "homeworkQuestionCountHint": "当前方案最多可设置 {max} 道题目。"
   },
   "notFound": {
     "message": "找不到页面。",
@@ -280,5 +288,10 @@
   "maintenance": {
     "title": "系统维护中",
     "defaultMessage": "我们正在进行系统维护以提供更好的服务，请稍后再来。"
+  },
+  "plan": {
+    "free": "免费版",
+    "basic": "基础版",
+    "pro": "专业版"
   }
 }
