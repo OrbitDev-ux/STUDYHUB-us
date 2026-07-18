@@ -292,6 +292,11 @@
   "plan": {
     "free": "Free",
     "basic": "Basic",
-    "pro": "Pro"
+    "pro": "Pro",
+    "compareTitle": "Compare Plans",
+    "homeworkLimitLabel": "Homework Questions",
+    "reportLimitLabel": "AI Report History",
+    "yourPlan": "Your Plan",
+    "questionsValue": "{max} questions"
   }
 }

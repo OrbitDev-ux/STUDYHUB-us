@@ -292,6 +292,11 @@
   "plan": {
     "free": "フリー",
     "basic": "ベーシック",
-    "pro": "プロ"
+    "pro": "プロ",
+    "compareTitle": "プラン比較",
+    "homeworkLimitLabel": "宿題の問題数",
+    "reportLimitLabel": "AIレポート保存期間",
+    "yourPlan": "現在のプラン",
+    "questionsValue": "{max}問"
   }
 }
