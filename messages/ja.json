@@ -275,7 +275,8 @@
       "emailPlaceholder": "user@example.com",
       "searchButton": "検索",
       "notFound": "該当するユーザーが見つかりません。",
-      "currentPlan": "現在のプラン"
+      "currentPlan": "現在のプラン",
+      "discordNotifyHint": "設定されていれば、メンテナンスの開始/終了時にDiscordチャンネルにも通知されます（DISCORD_MAINTENANCE_WEBHOOK_URL）。"
     },
     "homeworkQuestionCount": "宿題の問題数（5〜30問）",
     "myPlan": "マイプラン",

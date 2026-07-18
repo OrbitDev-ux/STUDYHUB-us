@@ -275,7 +275,8 @@
       "emailPlaceholder": "user@example.com",
       "searchButton": "Search",
       "notFound": "No user found with that email.",
-      "currentPlan": "Current plan"
+      "currentPlan": "Current plan",
+      "discordNotifyHint": "If configured, a Discord channel also gets notified when maintenance starts/ends (DISCORD_MAINTENANCE_WEBHOOK_URL)."
     },
     "homeworkQuestionCount": "Homework question count (5-30)",
     "myPlan": "My Plan",

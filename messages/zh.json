@@ -275,7 +275,8 @@
       "emailPlaceholder": "user@example.com",
       "searchButton": "搜索",
       "notFound": "未找到该邮箱对应的用户。",
-      "currentPlan": "当前方案"
+      "currentPlan": "当前方案",
+      "discordNotifyHint": "如已配置，维护开始/结束时也会通知到 Discord 频道（DISCORD_MAINTENANCE_WEBHOOK_URL）。"
     },
     "homeworkQuestionCount": "作业题目数量（5~30题）",
     "myPlan": "我的方案",

@@ -60,6 +60,10 @@ npm install
    없어서, 결제 확인 후 관리자가 직접 반영하는 방식입니다. 플랜별 차이는
    `lib/plan.ts`의 `PLAN_LIMITS`에서 관리합니다 (현재는 숙제 문제 수 상한, AI 리포트
    기록 보관 기간).
+6. (선택) 점검 모드 Discord 알림: `.env.local`에 `DISCORD_MAINTENANCE_WEBHOOK_URL`을
+   설정하면 점검 모드를 켜고 끌 때마다 해당 Discord 채널로 알림이 전송됩니다.
+   (Discord 채널 설정 > 연동 > 웹훅에서 발급. 미설정 시 알림만 안 갈 뿐 점검 모드
+   자체는 정상 동작합니다.)
 
 ### 3. 환경 변수 설정
 ```bash
