@@ -275,7 +275,8 @@
       "emailPlaceholder": "user@example.com",
       "searchButton": "검색",
       "notFound": "해당 이메일의 사용자를 찾을 수 없어요.",
-      "currentPlan": "현재 플랜"
+      "currentPlan": "현재 플랜",
+      "discordNotifyHint": "설정돼 있으면 Discord 채널로도 점검 시작/종료 알림이 전송돼요 (DISCORD_MAINTENANCE_WEBHOOK_URL)."
     },
     "homeworkQuestionCount": "숙제 문제 수 (5~30문제)",
     "myPlan": "내 플랜",

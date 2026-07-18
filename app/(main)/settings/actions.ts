@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { randomBytes } from "crypto";
 import { DISCORD_OAUTH_STATE_COOKIE } from "@/lib/discord/oauth";
+import { notifyMaintenanceModeChange } from "@/lib/discord/webhook";
 import { planLimits, isPlan } from "@/lib/plan";
 
 export async function updateSettings(formData: FormData) {
@@ -135,6 +136,8 @@ export async function setMaintenanceMode(formData: FormData) {
 
   const { error } = await supabase.rpc("set_maintenance_mode", { p_enabled: enabled, p_message: message });
   if (error) throw new Error(`점검 모드 변경 실패: ${error.message}`);
+
+  await notifyMaintenanceModeChange(enabled, message);
 
   revalidatePath("/settings");
 }

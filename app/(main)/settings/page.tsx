@@ -173,6 +173,7 @@ export default async function SettingsPage() {
                   defaultValue={appSettings?.maintenance_message ?? ""}
                   placeholder={ta("messagePlaceholder")}
                 />
+                <p className="text-xs text-muted-foreground">{ta("discordNotifyHint")}</p>
               </div>
               {appSettings?.maintenance_mode ? (
                 <Button type="submit" name="enabled" value="off" variant="outline" className="self-start">
