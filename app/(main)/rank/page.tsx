@@ -21,8 +21,6 @@ type LeaderboardRow = {
   streak_days: number;
 };
 
-const BADGE_CODES = ["streak_7", "streak_30", "homework_100", "early_bird"] as const;
-
 export default async function RankPage() {
   const supabase = await createClient();
   const {
@@ -99,7 +97,7 @@ export default async function RankPage() {
         <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {(allBadges ?? []).map((b) => {
             const earned = earnedIds.has(b.id);
-            const known = (BADGE_CODES as readonly string[]).includes(b.code);
+            const known = t.has(`badgeInfo.${b.code}.name`);
             const name = known ? t(`badgeInfo.${b.code}.name`) : b.name;
             const description = known ? t(`badgeInfo.${b.code}.desc`) : b.description;
             return (

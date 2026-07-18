@@ -2,11 +2,10 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { generateDailyHomework } from "@/lib/ai/homework";
 import { generateDailyStudyPlan } from "@/lib/ai/planner";
 import { insertHomeworkItems } from "@/lib/homework/persist";
+import { getWeakUnitsBySubject } from "@/lib/homework/weak-units";
 import { todayKST, currentHourKST } from "@/lib/utils/date";
-import { planLimits } from "@/lib/plan";
-import { sendDiscordDM } from "@/lib/discord/bot";
+import { sendDiscordDM, getDiscordUserIdMap } from "@/lib/discord/bot";
 import { NextResponse } from "next/server";
-import type { SubjectId } from "@/types";
 
 /**
  * Vercel Cron 등에서 매시간 호출됩니다.
@@ -34,18 +33,8 @@ export async function GET(request: Request) {
     .filter("homework_time", "gte", `${String(currentHour).padStart(2, "0")}:00`)
     .filter("homework_time", "lt", `${String(currentHour + 1).padStart(2, "0")}:00`);
 
-  // 알림 대상자의 discord_user_id를 유저마다 쿼리하는 대신 한 번에 벌크로 가져와 맵으로 조회한다 (N+1 방지).
   const notifyUserIds = (dueUsers ?? []).filter((r) => r.notification_enabled).map((r) => r.user_id as string);
-  const discordUserIdByUserId = new Map<string, string>();
-  if (notifyUserIds.length > 0) {
-    const { data: links } = await admin
-      .from("discord_links")
-      .select("user_id, discord_user_id")
-      .in("user_id", notifyUserIds);
-    for (const link of links ?? []) {
-      if (link.discord_user_id) discordUserIdByUserId.set(link.user_id, link.discord_user_id);
-    }
-  }
+  const discordUserIdByUserId = await getDiscordUserIdMap(admin, notifyUserIds);
 
   const results: { user_id: string; status: string }[] = [];
 
@@ -71,29 +60,25 @@ export async function GET(request: Request) {
         .eq("date", today)
         .maybeSingle();
 
+      const { data: existingPlan } = await admin
+        .from("study_plans")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("date", today)
+        .maybeSingle();
+
+      // 숙제/플래너 둘 다 이미 있으면 진단 데이터를 조회할 필요가 없다.
+      const weakUnitsBySubject =
+        !existingHw || !existingPlan ? await getWeakUnitsBySubject(admin, userId) : [];
+
       if (!existingHw) {
-        const { data: diagnostics } = await admin
-          .from("diagnostic_results")
-          .select("subject_id, weak_units")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false });
-
-        const weakBySubject = new Map<SubjectId, string[]>();
-        for (const d of diagnostics ?? []) {
-          if (!weakBySubject.has(d.subject_id)) {
-            weakBySubject.set(d.subject_id, ((d.weak_units as { name: string }[]) ?? []).map((u) => u.name));
-          }
-        }
-
         const generated = await generateDailyHomework({
           gradeLevel: profile?.grade_level ?? "중2",
-          weakUnitsBySubject: [...weakBySubject.entries()].map(([subject, units]) => ({ subject, units })),
+          weakUnitsBySubject,
           wrongQuestionSummaries: [],
           targetMinutes: profile?.target_study_minutes ?? 60,
-          questionCount: Math.min(
-            (row.homework_question_count as number | null) ?? 10,
-            planLimits(profile?.plan).homeworkQuestionMax
-          ),
+          requestedQuestionCount: (row.homework_question_count as number | null) ?? 10,
+          plan: profile?.plan,
         });
 
         const { data: homework } = await admin
@@ -108,32 +93,12 @@ export async function GET(request: Request) {
         }
       }
 
-      const { data: existingPlan } = await admin
-        .from("study_plans")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("date", today)
-        .maybeSingle();
-
       if (!existingPlan) {
-        const { data: diagnostics } = await admin
-          .from("diagnostic_results")
-          .select("subject_id, weak_units")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false });
-
-        const weakBySubject = new Map<SubjectId, string[]>();
-        for (const d of diagnostics ?? []) {
-          if (!weakBySubject.has(d.subject_id)) {
-            weakBySubject.set(d.subject_id, ((d.weak_units as { name: string }[]) ?? []).map((u) => u.name));
-          }
-        }
-
         const plan = await generateDailyStudyPlan({
           gradeLevel: profile?.grade_level ?? "중2",
           examDate: profile?.exam_date ?? null,
           targetMinutes: profile?.target_study_minutes ?? 60,
-          weakUnitsBySubject: [...weakBySubject.entries()].map(([subject, units]) => ({ subject, units })),
+          weakUnitsBySubject,
           yesterdayIncomplete: [],
         });
 

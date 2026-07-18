@@ -22,7 +22,9 @@ export function SideNav({ profile }: { profile: Profile | null }) {
       {profile && (
         <div className="mb-6 flex items-center gap-2 rounded-xl bg-secondary px-3 py-2.5 text-sm">
           <Flame className="h-4 w-4 text-warning" />
-          <span className="font-medium">{tc("streakDays", { days: profile.streak_days })}</span>
+          <span className="font-medium">
+            {tc("streak")} {tc("daysSuffix", { days: profile.streak_days })}
+          </span>
         </div>
       )}
 

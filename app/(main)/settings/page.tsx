@@ -144,52 +144,52 @@ export default async function SettingsPage() {
       </Card>
 
       {isAdmin && (
-        <Card className="border-warning/50">
-          <CardHeader>
-            <CardTitle className="text-base">{ta("userPlanTitle")}</CardTitle>
-            <CardDescription>{ta("userPlanDesc")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AdminPlanManager />
-          </CardContent>
-        </Card>
-      )}
+        <>
+          <Card className="border-warning/50">
+            <CardHeader>
+              <CardTitle className="text-base">{ta("userPlanTitle")}</CardTitle>
+              <CardDescription>{ta("userPlanDesc")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AdminPlanManager />
+            </CardContent>
+          </Card>
 
-      {isAdmin && (
-        <Card className="border-warning/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              {ta("title")}
-              <Badge variant={appSettings?.maintenance_mode ? "warning" : "outline"} className="text-[10px]">
-                {appSettings?.maintenance_mode ? ta("enabled") : ta("disabled")}
-              </Badge>
-            </CardTitle>
-            <CardDescription>{ta("desc")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form action={setMaintenanceMode} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="message">{ta("messageLabel")}</Label>
-                <Input
-                  id="message"
-                  name="message"
-                  defaultValue={appSettings?.maintenance_message ?? ""}
-                  placeholder={ta("messagePlaceholder")}
-                />
-                <p className="text-xs text-muted-foreground">{ta("discordNotifyHint")}</p>
-              </div>
-              {appSettings?.maintenance_mode ? (
-                <Button type="submit" name="enabled" value="off" variant="outline" className="self-start">
-                  {ta("disableButton")}
-                </Button>
-              ) : (
-                <Button type="submit" name="enabled" value="on" variant="destructive" className="self-start">
-                  {ta("enableButton")}
-                </Button>
-              )}
-            </form>
-          </CardContent>
-        </Card>
+          <Card className="border-warning/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                {ta("title")}
+                <Badge variant={appSettings?.maintenance_mode ? "warning" : "outline"} className="text-[10px]">
+                  {appSettings?.maintenance_mode ? ta("enabled") : ta("disabled")}
+                </Badge>
+              </CardTitle>
+              <CardDescription>{ta("desc")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form action={setMaintenanceMode} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="message">{ta("messageLabel")}</Label>
+                  <Input
+                    id="message"
+                    name="message"
+                    defaultValue={appSettings?.maintenance_message ?? ""}
+                    placeholder={ta("messagePlaceholder")}
+                  />
+                  <p className="text-xs text-muted-foreground">{ta("discordNotifyHint")}</p>
+                </div>
+                {appSettings?.maintenance_mode ? (
+                  <Button type="submit" name="enabled" value="off" variant="outline" className="self-start">
+                    {ta("disableButton")}
+                  </Button>
+                ) : (
+                  <Button type="submit" name="enabled" value="on" variant="destructive" className="self-start">
+                    {ta("enableButton")}
+                  </Button>
+                )}
+              </form>
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
   );

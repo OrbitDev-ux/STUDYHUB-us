@@ -42,7 +42,17 @@ export async function updateSession(request: NextRequest) {
   const isMaintenanceAllowed = isCron || MAINTENANCE_ALLOWED.some((p) => path === p || path.startsWith(`${p}/`));
 
   if (!isMaintenanceAllowed) {
-    const { data: appSettings } = await supabase.from("app_settings").select("maintenance_mode").eq("id", true).single();
+    const { data: appSettings, error: appSettingsError } = await supabase
+      .from("app_settings")
+      .select("maintenance_mode")
+      .eq("id", true)
+      .single();
+
+    // 조회 실패 시 점검 모드를 "꺼짐"으로 간주하고 통과시킨다(fail-open) — 하지만
+    // 원인 파악이 가능하도록 에러 자체는 로그로 남긴다.
+    if (appSettingsError) {
+      console.error("[middleware] app_settings 조회 실패:", appSettingsError.message);
+    }
 
     if (appSettings?.maintenance_mode) {
       let isAdmin = false;

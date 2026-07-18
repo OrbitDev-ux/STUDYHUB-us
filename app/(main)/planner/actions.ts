@@ -4,8 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { generateDailyStudyPlan } from "@/lib/ai/planner";
+import { getWeakUnitsBySubject } from "@/lib/homework/weak-units";
 import { todayKST } from "@/lib/utils/date";
-import type { SubjectId } from "@/types";
 
 export async function ensureTodayPlan() {
   const supabase = await createClient();
@@ -26,13 +26,9 @@ export async function ensureTodayPlan() {
 
   if (existing) return existing.id as string;
 
-  const [{ data: profile }, { data: diagnostics }, { data: yesterdayPlan }] = await Promise.all([
+  const [{ data: profile }, weakUnitsBySubject, { data: yesterdayPlan }] = await Promise.all([
     supabase.from("profiles").select("grade_level, target_study_minutes, exam_date").eq("id", user.id).single(),
-    supabase
-      .from("diagnostic_results")
-      .select("subject_id, weak_units")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false }),
+    getWeakUnitsBySubject(supabase, user.id),
     supabase
       .from("study_plans")
       .select("id, study_plan_items(title, completed)")
@@ -40,16 +36,6 @@ export async function ensureTodayPlan() {
       .eq("date", yesterday)
       .maybeSingle(),
   ]);
-
-  const weakBySubject = new Map<SubjectId, string[]>();
-  for (const d of diagnostics ?? []) {
-    if (!weakBySubject.has(d.subject_id)) {
-      weakBySubject.set(
-        d.subject_id,
-        ((d.weak_units as { name: string }[]) ?? []).map((u) => u.name)
-      );
-    }
-  }
 
   const incomplete = (yesterdayPlan?.study_plan_items ?? [])
     .filter((i: { completed: boolean }) => !i.completed)
@@ -59,7 +45,7 @@ export async function ensureTodayPlan() {
     gradeLevel: profile?.grade_level ?? "중2",
     examDate: profile?.exam_date ?? null,
     targetMinutes: profile?.target_study_minutes ?? 60,
-    weakUnitsBySubject: [...weakBySubject.entries()].map(([subject, units]) => ({ subject, units })),
+    weakUnitsBySubject,
     yesterdayIncomplete: incomplete,
   });
 

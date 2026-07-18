@@ -18,8 +18,7 @@
     "levelBadge": "Lv.{level}",
     "daysSuffix": "{days}天",
     "toggleTheme": "切换深色模式",
-    "toggleLanguage": "选择语言",
-    "streakDays": "连续{days}天"
+    "toggleLanguage": "选择语言"
   },
   "subjects": {
     "math": "数学",
