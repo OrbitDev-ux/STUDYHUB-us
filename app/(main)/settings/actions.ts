@@ -18,10 +18,12 @@ export async function updateSettings(formData: FormData) {
   const notification_enabled = formData.get("notification_enabled") === "on";
   const pomodoro_focus_min = Number(formData.get("pomodoro_focus_min") ?? 25);
   const pomodoro_break_min = Number(formData.get("pomodoro_break_min") ?? 5);
+  // DB 체크 제약(5~30)을 벗어나면 UPDATE 전체가 거부되어 다른 필드까지 저장되지 않으므로 미리 clamp.
+  const homework_question_count = Math.min(30, Math.max(5, Number(formData.get("homework_question_count") ?? 10)));
 
   await supabase
     .from("settings")
-    .update({ homework_time, notification_enabled, pomodoro_focus_min, pomodoro_break_min })
+    .update({ homework_time, notification_enabled, pomodoro_focus_min, pomodoro_break_min, homework_question_count })
     .eq("user_id", user.id);
 
   revalidatePath("/settings");

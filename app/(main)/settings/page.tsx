@@ -54,6 +54,17 @@ export default async function SettingsPage() {
               <Label htmlFor="homework_time">{t("homeworkTime")}</Label>
               <Input id="homework_time" name="homework_time" type="time" defaultValue={settings?.homework_time ?? "07:00"} />
             </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="homework_question_count">{t("homeworkQuestionCount")}</Label>
+              <Input
+                id="homework_question_count"
+                name="homework_question_count"
+                type="number"
+                min={5}
+                max={30}
+                defaultValue={settings?.homework_question_count ?? 10}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="pomodoro_focus_min">{t("focusMinutes")}</Label>

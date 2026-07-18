@@ -270,7 +270,8 @@
       "messagePlaceholder": "例：今晚12点前进行服务器维护。",
       "enableButton": "开启维护模式",
       "disableButton": "关闭维护模式"
-    }
+    },
+    "homeworkQuestionCount": "作业题目数量（5~30题）"
   },
   "notFound": {
     "message": "找不到页面。",

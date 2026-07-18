@@ -270,7 +270,8 @@
       "messagePlaceholder": "e.g. Maintenance until midnight tonight.",
       "enableButton": "Turn on maintenance mode",
       "disableButton": "Turn off maintenance mode"
-    }
+    },
+    "homeworkQuestionCount": "Homework question count (5-30)"
   },
   "notFound": {
     "message": "Page not found.",

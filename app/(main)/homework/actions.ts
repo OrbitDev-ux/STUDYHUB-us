@@ -28,8 +28,9 @@ export async function ensureTodayHomework() {
 
   if (existing) return existing.id as string;
 
-  const [{ data: profile }, { data: diagnostics }, { data: wrongAnswers }] = await Promise.all([
+  const [{ data: profile }, { data: settings }, { data: diagnostics }, { data: wrongAnswers }] = await Promise.all([
     supabase.from("profiles").select("grade_level, target_study_minutes").eq("id", user.id).single(),
+    supabase.from("settings").select("homework_question_count").eq("user_id", user.id).single(),
     supabase
       .from("diagnostic_results")
       .select("subject_id, weak_units")
@@ -65,6 +66,7 @@ export async function ensureTodayHomework() {
     weakUnitsBySubject: [...weakBySubject.entries()].map(([subject, units]) => ({ subject, units })),
     wrongQuestionSummaries: wrongSummaries,
     targetMinutes: profile?.target_study_minutes ?? 60,
+    questionCount: settings?.homework_question_count ?? 10,
   });
 
   const admin = createAdminClient();
