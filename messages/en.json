@@ -18,8 +18,7 @@
     "levelBadge": "Lv.{level}",
     "daysSuffix": "{days} days",
     "toggleTheme": "Toggle dark mode",
-    "toggleLanguage": "Select language",
-    "streakDays": "{days}-day streak"
+    "toggleLanguage": "Select language"
   },
   "subjects": {
     "math": "Math",

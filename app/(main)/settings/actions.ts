@@ -9,12 +9,18 @@ import { DISCORD_OAUTH_STATE_COOKIE } from "@/lib/discord/oauth";
 import { notifyMaintenanceModeChange } from "@/lib/discord/webhook";
 import { planLimits, isPlan } from "@/lib/plan";
 
-export async function updateSettings(formData: FormData) {
+/** 로그인 사용자를 요구하는 서버 액션들의 공통 진입부 — 없으면 로그인 페이지로 보낸다. */
+async function requireUser() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  return { supabase, user };
+}
+
+export async function updateSettings(formData: FormData) {
+  const { supabase, user } = await requireUser();
 
   const { data: profile } = await supabase.from("profiles").select("plan").eq("id", user.id).single();
   const maxQuestions = planLimits(profile?.plan).homeworkQuestionMax;
@@ -61,11 +67,7 @@ export async function startDiscordLink() {
 }
 
 export async function unlinkDiscord() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
   await supabase.from("discord_links").delete().eq("user_id", user.id);
   revalidatePath("/settings");
@@ -79,11 +81,7 @@ export async function unlinkDiscord() {
 export async function findUserByEmail(
   email: string
 ): Promise<{ id: string; nickname: string; plan: string; email: string } | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
   const { data: caller } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   if (caller?.role !== "admin") throw new Error("관리자만 사용할 수 있습니다.");
@@ -92,10 +90,15 @@ export async function findUserByEmail(
   if (!trimmed) return null;
 
   const admin = createAdminClient();
-  // Admin Auth API에 이메일 직접 필터가 없어 목록에서 직접 매칭한다.
-  // (유저 수가 많아지면 profiles에 email 컬럼을 추가하는 방식으로 바꿔야 한다.)
-  const { data } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  const authUser = data?.users.find((u) => u.email?.toLowerCase() === trimmed);
+  // Admin Auth API에 이메일 직접 필터가 없어 페이지를 넘기며 직접 매칭한다.
+  // (유저 수가 훨씬 많아지면 profiles에 email 컬럼을 추가하는 방식으로 바꿔야 한다.)
+  const perPage = 1000;
+  let authUser: { id: string; email?: string } | undefined;
+  for (let page = 1; page <= 20; page++) {
+    const { data } = await admin.auth.admin.listUsers({ page, perPage });
+    authUser = data?.users.find((u) => u.email?.toLowerCase() === trimmed);
+    if (authUser || !data || data.users.length < perPage) break;
+  }
   if (!authUser) return null;
 
   const { data: profile } = await admin.from("profiles").select("nickname, plan").eq("id", authUser.id).single();
@@ -106,11 +109,7 @@ export async function findUserByEmail(
 
 /** 특정 유저의 플랜 변경 (관리자 전용). DB의 set_user_plan()이 관리자 권한을 다시 검증한다. */
 export async function setUserPlan(targetUserId: string, plan: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase } = await requireUser();
 
   if (!isPlan(plan)) throw new Error("잘못된 플랜입니다.");
 
@@ -125,11 +124,7 @@ export async function setUserPlan(targetUserId: string, plan: string) {
  * 여기서는 별도 권한 체크 없이 그대로 위임한다 (UI는 관리자에게만 노출됨).
  */
 export async function setMaintenanceMode(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase } = await requireUser();
 
   const enabled = formData.get("enabled") === "on";
   const message = String(formData.get("message") ?? "").trim() || null;

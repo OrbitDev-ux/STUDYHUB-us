@@ -18,8 +18,7 @@
     "levelBadge": "Lv.{level}",
     "daysSuffix": "{days}일",
     "toggleTheme": "다크모드 전환",
-    "toggleLanguage": "언어 선택",
-    "streakDays": "{days}일 연속"
+    "toggleLanguage": "언어 선택"
   },
   "subjects": {
     "math": "수학",

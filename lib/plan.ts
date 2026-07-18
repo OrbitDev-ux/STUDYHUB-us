@@ -12,5 +12,5 @@ export function isPlan(value: string): value is Plan {
 }
 
 export function planLimits(plan: string | null | undefined) {
-  return PLAN_LIMITS[isPlan(plan ?? "") ? (plan as Plan) : "free"];
+  return PLAN_LIMITS[plan != null && isPlan(plan) ? plan : "free"];
 }

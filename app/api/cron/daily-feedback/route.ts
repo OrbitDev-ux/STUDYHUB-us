@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import { generateDailyFeedback } from "@/lib/ai/feedback";
 import { todayKST } from "@/lib/utils/date";
-import { sendDiscordDM } from "@/lib/discord/bot";
+import { sendDiscordDM, getDiscordUserIdMap } from "@/lib/discord/bot";
 import { NextResponse } from "next/server";
 
 /** Vercel Cron에서 매일 23:30 (KST) 경 1회 호출됩니다. */
@@ -29,17 +29,8 @@ export async function GET(request: Request) {
       notificationEnabledByUserId.set(s.user_id as string, s.notification_enabled as boolean);
     }
   }
-  const discordUserIdByUserId = new Map<string, string>();
   const notifyUserIds = allUserIds.filter((id) => notificationEnabledByUserId.get(id));
-  if (notifyUserIds.length > 0) {
-    const { data: links } = await admin
-      .from("discord_links")
-      .select("user_id, discord_user_id")
-      .in("user_id", notifyUserIds);
-    for (const link of links ?? []) {
-      if (link.discord_user_id) discordUserIdByUserId.set(link.user_id as string, link.discord_user_id as string);
-    }
-  }
+  const discordUserIdByUserId = await getDiscordUserIdMap(admin, notifyUserIds);
 
   for (const profile of profiles ?? []) {
     try {
