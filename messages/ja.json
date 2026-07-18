@@ -270,7 +270,8 @@
       "messagePlaceholder": "例：本日24時までメンテナンスを実施します。",
       "enableButton": "メンテナンスモードをオンにする",
       "disableButton": "メンテナンスモードをオフにする"
-    }
+    },
+    "homeworkQuestionCount": "宿題の問題数（5〜30問）"
   },
   "notFound": {
     "message": "ページが見つかりません。",

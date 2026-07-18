@@ -46,7 +46,9 @@ export async function fetchDiagnosticQuestions(subject: SubjectId) {
     .eq("id", user.id)
     .single();
 
-  const questions = await generateDiagnosticQuestions(subject, profile?.grade_level ?? "중2");
+  // 과목마다 20~30문제 사이에서 무작위로 문항 수를 정한다.
+  const questionCount = 20 + Math.floor(Math.random() * 11);
+  const questions = await generateDiagnosticQuestions(subject, profile?.grade_level ?? "중2", questionCount);
   return questions;
 }
 
