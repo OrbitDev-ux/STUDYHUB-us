@@ -49,8 +49,8 @@ npm install
 
 ### 2. Supabase 프로젝트 생성
 1. [supabase.com](https://supabase.com)에서 새 프로젝트 생성
-2. SQL Editor에서 `supabase/migrations/0001_init.sql` → `0002_leaderboard_and_xp_fix.sql` → `0003_lock_down_profiles_columns.sql` → `0004_badges_and_coins.sql` → `0005_maintenance_mode.sql` → `0006_homework_question_count.sql` → `0007_pricing_plans.sql` 순서대로 실행
-   (테이블/RLS/시드 데이터 생성 → 레벨/XP/리더보드 함수 → profiles 컬럼 권한 강화 → 배지/코인 지급 함수 → 점검 모드 테이블/함수 → 숙제 문제 수 설정 컬럼 → 유료 플랜 컬럼/함수)
+2. SQL Editor에서 `supabase/migrations/0001_init.sql` → `0002_leaderboard_and_xp_fix.sql` → `0003_lock_down_profiles_columns.sql` → `0004_badges_and_coins.sql` → `0005_maintenance_mode.sql` → `0006_homework_question_count.sql` → `0007_pricing_plans.sql` → `0008_discord_premium_sync.sql` 순서대로 실행
+   (테이블/RLS/시드 데이터 생성 → 레벨/XP/리더보드 함수 → profiles 컬럼 권한 강화 → 배지/코인 지급 함수 → 점검 모드 테이블/함수 → 숙제 문제 수 설정 컬럼 → 유료 플랜 컬럼/함수 → Discord 프리미엄 역할 플랜 연동)
 3. Authentication > Providers에서 Google, Discord OAuth 활성화 (선택)
 4. Project Settings > API에서 URL / anon key / service_role key 확인
 5. (선택) 관리자 계정 지정: 첫 관리자를 만드는 UI는 없습니다. 가입 후 SQL Editor에서 직접
@@ -64,6 +64,13 @@ npm install
    설정하면 점검 모드를 켜고 끌 때마다 해당 Discord 채널로 알림이 전송됩니다.
    (Discord 채널 설정 > 연동 > 웹훅에서 발급. 미설정 시 알림만 안 갈 뿐 점검 모드
    자체는 정상 동작합니다.)
+7. (선택) 매일 알림 Discord DM: `DISCORD_BOT_TOKEN`을 설정하면(기존 Discord 계정
+   연동용 봇과 동일한 토큰) 설정 페이지에서 "알림 받기"를 켠 사용자에게 매일
+   숙제·플래너·피드백이 생성될 때마다 DM으로 알려줍니다. Discord 계정이 연동돼
+   있어야 하고, 봇이 해당 유저와 공통 서버에 있어야 DM 전송이 가능합니다
+   (Discord API 제약). 플랜이 Basic/Pro로 바뀌면 이미 연동된 계정의
+   `discord_links.premium_role_granted`도 자동으로 갱신됩니다 (실제 길드 역할
+   부여 자체는 여전히 별도 봇 백엔드의 몫입니다).
 
 ### 3. 환경 변수 설정
 ```bash

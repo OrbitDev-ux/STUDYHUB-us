@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import { generateDailyFeedback } from "@/lib/ai/feedback";
 import { todayKST } from "@/lib/utils/date";
+import { sendDiscordDM } from "@/lib/discord/bot";
 import { NextResponse } from "next/server";
 
 /** Vercel Cron에서 매일 23:30 (KST) 경 1회 호출됩니다. */
@@ -74,6 +75,27 @@ export async function GET(request: Request) {
         recommended_next: generated.recommended_next,
         ai_message: generated.ai_message,
       });
+
+      const { data: settings } = await admin
+        .from("settings")
+        .select("notification_enabled")
+        .eq("user_id", profile.id)
+        .single();
+
+      if (settings?.notification_enabled) {
+        const { data: discordLink } = await admin
+          .from("discord_links")
+          .select("discord_user_id")
+          .eq("user_id", profile.id)
+          .maybeSingle();
+
+        if (discordLink?.discord_user_id) {
+          await sendDiscordDM(
+            discordLink.discord_user_id,
+            `📊 오늘의 AI 피드백이 도착했어요! 목표 달성률 ${generated.goal_achievement_rate}% — StudyHub에서 확인해보세요.`
+          );
+        }
+      }
 
       results.push({ user_id: profile.id, status: "ok" });
     } catch (e) {

@@ -4,6 +4,7 @@ import { generateDailyStudyPlan } from "@/lib/ai/planner";
 import { insertHomeworkItems } from "@/lib/homework/persist";
 import { todayKST, currentHourKST } from "@/lib/utils/date";
 import { planLimits } from "@/lib/plan";
+import { sendDiscordDM } from "@/lib/discord/bot";
 import { NextResponse } from "next/server";
 import type { SubjectId } from "@/types";
 
@@ -27,7 +28,9 @@ export async function GET(request: Request) {
 
   const { data: dueUsers } = await admin
     .from("settings")
-    .select("user_id, homework_time, homework_question_count, profiles(grade_level, target_study_minutes, exam_date, plan)")
+    .select(
+      "user_id, homework_time, homework_question_count, notification_enabled, profiles(grade_level, target_study_minutes, exam_date, plan)"
+    )
     .filter("homework_time", "gte", `${String(currentHour).padStart(2, "0")}:00`)
     .filter("homework_time", "lt", `${String(currentHour + 1).padStart(2, "0")}:00`);
 
@@ -133,6 +136,21 @@ export async function GET(request: Request) {
             order_index: idx,
           }))
         );
+      }
+
+      if (row.notification_enabled) {
+        const { data: discordLink } = await admin
+          .from("discord_links")
+          .select("discord_user_id")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (discordLink?.discord_user_id) {
+          await sendDiscordDM(
+            discordLink.discord_user_id,
+            "🎯 오늘의 AI 숙제와 학습 플래너가 준비됐어요! StudyHub에서 확인해보세요."
+          );
+        }
       }
 
       results.push({ user_id: userId, status: "ok" });
