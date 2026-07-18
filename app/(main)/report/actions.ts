@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { generateDailyFeedback } from "@/lib/ai/feedback";
+import { todayKST } from "@/lib/utils/date";
 
 export async function ensureTodayFeedback() {
   const supabase = await createClient();
@@ -12,7 +13,7 @@ export async function ensureTodayFeedback() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayKST();
 
   const { data: existing } = await supabase
     .from("daily_feedback")
@@ -25,7 +26,7 @@ export async function ensureTodayFeedback() {
 
   const [{ data: profile }, { data: sessions }, { data: homework }, { data: diagnostics }] = await Promise.all([
     supabase.from("profiles").select("nickname, target_study_minutes, streak_days").eq("id", user.id).single(),
-    supabase.from("study_sessions").select("focus_minutes").eq("user_id", user.id).gte("started_at", `${today}T00:00:00`),
+    supabase.from("study_sessions").select("focus_minutes").eq("user_id", user.id).gte("started_at", `${today}T00:00:00+09:00`),
     supabase
       .from("homeworks")
       .select("*, homework_items(is_correct)")

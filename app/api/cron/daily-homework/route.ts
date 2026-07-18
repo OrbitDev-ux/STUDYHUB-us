@@ -1,6 +1,8 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import { generateDailyHomework } from "@/lib/ai/homework";
 import { generateDailyStudyPlan } from "@/lib/ai/planner";
+import { insertHomeworkItems } from "@/lib/homework/persist";
+import { todayKST, currentHourKST } from "@/lib/utils/date";
 import { NextResponse } from "next/server";
 import type { SubjectId } from "@/types";
 
@@ -17,8 +19,10 @@ export async function GET(request: Request) {
   }
 
   const admin = createAdminClient();
-  const today = new Date().toISOString().slice(0, 10);
-  const currentHour = new Date().getUTCHours();
+  const today = todayKST();
+  // settings.homework_time은 사용자가 설정 화면에서 고른 한국 현지 시각이므로
+  // UTC 시(getUTCHours)가 아니라 KST 시로 비교해야 한다.
+  const currentHour = currentHourKST();
 
   const { data: dueUsers } = await admin
     .from("settings")
@@ -71,29 +75,8 @@ export async function GET(request: Request) {
           .select("id")
           .single();
 
-        for (const [i, item] of generated.items.entries()) {
-          const { data: question } = await admin
-            .from("questions")
-            .insert({
-              subject_id: item.subject_id,
-              type: item.type,
-              difficulty: item.difficulty,
-              content: item.content,
-              choices: item.choices,
-              answer: item.answer,
-              explanation: item.explanation,
-              source: "ai_generated",
-            })
-            .select("id")
-            .single();
-
-          await admin.from("homework_items").insert({
-            homework_id: homework!.id,
-            question_id: question!.id,
-            subject_id: item.subject_id,
-            category: item.category,
-            order_index: i,
-          });
+        if (homework) {
+          await insertHomeworkItems(admin, homework.id, generated.items);
         }
       }
 

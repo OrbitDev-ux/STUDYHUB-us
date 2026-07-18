@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import { generateDailyFeedback } from "@/lib/ai/feedback";
+import { todayKST } from "@/lib/utils/date";
 import { NextResponse } from "next/server";
 
 /** Vercel Cron에서 매일 23:30 (KST) 경 1회 호출됩니다. */
@@ -10,7 +11,7 @@ export async function GET(request: Request) {
   }
 
   const admin = createAdminClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayKST();
 
   const { data: profiles } = await admin.from("profiles").select("id, nickname, target_study_minutes, streak_days");
   const results: { user_id: string; status: string }[] = [];
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
         .from("study_sessions")
         .select("focus_minutes")
         .eq("user_id", profile.id)
-        .gte("started_at", `${today}T00:00:00`);
+        .gte("started_at", `${today}T00:00:00+09:00`);
       const studyMinutes = (sessions ?? []).reduce((s: number, x: { focus_minutes: number | null }) => s + (x.focus_minutes ?? 0), 0);
 
       if (studyMinutes === 0) {

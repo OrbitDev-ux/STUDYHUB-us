@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { generateDailyStudyPlan } from "@/lib/ai/planner";
+import { todayKST } from "@/lib/utils/date";
 import type { SubjectId } from "@/types";
 
 export async function ensureTodayPlan() {
@@ -13,8 +14,8 @@ export async function ensureTodayPlan() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const today = new Date().toISOString().slice(0, 10);
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const today = todayKST();
+  const yesterday = todayKST(new Date(Date.now() - 86400000));
 
   const { data: existing } = await supabase
     .from("study_plans")

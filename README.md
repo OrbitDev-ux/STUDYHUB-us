@@ -49,7 +49,7 @@ npm install
 
 ### 2. Supabase 프로젝트 생성
 1. [supabase.com](https://supabase.com)에서 새 프로젝트 생성
-2. SQL Editor에서 `supabase/migrations/0001_init.sql` → `0002_leaderboard_and_xp_fix.sql` 순서대로 실행
+2. SQL Editor에서 `supabase/migrations/0001_init.sql` → `0002_leaderboard_and_xp_fix.sql` → `0003_lock_down_profiles_columns.sql` 순서대로 실행
    (테이블/RLS/시드 데이터 생성 후, 레벨/XP/리더보드용 함수 추가)
 3. Authentication > Providers에서 Google, Discord OAuth 활성화 (선택)
 4. Project Settings > API에서 URL / anon key / service_role key 확인

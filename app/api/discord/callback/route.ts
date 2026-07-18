@@ -1,12 +1,23 @@
 import { createClient } from "@/lib/supabase/server";
+import { DISCORD_OAUTH_STATE_COOKIE } from "@/lib/discord/oauth";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
+  const state = searchParams.get("state");
 
   if (!code) {
     return NextResponse.redirect(`${origin}/settings?error=discord_no_code`);
+  }
+
+  // OAuth 로그인 CSRF 방지: startDiscordLink에서 심어둔 쿠키와 state가 일치해야 진행한다.
+  const cookieStore = await cookies();
+  const expectedState = cookieStore.get(DISCORD_OAUTH_STATE_COOKIE)?.value;
+  cookieStore.delete(DISCORD_OAUTH_STATE_COOKIE);
+  if (!state || !expectedState || state !== expectedState) {
+    return NextResponse.redirect(`${origin}/settings?error=discord_invalid_state`);
   }
 
   const supabase = await createClient();
