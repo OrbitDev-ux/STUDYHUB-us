@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,9 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { updateProfile } from "./actions";
 import { Flame, Zap, Coins, Clock } from "lucide-react";
 
-export const metadata = { title: "프로필" };
-
-const SUBJECT_LABEL: Record<string, string> = { math: "수학", english: "영어", social: "사회", science: "과학" };
+export async function generateMetadata() {
+  const t = await getTranslations("nav");
+  return { title: t("profile") };
+}
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -18,6 +20,10 @@ export default async function ProfilePage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  const t = await getTranslations("profile");
+  const tc = await getTranslations("common");
+  const ts = await getTranslations("subjects");
 
   const [{ data: profile }, { data: stats }, { data: badgeCount }, { data: totalSessions }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
@@ -44,42 +50,42 @@ export default async function ProfilePage() {
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatChip icon={Zap} label="XP" value={profile?.xp ?? 0} />
-        <StatChip icon={Coins} label="코인" value={profile?.coins ?? 0} />
-        <StatChip icon={Flame} label="연속학습" value={`${profile?.streak_days ?? 0}일`} />
-        <StatChip icon={Clock} label="누적 공부시간" value={`${Math.round(totalMinutes / 60)}시간`} />
+        <StatChip icon={Coins} label={tc("coins")} value={profile?.coins ?? 0} />
+        <StatChip icon={Flame} label={tc("streak")} value={tc("daysSuffix", { days: profile?.streak_days ?? 0 })} />
+        <StatChip icon={Clock} label={t("totalStudyTime")} value={tc("hours", { n: Math.round(totalMinutes / 60) })} />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">과목별 실력</CardTitle>
+          <CardTitle className="text-base">{t("subjectSkills")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          {(stats ?? []).length === 0 && <p className="text-sm text-muted-foreground">아직 진단 결과가 없어요.</p>}
+          {(stats ?? []).length === 0 && <p className="text-sm text-muted-foreground">{t("noDiagnostic")}</p>}
           {(stats ?? []).map((s) => (
             <Badge key={s.subject_id} variant="secondary">
-              {SUBJECT_LABEL[s.subject_id]} {s.current_grade}
+              {ts(s.subject_id)} {s.current_grade}
             </Badge>
           ))}
-          <Badge variant="outline">배지 {badgeCount?.length ?? 0}개</Badge>
+          <Badge variant="outline">{t("badgeCount", { count: badgeCount?.length ?? 0 })}</Badge>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">프로필 수정</CardTitle>
+          <CardTitle className="text-base">{t("editProfile")}</CardTitle>
         </CardHeader>
         <CardContent>
           <form action={updateProfile} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="nickname">닉네임</Label>
+              <Label htmlFor="nickname">{tc("nickname")}</Label>
               <Input id="nickname" name="nickname" defaultValue={profile?.nickname ?? ""} />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="bio">소개</Label>
-              <Input id="bio" name="bio" defaultValue={profile?.bio ?? ""} placeholder="한 줄 소개를 남겨보세요" />
+              <Label htmlFor="bio">{t("bio")}</Label>
+              <Input id="bio" name="bio" defaultValue={profile?.bio ?? ""} placeholder={t("bioPlaceholder")} />
             </div>
             <Button type="submit" className="self-start">
-              저장
+              {tc("save")}
             </Button>
           </form>
         </CardContent>

@@ -1,6 +1,10 @@
+import { getTranslations } from "next-intl/server";
 import { DiagnosticFlow } from "./diagnostic-flow";
 
-export const metadata = { title: "AI 진단평가" };
+export async function generateMetadata() {
+  const t = await getTranslations("diagnostic");
+  return { title: t("pageTitle") };
+}
 
 export default function DiagnosticPage() {
   return (

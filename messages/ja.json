@@ -1,0 +1,269 @@
+{
+  "common": {
+    "login": "ログイン",
+    "signup": "会員登録",
+    "logout": "ログアウト",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "email": "メール",
+    "password": "パスワード",
+    "nickname": "ニックネーム",
+    "coins": "コイン",
+    "streak": "連続学習",
+    "correct": "正解です!",
+    "predictedGrade": "予想成績",
+    "goalAchievementRate": "目標達成率",
+    "minutes": "{n}分",
+    "hours": "{n}時間",
+    "levelBadge": "Lv.{level}",
+    "daysSuffix": "{days}日",
+    "toggleTheme": "ダークモード切替",
+    "toggleLanguage": "言語選択",
+    "streakDays": "{days}日連続"
+  },
+  "subjects": {
+    "math": "数学",
+    "english": "英語",
+    "social": "社会",
+    "science": "理科"
+  },
+  "nav": {
+    "dashboard": "ダッシュボード",
+    "homework": "今日の宿題",
+    "planner": "学習プランナー",
+    "timer": "タイマー",
+    "wrongNotes": "間違いノート",
+    "report": "AIレポート",
+    "rank": "ランキング/バッジ",
+    "profile": "プロフィール"
+  },
+  "topbar": {
+    "greeting": "こんにちは、<b>{nickname}</b>さん",
+    "levelTooltip": "次のレベルまであと{remaining}XP（{percent}%）"
+  },
+  "landing": {
+    "navSignup": "無料で始める",
+    "badge": "毎日の勉強を管理してくれるAI家庭教師",
+    "heroTitleLine1": "AIが実力を診断し、",
+    "heroTitleLine2": "毎日の勉強を設計します",
+    "heroSubtitle": "診断評価から予想成績、弱点分析、宿題や学習計画まで — StudyHubが毎日あなた専属の家庭教師になります。",
+    "ctaPrimary": "無料で診断を受ける",
+    "footer": "© {year} StudyHub. All rights reserved.",
+    "features": {
+      "diagnostic": {
+        "title": "AI診断評価",
+        "desc": "登録後すぐに4科目の実力を診断し、予想成績を算出します。"
+      },
+      "weakness": {
+        "title": "弱点分析",
+        "desc": "どの単元がなぜ弱いのか、AIが原因と学習の方向性を教えます。"
+      },
+      "homework": {
+        "title": "毎日のAI宿題",
+        "desc": "弱点単元を中心に毎朝自動で宿題が生成されます。"
+      },
+      "timer": {
+        "title": "ポモドーロタイマー",
+        "desc": "集中時間を計測し、休憩まで管理します。"
+      },
+      "streak": {
+        "title": "連続学習ストリーク",
+        "desc": "XP・コイン・バッジで勉強習慣をゲームのように。"
+      },
+      "feedback": {
+        "title": "毎日のAIフィードバック",
+        "desc": "今日の勉強をまとめ、明日やることを提案します。"
+      }
+    }
+  },
+  "auth": {
+    "loginSubtitle": "今日もAI家庭教師と一緒に始めましょう",
+    "orEmailLogin": "またはメールでログイン",
+    "loginError": "メールアドレスまたはパスワードが正しくありません。",
+    "noAccount": "アカウントをお持ちでないですか？",
+    "signupSubtitle": "登録後すぐにAI診断評価を始めます",
+    "orEmailSignup": "またはメールで登録",
+    "nicknamePlaceholder": "勉強マスター",
+    "passwordHint": "8文字以上入力してください",
+    "signupError": "登録中に問題が発生しました。もう一度お試しください。",
+    "signupSubmit": "登録して診断評価を始める",
+    "haveAccount": "すでにアカウントをお持ちですか？",
+    "continueWithGoogle": "Googleで続ける",
+    "continueWithDiscord": "Discordで続ける",
+    "checkEmail": {
+      "title": "メールをご確認ください",
+      "description": "認証リンクを送信しました。メール内のリンクをクリックすると登録が完了します。"
+    }
+  },
+  "onboarding": {
+    "title": "ようこそ！いくつか教えてください",
+    "subtitle": "AIがあなた専用の診断評価と学習計画を準備します",
+    "gradeLevel": "学年",
+    "selectPlaceholder": "選択してください",
+    "targetMinutes": "目標学習時間（分/日）",
+    "targetScore": "目標成績",
+    "targetScorePlaceholder": "例：全科目A、上位10%",
+    "examDate": "試験日（任意）",
+    "submit": "次へ：AI診断評価を始める",
+    "grades": {
+      "초4": "小学4年生",
+      "초5": "小学5年生",
+      "초6": "小学6年生",
+      "중1": "中学1年生",
+      "중2": "中学2年生",
+      "중3": "中学3年生",
+      "고1": "高校1年生",
+      "고2": "高校2年生",
+      "고3": "高校3年生"
+    },
+    "pageTitle": "プロフィール設定"
+  },
+  "diagnostic": {
+    "introTitle": "AI診断評価を始めます",
+    "introDesc": "数学・英語・社会・理科の4科目を順番に診断します。1科目あたり約2〜3分で完了します。",
+    "start": "診断評価を始める",
+    "progressBadge": "{current} / {total} · {subject}",
+    "questionProgress": "{current} / {total}",
+    "preparing": "問題を準備しています",
+    "subjectQuiz": "{subject}診断評価",
+    "analyzing": "AIが実力を分析しています",
+    "subjectResult": "{subject}診断結果",
+    "loadingQuestions": "AIが最適な問題を出題しています...",
+    "loadingAnalysis": "正誤パターンを分析して予想成績を計算しています...",
+    "nextSubject": "次の科目を診断する",
+    "goDashboard": "ダッシュボードへ移動",
+    "pageTitle": "AI診断評価"
+  },
+  "dashboard": {
+    "greeting": "今日も頑張りましょう、{nickname}さん 👋",
+    "subtitle": "AIが今日の学習状況をまとめました。",
+    "todayMinutesLabel": "今日の勉強時間",
+    "todayMinutesSub": "目標{target}分",
+    "streakLabel": "連続学習",
+    "streakSub": "継続は力なり",
+    "homeworkRateLabel": "宿題完了率",
+    "homeworkRateSub": "{answered}/{total}問",
+    "goalRateLabel": "目標達成率",
+    "goalRateSub": "本日基準",
+    "goalCardTitle": "本日の目標達成率",
+    "goalCaption": "{studied}分 / {target}分（{rate}%）",
+    "noDiagnostic": "まだ診断評価の結果がありません。",
+    "weakUnitsTitle": "弱点単元",
+    "noWeakUnits": "まだ弱点単元はありません。",
+    "goHomework": "今日の宿題をやる",
+    "goPlanner": "学習プランナーを見る"
+  },
+  "homework": {
+    "title": "今日のAI宿題",
+    "subtitle": "弱点単元を中心にAIが自動生成しました。",
+    "rationaleTitle": "AIがこの宿題を選んだ理由",
+    "completedProgress": "{completed} / {total} 完了",
+    "wrongAnswer": "不正解：{answer}",
+    "categories": {
+      "신규": "新規",
+      "오답복습": "間違い復習",
+      "단어": "単語"
+    }
+  },
+  "planner": {
+    "title": "今日のAI学習プランナー",
+    "subtitle": "試験日程と弱点を考慮してAIが計画を立てました。",
+    "summaryTitle": "今日の計画まとめ",
+    "totalTime": "合計計画時間：{minutes}分",
+    "priorityLabel": "優先度 {level}",
+    "priority": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "reviewBadge": "復習",
+    "toggleComplete": "完了チェック"
+  },
+  "timer": {
+    "title": "勉強タイマー",
+    "subtitle": "25分集中、5分休憩で没頭しましょう。",
+    "focusLabel": "集中時間",
+    "breakLabel": "休憩時間",
+    "pause": "一時停止",
+    "start": "開始",
+    "stopAndSave": "終了して保存",
+    "sessionTotal": "今回のセッションの累計集中時間：{minutes}分"
+  },
+  "wrongNotes": {
+    "title": "間違いノート",
+    "subtitle": "間違えた問題を復習し、類似問題に再挑戦しましょう。",
+    "empty": "まだ間違いがありません。宿題をやってみましょう！",
+    "needsReview": "復習が必要です（{count}）",
+    "mastered": "克服しました（{count}）",
+    "wrongCount": "{count}回不正解",
+    "myAnswer": "自分の回答：",
+    "correctAnswer": "正解：",
+    "generateSimilar": "AIで類似問題を生成して再挑戦",
+    "masteredMessage": "この概念を克服しました！",
+    "wrongAgain": "また不正解でした"
+  },
+  "report": {
+    "title": "AI毎日フィードバック",
+    "subtitle": "AIが今日一日をまとめてコーチングします。",
+    "empty": "今日の学習記録がまだありません。宿題やタイマーを使うとフィードバックが生成されます。",
+    "todayFeedback": "今日のフィードバック",
+    "recommendedNext": "明日のおすすめ",
+    "recentHistory": "最近の学習履歴",
+    "noHistory": "記録がありません。"
+  },
+  "rank": {
+    "title": "ランキング＆バッジ",
+    "subtitle": "継続は実力です。XPを集めて順位を上げましょう。",
+    "xpRanking": "XPランキング",
+    "me": "自分",
+    "xpValue": "{xp} XP",
+    "badges": "バッジ",
+    "badgeInfo": {
+      "streak_7": {
+        "name": "7日連続学習",
+        "desc": "7日連続で勉強しました"
+      },
+      "streak_30": {
+        "name": "30日連続学習",
+        "desc": "30日連続で勉強しました"
+      },
+      "homework_100": {
+        "name": "宿題マスター",
+        "desc": "宿題100問完了"
+      },
+      "early_bird": {
+        "name": "早起き",
+        "desc": "午前7時前に学習5回"
+      }
+    }
+  },
+  "profile": {
+    "totalStudyTime": "累計勉強時間",
+    "subjectSkills": "科目別実力",
+    "noDiagnostic": "まだ診断結果がありません。",
+    "badgeCount": "バッジ{count}個",
+    "editProfile": "プロフィール編集",
+    "bio": "自己紹介",
+    "bioPlaceholder": "一言自己紹介を書いてみましょう"
+  },
+  "settings": {
+    "title": "設定",
+    "subtitle": "学習環境を自分に合わせて調整します。",
+    "studySettings": "学習設定",
+    "studySettingsDesc": "毎日の宿題生成時刻とタイマーの初期値を設定します",
+    "homeworkTime": "毎日の宿題生成時刻",
+    "focusMinutes": "集中時間（分）",
+    "breakMinutes": "休憩時間（分）",
+    "notifications": "通知を受け取る",
+    "discordLink": "Discord連携",
+    "discordLinkDesc": "Discordアカウントを連携するとXP・バッジが同期され、プレミアムロールが付与されます",
+    "linked": "連携済み",
+    "premium": "プレミアム",
+    "unlink": "連携解除",
+    "linkDiscord": "Discordアカウントを連携する"
+  },
+  "notFound": {
+    "message": "ページが見つかりません。",
+    "goHome": "ホームに戻る"
+  }
+}

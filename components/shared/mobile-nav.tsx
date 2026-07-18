@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { MOBILE_NAV_ITEMS } from "./nav-items";
 import { cn } from "@/lib/utils/cn";
 
 export function MobileNav() {
   const pathname = usePathname();
+  const t = useTranslations("nav");
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-background/95 backdrop-blur md:hidden">
@@ -22,7 +24,7 @@ export function MobileNav() {
             )}
           >
             <item.icon className="h-5 w-5" />
-            {item.label}
+            {t(item.labelKey)}
           </Link>
         );
       })}
