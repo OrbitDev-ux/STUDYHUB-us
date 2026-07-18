@@ -10,7 +10,7 @@ AI가 실력을 진단하고, 예상 등급을 계산하고, 취약점을 분석
 | Backend | Next.js Server Actions, Route Handlers |
 | Database | Supabase PostgreSQL (Row Level Security) |
 | Auth | Supabase Auth (Email/Password, Google OAuth, Discord OAuth) |
-| AI | Anthropic API (`claude-sonnet-4-6`) |
+| AI | Anthropic API (`claude-sonnet-4-6`, 기본값) 또는 GLM API (`glm-5.2-lite`, Z.ai) — `AI_PROVIDER` 환경변수로 전환 |
 | 배포 | Vercel, Docker |
 
 ## 폴더 구조
