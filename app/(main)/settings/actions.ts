@@ -59,3 +59,23 @@ export async function unlinkDiscord() {
   await supabase.from("discord_links").delete().eq("user_id", user.id);
   revalidatePath("/settings");
 }
+
+/**
+ * 점검 모드 on/off. DB의 set_maintenance_mode()가 관리자 권한을 다시 검증하므로
+ * 여기서는 별도 권한 체크 없이 그대로 위임한다 (UI는 관리자에게만 노출됨).
+ */
+export async function setMaintenanceMode(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const enabled = formData.get("enabled") === "on";
+  const message = String(formData.get("message") ?? "").trim() || null;
+
+  const { error } = await supabase.rpc("set_maintenance_mode", { p_enabled: enabled, p_message: message });
+  if (error) throw new Error(`점검 모드 변경 실패: ${error.message}`);
+
+  revalidatePath("/settings");
+}

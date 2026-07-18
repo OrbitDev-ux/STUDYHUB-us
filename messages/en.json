@@ -260,10 +260,24 @@
     "linked": "Linked",
     "premium": "Premium",
     "unlink": "Unlink",
-    "linkDiscord": "Link Discord account"
+    "linkDiscord": "Link Discord account",
+    "admin": {
+      "title": "Admin: Server Maintenance",
+      "desc": "When maintenance mode is on, every user except admins sees a maintenance page.",
+      "enabled": "Maintenance mode ON",
+      "disabled": "Maintenance mode OFF",
+      "messageLabel": "Maintenance message (optional)",
+      "messagePlaceholder": "e.g. Maintenance until midnight tonight.",
+      "enableButton": "Turn on maintenance mode",
+      "disableButton": "Turn off maintenance mode"
+    }
   },
   "notFound": {
     "message": "Page not found.",
     "goHome": "Back to home"
+  },
+  "maintenance": {
+    "title": "Under Maintenance",
+    "defaultMessage": "We're performing maintenance to make things better. Please check back shortly."
   }
 }
