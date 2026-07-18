@@ -7,6 +7,15 @@ import { cn } from "@/lib/utils/cn";
 
 export const metadata = { title: "랭킹 / 배지" };
 
+type LeaderboardRow = {
+  id: string;
+  nickname: string;
+  avatar_url: string | null;
+  xp: number;
+  level: number;
+  streak_days: number;
+};
+
 export default async function RankPage() {
   const supabase = await createClient();
   const {
@@ -15,7 +24,9 @@ export default async function RankPage() {
   if (!user) redirect("/login");
 
   const [{ data: topUsers }, { data: allBadges }, { data: myBadges }] = await Promise.all([
-    supabase.rpc("get_leaderboard", { limit_count: 20 }),
+    supabase.rpc("get_leaderboard", { limit_count: 20 }) as unknown as Promise<{
+      data: LeaderboardRow[] | null;
+    }>,
     supabase.from("badges").select("*"),
     supabase.from("user_badges").select("badge_id").eq("user_id", user.id),
   ]);

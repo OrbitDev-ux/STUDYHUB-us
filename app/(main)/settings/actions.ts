@@ -3,7 +3,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { randomBytes } from "crypto";
+import { DISCORD_OAUTH_STATE_COOKIE } from "@/lib/discord/oauth";
 
 export async function updateSettings(formData: FormData) {
   const supabase = await createClient();
@@ -30,7 +32,20 @@ export async function startDiscordLink() {
   const origin = (await headers()).get("origin");
   const clientId = process.env.DISCORD_CLIENT_ID;
   const redirectUri = encodeURIComponent(`${origin}/api/discord/callback`);
-  const url = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify`;
+
+  // OAuth 로그인 CSRF 방지용 state. 콜백에서 쿠키 값과 대조해 검증한다.
+  // (state 없이는 공격자가 자기 Discord 계정으로 받은 code를 피해자에게 콜백 URL로
+  // 열게 만들어 피해자 계정에 공격자의 Discord를 연동시킬 수 있다.)
+  const state = randomBytes(24).toString("hex");
+  (await cookies()).set(DISCORD_OAUTH_STATE_COOKIE, state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 300,
+    path: "/",
+  });
+
+  const url = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify&state=${state}`;
   redirect(url);
 }
 

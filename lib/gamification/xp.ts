@@ -10,7 +10,20 @@ export async function awardXP(supabase: SupabaseClient, amount: number, reason: 
 
   if (error) throw new Error(`XP 지급 실패: ${error.message}`);
 
-  return data as { new_xp: number; new_level: number; leveled_up: boolean };
+  return data as { new_xp: number; new_level: number; leveled_up: boolean; new_coins: number };
+}
+
+/**
+ * 배지 획득 조건(연속학습일/숙제완료수/얼리버드 등)을 판정해 새로 달성한 배지를
+ * user_badges에 지급하는 DB 함수(check_and_award_badges)를 호출합니다.
+ * 연속학습일 갱신, 숙제 완료 처리, 학습 세션 저장 직후에 호출하세요.
+ */
+export async function checkAndAwardBadges(supabase: SupabaseClient) {
+  const { data, error } = await supabase.rpc("check_and_award_badges");
+
+  if (error) throw new Error(`배지 판정 실패: ${error.message}`);
+
+  return (data ?? []) as { code: string; name: string }[];
 }
 
 /**
