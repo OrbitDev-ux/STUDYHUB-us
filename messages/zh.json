@@ -1,0 +1,269 @@
+{
+  "common": {
+    "login": "登录",
+    "signup": "注册",
+    "logout": "登出",
+    "save": "保存",
+    "cancel": "取消",
+    "email": "邮箱",
+    "password": "密码",
+    "nickname": "昵称",
+    "coins": "金币",
+    "streak": "连续学习",
+    "correct": "答对了!",
+    "predictedGrade": "预测成绩",
+    "goalAchievementRate": "目标达成率",
+    "minutes": "{n}分钟",
+    "hours": "{n}小时",
+    "levelBadge": "Lv.{level}",
+    "daysSuffix": "{days}天",
+    "toggleTheme": "切换深色模式",
+    "toggleLanguage": "选择语言",
+    "streakDays": "连续{days}天"
+  },
+  "subjects": {
+    "math": "数学",
+    "english": "英语",
+    "social": "社会",
+    "science": "科学"
+  },
+  "nav": {
+    "dashboard": "仪表盘",
+    "homework": "今日作业",
+    "planner": "学习计划",
+    "timer": "计时器",
+    "wrongNotes": "错题本",
+    "report": "AI报告",
+    "rank": "排行/徽章",
+    "profile": "个人资料"
+  },
+  "topbar": {
+    "greeting": "你好，<b>{nickname}</b>",
+    "levelTooltip": "距下一等级还需{remaining}XP（{percent}%）"
+  },
+  "landing": {
+    "navSignup": "免费开始",
+    "badge": "每天为你管理学习的AI家教老师",
+    "heroTitleLine1": "AI诊断你的实力，",
+    "heroTitleLine2": "为你设计每日学习计划",
+    "heroSubtitle": "从诊断评估、预测成绩、弱点分析，到作业和学习计划——StudyHub 每天都是你的专属家教。",
+    "ctaPrimary": "免费诊断",
+    "footer": "© {year} StudyHub. All rights reserved.",
+    "features": {
+      "diagnostic": {
+        "title": "AI诊断评估",
+        "desc": "注册后立即诊断4个科目的实力并预测成绩。"
+      },
+      "weakness": {
+        "title": "弱点分析",
+        "desc": "AI告诉你哪个单元薄弱、原因是什么、该怎么学。"
+      },
+      "homework": {
+        "title": "每日AI作业",
+        "desc": "每天早上根据薄弱单元自动生成作业。"
+      },
+      "timer": {
+        "title": "番茄钟计时器",
+        "desc": "记录专注时间并帮你管理休息。"
+      },
+      "streak": {
+        "title": "连续学习打卡",
+        "desc": "用XP、金币和徽章把学习习惯变成游戏。"
+      },
+      "feedback": {
+        "title": "每日AI反馈",
+        "desc": "总结今天的学习并推荐明天要做的事。"
+      }
+    }
+  },
+  "auth": {
+    "loginSubtitle": "今天也和AI家教老师一起开始吧",
+    "orEmailLogin": "或使用邮箱登录",
+    "loginError": "邮箱或密码不正确。",
+    "noAccount": "还没有账号？",
+    "signupSubtitle": "注册后立即开始AI诊断评估",
+    "orEmailSignup": "或使用邮箱注册",
+    "nicknamePlaceholder": "学习达人",
+    "passwordHint": "请输入至少8个字符",
+    "signupError": "注册时出现问题，请重试。",
+    "signupSubmit": "注册并开始诊断评估",
+    "haveAccount": "已经有账号了？",
+    "continueWithGoogle": "使用Google继续",
+    "continueWithDiscord": "使用Discord继续",
+    "checkEmail": {
+      "title": "请查收邮箱",
+      "description": "我们已发送验证链接。点击邮件中的链接即可完成注册。"
+    }
+  },
+  "onboarding": {
+    "title": "欢迎！请告诉我们一些信息",
+    "subtitle": "AI将为你准备专属的诊断评估和学习计划",
+    "gradeLevel": "年级",
+    "selectPlaceholder": "请选择",
+    "targetMinutes": "目标学习时间（分钟/天）",
+    "targetScore": "目标成绩",
+    "targetScorePlaceholder": "例：全科A，前10%",
+    "examDate": "考试日期（可选）",
+    "submit": "下一步：开始AI诊断评估",
+    "grades": {
+      "초4": "小学4年级",
+      "초5": "小学5年级",
+      "초6": "小学6年级",
+      "중1": "初中1年级",
+      "중2": "初中2年级",
+      "중3": "初中3年级",
+      "고1": "高中1年级",
+      "고2": "高中2年级",
+      "고3": "高中3年级"
+    },
+    "pageTitle": "个人资料设置"
+  },
+  "diagnostic": {
+    "introTitle": "开始AI诊断评估",
+    "introDesc": "将依次诊断数学、英语、社会、科学4个科目，每科大约2~3分钟即可完成。",
+    "start": "开始诊断评估",
+    "progressBadge": "{current} / {total} · {subject}",
+    "questionProgress": "{current} / {total}",
+    "preparing": "正在准备题目",
+    "subjectQuiz": "{subject}诊断评估",
+    "analyzing": "AI正在分析你的实力",
+    "subjectResult": "{subject}诊断结果",
+    "loadingQuestions": "AI正在出题…",
+    "loadingAnalysis": "正在分析答题规律并计算预测成绩…",
+    "nextSubject": "下一科目诊断",
+    "goDashboard": "前往仪表盘",
+    "pageTitle": "AI诊断评估"
+  },
+  "dashboard": {
+    "greeting": "加油，{nickname} 👋",
+    "subtitle": "AI已为你整理今天的学习状况。",
+    "todayMinutesLabel": "今日学习时间",
+    "todayMinutesSub": "目标{target}分钟",
+    "streakLabel": "连续学习",
+    "streakSub": "坚持就是实力",
+    "homeworkRateLabel": "作业完成率",
+    "homeworkRateSub": "{answered}/{total}题",
+    "goalRateLabel": "目标达成率",
+    "goalRateSub": "今日",
+    "goalCardTitle": "今日目标达成率",
+    "goalCaption": "{studied}分钟 / {target}分钟（{rate}%）",
+    "noDiagnostic": "还没有诊断评估结果。",
+    "weakUnitsTitle": "薄弱单元",
+    "noWeakUnits": "暂无薄弱单元。",
+    "goHomework": "去做今日作业",
+    "goPlanner": "查看学习计划"
+  },
+  "homework": {
+    "title": "今日AI作业",
+    "subtitle": "AI根据薄弱单元自动生成。",
+    "rationaleTitle": "AI布置这些作业的原因",
+    "completedProgress": "已完成 {completed} / {total}",
+    "wrongAnswer": "错误答案：{answer}",
+    "categories": {
+      "신규": "新题",
+      "오답복습": "错题复习",
+      "단어": "单词"
+    }
+  },
+  "planner": {
+    "title": "今日AI学习计划",
+    "subtitle": "AI综合考试安排和薄弱点制定了这份计划。",
+    "summaryTitle": "今日计划摘要",
+    "totalTime": "总计划时间：{minutes}分钟",
+    "priorityLabel": "优先级 {level}",
+    "priority": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "reviewBadge": "复习",
+    "toggleComplete": "完成勾选"
+  },
+  "timer": {
+    "title": "学习计时器",
+    "subtitle": "专注25分钟，休息5分钟，进入状态。",
+    "focusLabel": "专注时间",
+    "breakLabel": "休息时间",
+    "pause": "暂停",
+    "start": "开始",
+    "stopAndSave": "结束并保存",
+    "sessionTotal": "本次会话累计专注时间：{minutes}分钟"
+  },
+  "wrongNotes": {
+    "title": "错题本",
+    "subtitle": "复习做错的题目，挑战类似题再试一次。",
+    "empty": "还没有错题。快去做作业吧！",
+    "needsReview": "需要复习（{count}）",
+    "mastered": "已掌握（{count}）",
+    "wrongCount": "错了{count}次",
+    "myAnswer": "我的答案：",
+    "correctAnswer": "正确答案：",
+    "generateSimilar": "用AI生成类似题再挑战一次",
+    "masteredMessage": "你已经掌握这个知识点了！",
+    "wrongAgain": "又答错了"
+  },
+  "report": {
+    "title": "AI每日反馈",
+    "subtitle": "AI为你总结今天并进行辅导。",
+    "empty": "今天还没有学习记录。完成作业或使用计时器即可生成反馈。",
+    "todayFeedback": "今日反馈",
+    "recommendedNext": "明日推荐",
+    "recentHistory": "最近学习记录",
+    "noHistory": "暂无记录。"
+  },
+  "rank": {
+    "title": "排行榜与徽章",
+    "subtitle": "坚持就是实力，赚取XP提升排名吧。",
+    "xpRanking": "XP排行榜",
+    "me": "我",
+    "xpValue": "{xp} XP",
+    "badges": "徽章",
+    "badgeInfo": {
+      "streak_7": {
+        "name": "连续学习7天",
+        "desc": "连续7天坚持学习"
+      },
+      "streak_30": {
+        "name": "连续学习30天",
+        "desc": "连续30天坚持学习"
+      },
+      "homework_100": {
+        "name": "作业达人",
+        "desc": "完成100道作业题"
+      },
+      "early_bird": {
+        "name": "早起鸟",
+        "desc": "上午7点前学习5次"
+      }
+    }
+  },
+  "profile": {
+    "totalStudyTime": "累计学习时间",
+    "subjectSkills": "各科实力",
+    "noDiagnostic": "还没有诊断结果。",
+    "badgeCount": "{count}个徽章",
+    "editProfile": "编辑资料",
+    "bio": "简介",
+    "bioPlaceholder": "写一句自我介绍吧"
+  },
+  "settings": {
+    "title": "设置",
+    "subtitle": "根据自己调整学习环境。",
+    "studySettings": "学习设置",
+    "studySettingsDesc": "设置每日作业生成时间和计时器默认值",
+    "homeworkTime": "每日作业生成时间",
+    "focusMinutes": "专注时间（分钟）",
+    "breakMinutes": "休息时间（分钟）",
+    "notifications": "接收通知",
+    "discordLink": "Discord绑定",
+    "discordLinkDesc": "绑定Discord账号后将同步XP·徽章，并授予高级角色",
+    "linked": "已绑定",
+    "premium": "高级",
+    "unlink": "解除绑定",
+    "linkDiscord": "绑定Discord账号"
+  },
+  "notFound": {
+    "message": "找不到页面。",
+    "goHome": "返回首页"
+  }
+}

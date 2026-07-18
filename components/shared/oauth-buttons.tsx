@@ -1,10 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { signInWithOAuth } from "@/app/(auth)/actions";
 import { useTransition } from "react";
 
 export function OAuthButtons() {
+  const t = useTranslations("auth");
   const [isPending, startTransition] = useTransition();
 
   return (
@@ -17,7 +19,7 @@ export function OAuthButtons() {
         className="gap-3"
       >
         <GoogleIcon />
-        Google로 계속하기
+        {t("continueWithGoogle")}
       </Button>
       <Button
         type="button"
@@ -27,7 +29,7 @@ export function OAuthButtons() {
         className="gap-3"
       >
         <DiscordIcon />
-        Discord로 계속하기
+        {t("continueWithDiscord")}
       </Button>
     </div>
   );

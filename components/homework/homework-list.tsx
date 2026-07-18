@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,8 @@ interface Item {
 
 export function HomeworkList({ homeworkId, items }: { homeworkId: string; items: Item[] }) {
   const router = useRouter();
+  const t = useTranslations("homework");
+  const tc = useTranslations("common");
   const [localItems, setLocalItems] = useState(items);
   const [pendingId, setPendingId] = useState<string | null>(null);
 
@@ -48,14 +51,14 @@ export function HomeworkList({ homeworkId, items }: { homeworkId: string; items:
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        {completedCount} / {localItems.length} 완료
+        {t("completedProgress", { completed: completedCount, total: localItems.length })}
       </p>
       {localItems.map((item, idx) => (
         <Card key={item.id}>
           <CardContent className="flex flex-col gap-3 p-5">
             <div className="flex items-center justify-between">
               <Badge variant="secondary">
-                {idx + 1}. {item.category}
+                {idx + 1}. {t.has(`categories.${item.category}`) ? t(`categories.${item.category}`) : item.category}
               </Badge>
               {item.is_correct !== null &&
                 (item.is_correct ? (
@@ -87,7 +90,7 @@ export function HomeworkList({ homeworkId, items }: { homeworkId: string; items:
                 }`}
               >
                 <p className="font-medium">
-                  {item.is_correct ? "정답이에요!" : `오답: ${item.user_answer}`}
+                  {item.is_correct ? tc("correct") : t("wrongAnswer", { answer: item.user_answer ?? "" })}
                 </p>
                 {item.questions.explanation && (
                   <p className="mt-1 text-foreground/80">{item.questions.explanation}</p>

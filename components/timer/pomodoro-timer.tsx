@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, RotateCcw, Coffee, BookOpen } from "lucide-react";
@@ -11,14 +12,11 @@ import type { SubjectId } from "@/types";
 const FOCUS_MIN = 25;
 const BREAK_MIN = 5;
 
-const SUBJECTS: { id: SubjectId; label: string }[] = [
-  { id: "math", label: "수학" },
-  { id: "english", label: "영어" },
-  { id: "social", label: "사회" },
-  { id: "science", label: "과학" },
-];
+const SUBJECT_IDS: SubjectId[] = ["math", "english", "social", "science"];
 
 export function PomodoroTimer() {
+  const t = useTranslations("timer");
+  const ts = useTranslations("subjects");
   const [mode, setMode] = useState<"focus" | "break">("focus");
   const [secondsLeft, setSecondsLeft] = useState(FOCUS_MIN * 60);
   const [running, setRunning] = useState(false);
@@ -87,17 +85,17 @@ export function PomodoroTimer() {
     <Card>
       <CardContent className="flex flex-col items-center gap-6 p-8">
         <div className="flex gap-2">
-          {SUBJECTS.map((s) => (
+          {SUBJECT_IDS.map((id) => (
             <button
-              key={s.id}
-              onClick={() => setSubject(s.id)}
+              key={id}
+              onClick={() => setSubject(id)}
               disabled={running}
               className={cn(
                 "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                subject === s.id ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                subject === id ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
               )}
             >
-              {s.label}
+              {ts(id)}
             </button>
           ))}
         </div>
@@ -127,23 +125,23 @@ export function PomodoroTimer() {
             <span className="text-4xl font-bold tabular-nums">
               {mm}:{ss}
             </span>
-            <span className="text-xs text-muted-foreground">{mode === "focus" ? "집중 시간" : "휴식 시간"}</span>
+            <span className="text-xs text-muted-foreground">{mode === "focus" ? t("focusLabel") : t("breakLabel")}</span>
           </div>
         </div>
 
         <div className="flex gap-3">
           <Button size="lg" onClick={() => setRunning((r) => !r)} className="gap-2">
             {running ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            {running ? "일시정지" : "시작"}
+            {running ? t("pause") : t("start")}
           </Button>
           <Button size="lg" variant="outline" onClick={handleStop} className="gap-2">
             <RotateCcw className="h-4 w-4" />
-            종료 및 저장
+            {t("stopAndSave")}
           </Button>
         </div>
 
         <p className="text-xs text-muted-foreground">
-          이번 세션 누적 집중 시간: {completedFocusMinutes}분
+          {t("sessionTotal", { minutes: completedFocusMinutes })}
         </p>
       </CardContent>
     </Card>
