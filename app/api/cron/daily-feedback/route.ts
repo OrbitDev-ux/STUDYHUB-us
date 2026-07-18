@@ -17,6 +17,30 @@ export async function GET(request: Request) {
   const { data: profiles } = await admin.from("profiles").select("id, nickname, target_study_minutes, streak_days");
   const results: { user_id: string; status: string }[] = [];
 
+  // 알림 설정/디스코드 연동 정보를 유저마다 쿼리하는 대신 한 번에 벌크로 가져와 맵으로 조회한다 (N+1 방지).
+  const allUserIds = (profiles ?? []).map((p) => p.id as string);
+  const notificationEnabledByUserId = new Map<string, boolean>();
+  if (allUserIds.length > 0) {
+    const { data: settingsRows } = await admin
+      .from("settings")
+      .select("user_id, notification_enabled")
+      .in("user_id", allUserIds);
+    for (const s of settingsRows ?? []) {
+      notificationEnabledByUserId.set(s.user_id as string, s.notification_enabled as boolean);
+    }
+  }
+  const discordUserIdByUserId = new Map<string, string>();
+  const notifyUserIds = allUserIds.filter((id) => notificationEnabledByUserId.get(id));
+  if (notifyUserIds.length > 0) {
+    const { data: links } = await admin
+      .from("discord_links")
+      .select("user_id, discord_user_id")
+      .in("user_id", notifyUserIds);
+    for (const link of links ?? []) {
+      if (link.discord_user_id) discordUserIdByUserId.set(link.user_id as string, link.discord_user_id as string);
+    }
+  }
+
   for (const profile of profiles ?? []) {
     try {
       const { data: existing } = await admin
@@ -76,25 +100,12 @@ export async function GET(request: Request) {
         ai_message: generated.ai_message,
       });
 
-      const { data: settings } = await admin
-        .from("settings")
-        .select("notification_enabled")
-        .eq("user_id", profile.id)
-        .single();
-
-      if (settings?.notification_enabled) {
-        const { data: discordLink } = await admin
-          .from("discord_links")
-          .select("discord_user_id")
-          .eq("user_id", profile.id)
-          .maybeSingle();
-
-        if (discordLink?.discord_user_id) {
-          await sendDiscordDM(
-            discordLink.discord_user_id,
-            `📊 오늘의 AI 피드백이 도착했어요! 목표 달성률 ${generated.goal_achievement_rate}% — StudyHub에서 확인해보세요.`
-          );
-        }
+      const discordUserId = discordUserIdByUserId.get(profile.id);
+      if (discordUserId) {
+        await sendDiscordDM(
+          discordUserId,
+          `📊 오늘의 AI 피드백이 도착했어요! 목표 달성률 ${generated.goal_achievement_rate}% — StudyHub에서 확인해보세요.`
+        );
       }
 
       results.push({ user_id: profile.id, status: "ok" });

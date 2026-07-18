@@ -34,6 +34,19 @@ export async function GET(request: Request) {
     .filter("homework_time", "gte", `${String(currentHour).padStart(2, "0")}:00`)
     .filter("homework_time", "lt", `${String(currentHour + 1).padStart(2, "0")}:00`);
 
+  // 알림 대상자의 discord_user_id를 유저마다 쿼리하는 대신 한 번에 벌크로 가져와 맵으로 조회한다 (N+1 방지).
+  const notifyUserIds = (dueUsers ?? []).filter((r) => r.notification_enabled).map((r) => r.user_id as string);
+  const discordUserIdByUserId = new Map<string, string>();
+  if (notifyUserIds.length > 0) {
+    const { data: links } = await admin
+      .from("discord_links")
+      .select("user_id, discord_user_id")
+      .in("user_id", notifyUserIds);
+    for (const link of links ?? []) {
+      if (link.discord_user_id) discordUserIdByUserId.set(link.user_id, link.discord_user_id);
+    }
+  }
+
   const results: { user_id: string; status: string }[] = [];
 
   for (const row of dueUsers ?? []) {
@@ -45,6 +58,11 @@ export async function GET(request: Request) {
         exam_date: string | null;
         plan: string;
       };
+      const discordUserId = discordUserIdByUserId.get(userId);
+
+      // 이번 실행에서 새로 만든 게 있을 때만 알림을 보낸다 (크론 재시도로 같은 시간대에
+      // 두 번 호출돼도 이미 존재하면 건너뛰므로, 중복 DM을 막는 기준이기도 하다).
+      let createdSomething = false;
 
       const { data: existingHw } = await admin
         .from("homeworks")
@@ -86,6 +104,7 @@ export async function GET(request: Request) {
 
         if (homework) {
           await insertHomeworkItems(admin, homework.id, generated.items);
+          createdSomething = true;
         }
       }
 
@@ -136,21 +155,14 @@ export async function GET(request: Request) {
             order_index: idx,
           }))
         );
+        createdSomething = true;
       }
 
-      if (row.notification_enabled) {
-        const { data: discordLink } = await admin
-          .from("discord_links")
-          .select("discord_user_id")
-          .eq("user_id", userId)
-          .maybeSingle();
-
-        if (discordLink?.discord_user_id) {
-          await sendDiscordDM(
-            discordLink.discord_user_id,
-            "🎯 오늘의 AI 숙제와 학습 플래너가 준비됐어요! StudyHub에서 확인해보세요."
-          );
-        }
+      if (createdSomething && row.notification_enabled && discordUserId) {
+        await sendDiscordDM(
+          discordUserId,
+          "🎯 오늘의 AI 숙제와 학습 플래너가 준비됐어요! StudyHub에서 확인해보세요."
+        );
       }
 
       results.push({ user_id: userId, status: "ok" });
