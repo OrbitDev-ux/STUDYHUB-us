@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { signInWithEmail } from "../actions";
 import { OAuthButtons } from "@/components/shared/oauth-buttons";
+import { SubmitButton } from "@/components/shared/submit-button";
 
 export async function generateMetadata() {
   const t = await getTranslations("common");
@@ -54,9 +54,7 @@ async function LoginForm({
             <Input id="password" name="password" type="password" required />
           </div>
           {params.error && <p className="text-sm text-destructive">{t("loginError")}</p>}
-          <Button type="submit" className="mt-2">
-            {tc("login")}
-          </Button>
+          <SubmitButton className="mt-2">{tc("login")}</SubmitButton>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">

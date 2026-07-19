@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { signUpWithEmail } from "../actions";
 import { OAuthButtons } from "@/components/shared/oauth-buttons";
+import { SubmitButton } from "@/components/shared/submit-button";
 
 export async function generateMetadata() {
   const t = await getTranslations("common");
@@ -49,6 +49,7 @@ export default async function SignupPage({
             <Input id="password" name="password" type="password" minLength={8} required />
             <p className="text-xs text-muted-foreground">{t("passwordHint")}</p>
           </div>
+<<<<<<< HEAD
           {params.error && (
             <p className="text-sm text-destructive">
               {params.error === "rate_limit" ? t("signupRateLimitError") : t("signupError")}
@@ -57,6 +58,10 @@ export default async function SignupPage({
           <Button type="submit" className="mt-2">
             {t("signupSubmit")}
           </Button>
+=======
+          {params.error && <p className="text-sm text-destructive">{t("signupError")}</p>}
+          <SubmitButton className="mt-2">{t("signupSubmit")}</SubmitButton>
+>>>>>>> ae5f33dde2ef807a9d2a635f85457f4128534f99
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
