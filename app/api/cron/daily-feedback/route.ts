@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { generateDailyFeedback } from "@/lib/ai/feedback";
 import { todayKST } from "@/lib/utils/date";
 import { sendDiscordDM, getDiscordUserIdMap } from "@/lib/discord/bot";
+import { createNotification } from "@/lib/notifications/create";
 import { NextResponse } from "next/server";
 
 /** Vercel Cron에서 매일 23:30 (KST) 경 1회 호출됩니다. */
@@ -90,6 +91,14 @@ export async function GET(request: Request) {
         recommended_next: generated.recommended_next,
         ai_message: generated.ai_message,
       });
+
+      await createNotification(
+        admin,
+        profile.id,
+        "feedback",
+        "오늘의 AI 피드백이 도착했어요",
+        `목표 달성률 ${generated.goal_achievement_rate}% — 오늘 하루를 AI가 정리했어요.`
+      );
 
       const discordUserId = discordUserIdByUserId.get(profile.id);
       if (discordUserId) {

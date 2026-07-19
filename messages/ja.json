@@ -40,6 +40,11 @@
     "greeting": "こんにちは、<b>{nickname}</b>さん",
     "levelTooltip": "次のレベルまであと{remaining}XP（{percent}%）"
   },
+  "notifications": {
+    "title": "通知",
+    "markAllRead": "すべて既読にする",
+    "empty": "通知はありません"
+  },
   "landing": {
     "navSignup": "無料で始める",
     "badge": "毎日の勉強を管理してくれるAI家庭教師",
@@ -93,7 +98,9 @@
     "checkEmail": {
       "title": "メールをご確認ください",
       "description": "認証リンクを送信しました。メール内のリンクをクリックすると登録が完了します。"
-    }
+    },
+    "agreeTerms": "<terms>利用規約</terms>および<privacy>プライバシーポリシー</privacy>に同意します",
+    "termsRequiredError": "利用規約とプライバシーポリシーに同意しないと登録できません。"
   },
   "onboarding": {
     "title": "ようこそ！いくつか教えてください",
@@ -289,6 +296,11 @@
   "notFound": {
     "message": "ページが見つかりません。",
     "goHome": "ホームに戻る"
+  },
+  "routeError": {
+    "title": "問題が発生しました",
+    "description": "一時的なエラーの可能性があります。もう一度お試しください。",
+    "retry": "再試行"
   },
   "maintenance": {
     "title": "メンテナンス中です",

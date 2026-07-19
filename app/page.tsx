@@ -63,8 +63,16 @@ export default async function LandingPage() {
         })}
       </section>
 
-      <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
-        {t("footer", { year: new Date().getFullYear() })}
+      <footer className="flex flex-col items-center gap-2 border-t border-border py-8 text-center text-sm text-muted-foreground">
+        <p>{t("footer", { year: new Date().getFullYear() })}</p>
+        <div className="flex items-center gap-3 text-xs">
+          <Link href="/terms" className="hover:text-foreground hover:underline">
+            이용약관
+          </Link>
+          <Link href="/privacy" className="hover:text-foreground hover:underline">
+            개인정보처리방침
+          </Link>
+        </div>
       </footer>
     </main>
   );

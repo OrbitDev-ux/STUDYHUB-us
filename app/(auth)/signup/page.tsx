@@ -49,9 +49,30 @@ export default async function SignupPage({
             <Input id="password" name="password" type="password" minLength={8} required />
             <p className="text-xs text-muted-foreground">{t("passwordHint")}</p>
           </div>
+          <label className="flex items-start gap-2 text-xs text-muted-foreground">
+            <input type="checkbox" name="agreeTerms" required className="mt-0.5 h-4 w-4 rounded border-input" />
+            <span>
+              {t.rich("agreeTerms", {
+                terms: (chunks) => (
+                  <Link href="/terms" target="_blank" className="font-medium text-primary hover:underline">
+                    {chunks}
+                  </Link>
+                ),
+                privacy: (chunks) => (
+                  <Link href="/privacy" target="_blank" className="font-medium text-primary hover:underline">
+                    {chunks}
+                  </Link>
+                ),
+              })}
+            </span>
+          </label>
           {params.error && (
             <p className="text-sm text-destructive">
-              {params.error === "rate_limit" ? t("signupRateLimitError") : t("signupError")}
+              {params.error === "rate_limit"
+                ? t("signupRateLimitError")
+                : params.error === "terms_required"
+                  ? t("termsRequiredError")
+                  : t("signupError")}
             </p>
           )}
           <SubmitButton className="mt-2">{t("signupSubmit")}</SubmitButton>

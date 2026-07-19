@@ -7,6 +7,7 @@ import { generateDailyHomework } from "@/lib/ai/homework";
 import { insertHomeworkItems } from "@/lib/homework/persist";
 import { getWeakUnitsBySubject } from "@/lib/homework/weak-units";
 import { awardXP, checkAndAwardBadges } from "@/lib/gamification/xp";
+import { notifyNewBadges } from "@/lib/notifications/create";
 import { todayKST } from "@/lib/utils/date";
 import type { SubjectId } from "@/types";
 import { getHomeworkQuestionCount, getUserPlan } from "@/lib/supabase/compat";
@@ -183,6 +184,7 @@ export async function completeHomeworkIfDone(homeworkId: string) {
       .eq("user_id", user.id);
     if (completionError) throw new Error(`숙제 완료 처리 실패: ${completionError.message}`);
     // 숙제 완료 수 기반 배지(homework_100) 판정
-    await checkAndAwardBadges(supabase);
+    const newBadges = await checkAndAwardBadges(supabase);
+    await notifyNewBadges(supabase, user.id, newBadges);
   }
 }

@@ -40,6 +40,11 @@
     "greeting": "Hi, <b>{nickname}</b>",
     "levelTooltip": "{remaining}XP to next level ({percent}%)"
   },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "empty": "No notifications yet"
+  },
   "landing": {
     "navSignup": "Get started free",
     "badge": "Your AI tutor that manages your study every day",
@@ -93,7 +98,9 @@
     "checkEmail": {
       "title": "Check your email",
       "description": "We've sent you a verification link. Click the link in your email to complete signup."
-    }
+    },
+    "agreeTerms": "I agree to the <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>",
+    "termsRequiredError": "You must agree to the Terms of Service and Privacy Policy to sign up."
   },
   "onboarding": {
     "title": "Welcome! Tell us a bit about yourself",
@@ -289,6 +296,11 @@
   "notFound": {
     "message": "Page not found.",
     "goHome": "Back to home"
+  },
+  "routeError": {
+    "title": "Something went wrong",
+    "description": "This might be a temporary issue. Please try again.",
+    "retry": "Try again"
   },
   "maintenance": {
     "title": "Under Maintenance",

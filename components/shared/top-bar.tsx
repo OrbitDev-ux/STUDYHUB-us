@@ -5,11 +5,12 @@ import { Coins, Moon, Sun, LogOut, Zap, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "./theme-provider";
 import { LanguageSwitcher } from "./language-switcher";
+import { NotificationBell, type NotificationRow } from "./notification-bell";
 import { signOut } from "@/app/(auth)/actions";
 import { getLevelProgress } from "@/lib/gamification/level";
 import type { Profile } from "@/types";
 
-export function TopBar({ profile }: { profile: Profile | null }) {
+export function TopBar({ profile, notifications }: { profile: Profile | null; notifications: NotificationRow[] }) {
   const { theme, setTheme } = useTheme();
   const t = useTranslations("topbar");
   const tc = useTranslations("common");
@@ -41,6 +42,7 @@ export function TopBar({ profile }: { profile: Profile | null }) {
         <div className="hidden items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold sm:flex">
           <Coins className="h-3.5 w-3.5 text-warning" /> {profile?.coins ?? 0}
         </div>
+        <NotificationBell initialNotifications={notifications} />
         <LanguageSwitcher />
         <Button
           variant="ghost"
