@@ -40,6 +40,11 @@
     "greeting": "你好，<b>{nickname}</b>",
     "levelTooltip": "距下一等级还需{remaining}XP（{percent}%）"
   },
+  "notifications": {
+    "title": "通知",
+    "markAllRead": "全部标记为已读",
+    "empty": "暂无通知"
+  },
   "landing": {
     "navSignup": "免费开始",
     "badge": "每天为你管理学习的AI家教老师",
@@ -93,7 +98,9 @@
     "checkEmail": {
       "title": "请查收邮箱",
       "description": "我们已发送验证链接。点击邮件中的链接即可完成注册。"
-    }
+    },
+    "agreeTerms": "我同意<terms>服务条款</terms>和<privacy>隐私政策</privacy>",
+    "termsRequiredError": "您必须同意服务条款和隐私政策才能注册。"
   },
   "onboarding": {
     "title": "欢迎！请告诉我们一些信息",
@@ -289,6 +296,11 @@
   "notFound": {
     "message": "找不到页面。",
     "goHome": "返回首页"
+  },
+  "routeError": {
+    "title": "出现了问题",
+    "description": "可能是临时故障，请重试。",
+    "retry": "重试"
   },
   "maintenance": {
     "title": "系统维护中",

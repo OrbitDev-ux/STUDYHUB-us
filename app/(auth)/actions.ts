@@ -46,6 +46,7 @@ export async function signUpWithEmail(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const nickname = String(formData.get("nickname") ?? "").trim();
+  const agreedToTerms = formData.get("agreeTerms") === "on";
 
   if (!email || !password || !nickname) {
     redirect("/signup?error=missing_fields");
@@ -56,6 +57,10 @@ export async function signUpWithEmail(formData: FormData) {
 
   if (nickname.length > 20) {
     redirect("/signup?error=invalid_nickname");
+  }
+
+  if (!agreedToTerms) {
+    redirect("/signup?error=terms_required");
   }
 
   const origin = await getRequestOrigin();

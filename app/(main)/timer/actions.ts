@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { awardXP, bumpStreak, checkAndAwardBadges } from "@/lib/gamification/xp";
+import { notifyNewBadges } from "@/lib/notifications/create";
 import type { SubjectId } from "@/types";
 
 // 한 세션(타이머 종료 1회 호출)에서 인정하는 최대 시간. Server Action은 인증만 되어 있으면
@@ -65,7 +66,8 @@ export async function saveStudySession(input: {
   }
 
   // 연속학습일/얼리버드 배지 판정 (streak, study_sessions 갱신 직후)
-  await checkAndAwardBadges(supabase);
+  const newBadges = await checkAndAwardBadges(supabase);
+  await notifyNewBadges(supabase, user.id, newBadges);
 
   revalidatePath("/dashboard");
   revalidatePath("/timer");

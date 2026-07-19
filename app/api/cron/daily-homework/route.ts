@@ -5,6 +5,7 @@ import { insertHomeworkItems } from "@/lib/homework/persist";
 import { getWeakUnitsBySubject } from "@/lib/homework/weak-units";
 import { todayKST, currentHourKST } from "@/lib/utils/date";
 import { sendDiscordDM, getDiscordUserIdMap } from "@/lib/discord/bot";
+import { createNotification } from "@/lib/notifications/create";
 import { NextResponse } from "next/server";
 import { isMissingColumnError } from "@/lib/supabase/compat";
 
@@ -161,11 +162,21 @@ export async function GET(request: Request) {
         createdSomething = true;
       }
 
-      if (createdSomething && row.notification_enabled && discordUserId) {
-        await sendDiscordDM(
-          discordUserId,
-          "🎯 오늘의 AI 숙제와 학습 플래너가 준비됐어요! StudyHub에서 확인해보세요."
+      if (createdSomething) {
+        await createNotification(
+          admin,
+          userId,
+          "homework",
+          "오늘의 숙제가 준비됐어요",
+          "AI가 오늘의 숙제와 학습 플래너를 만들었어요. 지금 확인해보세요."
         );
+
+        if (row.notification_enabled && discordUserId) {
+          await sendDiscordDM(
+            discordUserId,
+            "🎯 오늘의 AI 숙제와 학습 플래너가 준비됐어요! StudyHub에서 확인해보세요."
+          );
+        }
       }
 
       results.push({ user_id: userId, status: "ok" });

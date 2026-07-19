@@ -40,6 +40,11 @@
     "greeting": "안녕하세요, <b>{nickname}</b>님",
     "levelTooltip": "다음 레벨까지 {remaining}XP ({percent}%)"
   },
+  "notifications": {
+    "title": "알림",
+    "markAllRead": "모두 읽음",
+    "empty": "알림이 없어요"
+  },
   "landing": {
     "navSignup": "무료로 시작하기",
     "badge": "매일 공부를 관리해주는 AI 과외 선생님",
@@ -93,7 +98,9 @@
     "checkEmail": {
       "title": "이메일을 확인해주세요",
       "description": "인증 링크를 보내드렸어요. 이메일의 링크를 클릭하면 가입이 완료됩니다."
-    }
+    },
+    "agreeTerms": "<terms>이용약관</terms> 및 <privacy>개인정보처리방침</privacy>에 동의합니다",
+    "termsRequiredError": "이용약관 및 개인정보처리방침에 동의해야 가입할 수 있어요."
   },
   "onboarding": {
     "title": "반가워요! 몇 가지만 알려주세요",
@@ -289,6 +296,11 @@
   "notFound": {
     "message": "페이지를 찾을 수 없어요.",
     "goHome": "홈으로 돌아가기"
+  },
+  "routeError": {
+    "title": "문제가 발생했어요",
+    "description": "일시적인 오류일 수 있어요. 다시 시도해주세요.",
+    "retry": "다시 시도"
   },
   "maintenance": {
     "title": "점검 중입니다",
