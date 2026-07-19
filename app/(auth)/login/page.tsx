@@ -15,7 +15,7 @@ export async function generateMetadata() {
 export default function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; redirect?: string }>;
+  searchParams: Promise<{ error?: string; redirect?: string; message?: string }>;
 }) {
   return <LoginForm searchParams={searchParams} />;
 }
@@ -23,7 +23,7 @@ export default function LoginPage({
 async function LoginForm({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; redirect?: string }>;
+  searchParams: Promise<{ error?: string; redirect?: string; message?: string }>;
 }) {
   const params = await searchParams;
   const t = await getTranslations("auth");
@@ -36,6 +36,9 @@ async function LoginForm({
         <CardDescription>{t("loginSubtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        {params.message === "password_updated" && (
+          <p className="rounded-xl bg-accent px-3 py-2 text-sm text-accent-foreground">{t("passwordUpdated")}</p>
+        )}
         <OAuthButtons />
         <div className="relative flex items-center py-1">
           <div className="h-px flex-1 bg-border" />
@@ -50,10 +53,23 @@ async function LoginForm({
             <Input id="email" name="email" type="email" placeholder="you@example.com" required />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="password">{tc("password")}</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">{tc("password")}</Label>
+              <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
+                {t("forgotPassword")}
+              </Link>
+            </div>
             <Input id="password" name="password" type="password" required />
           </div>
-          {params.error && <p className="text-sm text-destructive">{t("loginError")}</p>}
+          {params.error && (
+            <p className="text-sm text-destructive">
+              {params.error === "rate_limited"
+                ? t("rateLimitedError")
+                : params.error === "reset_session_expired"
+                  ? t("resetSessionExpiredError")
+                  : t("loginError")}
+            </p>
+          )}
           <SubmitButton className="mt-2">{tc("login")}</SubmitButton>
         </form>
 

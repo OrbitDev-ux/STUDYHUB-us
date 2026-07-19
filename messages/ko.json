@@ -100,7 +100,30 @@
       "description": "인증 링크를 보내드렸어요. 이메일의 링크를 클릭하면 가입이 완료됩니다."
     },
     "agreeTerms": "<terms>이용약관</terms> 및 <privacy>개인정보처리방침</privacy>에 동의합니다",
-    "termsRequiredError": "이용약관 및 개인정보처리방침에 동의해야 가입할 수 있어요."
+    "termsRequiredError": "이용약관 및 개인정보처리방침에 동의해야 가입할 수 있어요.",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
+    "rateLimitedError": "시도가 너무 많아요. 잠시 후 다시 시도해주세요.",
+    "passwordUpdated": "비밀번호가 변경됐어요. 새 비밀번호로 로그인해주세요.",
+    "resetSessionExpiredError": "비밀번호 재설정 링크가 만료됐어요. 다시 요청해주세요.",
+    "forgotPasswordPage": {
+      "title": "비밀번호 재설정",
+      "subtitle": "가입하신 이메일로 재설정 링크를 보내드려요",
+      "submit": "재설정 링크 받기",
+      "error": "요청 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.",
+      "backToLogin": "로그인으로 돌아가기",
+      "sent": {
+        "title": "이메일을 확인해주세요",
+        "description": "해당 이메일로 가입된 계정이 있다면, 비밀번호 재설정 링크를 보내드렸어요. 메일함(스팸함 포함)을 확인해주세요."
+      }
+    },
+    "resetPasswordPage": {
+      "title": "새 비밀번호 설정",
+      "subtitle": "새로 사용할 비밀번호를 입력해주세요",
+      "newPassword": "새 비밀번호",
+      "confirmPassword": "새 비밀번호 확인",
+      "error": "비밀번호 변경에 실패했어요. 다시 시도해주세요.",
+      "mismatchError": "비밀번호가 일치하지 않아요."
+    }
   },
   "onboarding": {
     "title": "반가워요! 몇 가지만 알려주세요",
@@ -291,7 +314,14 @@
     "homeworkQuestionCount": "숙제 문제 수 (5~30문제)",
     "myPlan": "내 플랜",
     "homeworkQuestionCountHint": "현재 플랜에서는 최대 {max}문제까지 설정할 수 있어요.",
-    "notificationsHint": "Discord 계정을 연동해두면 매일 숙제·플래너·피드백이 생성될 때 DM으로 알려드려요."
+    "notificationsHint": "Discord 계정을 연동해두면 매일 숙제·플래너·피드백이 생성될 때 DM으로 알려드려요.",
+    "deleteAccount": {
+      "title": "위험 구역: 계정 삭제",
+      "desc": "계정을 삭제하면 학습 기록, XP, 배지 등 모든 데이터가 영구히 삭제되며 되돌릴 수 없어요.",
+      "warning": "이 작업은 취소할 수 없습니다. 계정과 관련된 모든 데이터(학습 기록, 숙제, XP, 배지, 연동 정보 등)가 즉시 삭제됩니다.",
+      "confirmLabel": "계속하려면 아래에 \"{word}\"를 입력하세요",
+      "button": "계정 영구 삭제"
+    }
   },
   "notFound": {
     "message": "페이지를 찾을 수 없어요.",

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { signInWithOAuth } from "@/app/(auth)/actions";
 import { useTransition } from "react";
 
-export function OAuthButtons() {
+export function OAuthButtons({ disabled = false }: { disabled?: boolean }) {
   const t = useTranslations("auth");
   const [isPending, startTransition] = useTransition();
 
@@ -14,7 +14,7 @@ export function OAuthButtons() {
       <Button
         type="button"
         variant="outline"
-        disabled={isPending}
+        disabled={disabled || isPending}
         onClick={() => startTransition(() => signInWithOAuth("google"))}
         className="gap-3"
       >
@@ -24,7 +24,7 @@ export function OAuthButtons() {
       <Button
         type="button"
         variant="outline"
-        disabled={isPending}
+        disabled={disabled || isPending}
         onClick={() => startTransition(() => signInWithOAuth("discord"))}
         className="gap-3"
       >

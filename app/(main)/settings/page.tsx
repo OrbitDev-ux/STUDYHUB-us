@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { updateSettings, startDiscordLink, unlinkDiscord, setMaintenanceMode } from "./actions";
 import { AdminPlanManager } from "@/components/settings/admin-plan-manager";
+import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 import { planLimits } from "@/lib/plan";
 import { getUserPlan } from "@/lib/supabase/compat";
 
@@ -142,6 +143,16 @@ export default async function SettingsPage() {
               </Button>
             </form>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle className="text-base text-destructive">{t("deleteAccount.title")}</CardTitle>
+          <CardDescription>{t("deleteAccount.desc")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DeleteAccountForm />
         </CardContent>
       </Card>
 

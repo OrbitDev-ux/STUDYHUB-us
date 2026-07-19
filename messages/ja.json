@@ -100,7 +100,30 @@
       "description": "認証リンクを送信しました。メール内のリンクをクリックすると登録が完了します。"
     },
     "agreeTerms": "<terms>利用規約</terms>および<privacy>プライバシーポリシー</privacy>に同意します",
-    "termsRequiredError": "利用規約とプライバシーポリシーに同意しないと登録できません。"
+    "termsRequiredError": "利用規約とプライバシーポリシーに同意しないと登録できません。",
+    "forgotPassword": "パスワードをお忘れですか？",
+    "rateLimitedError": "試行回数が多すぎます。しばらくしてからもう一度お試しください。",
+    "passwordUpdated": "パスワードが変更されました。新しいパスワードでログインしてください。",
+    "resetSessionExpiredError": "パスワード再設定リンクの有効期限が切れています。もう一度リクエストしてください。",
+    "forgotPasswordPage": {
+      "title": "パスワード再設定",
+      "subtitle": "登録済みのメールに再設定リンクをお送りします",
+      "submit": "再設定リンクを送信",
+      "error": "リクエスト処理中に問題が発生しました。しばらくしてからもう一度お試しください。",
+      "backToLogin": "ログインに戻る",
+      "sent": {
+        "title": "メールをご確認ください",
+        "description": "該当のメールで登録されたアカウントがある場合、パスワード再設定リンクをお送りしました。受信トレイ（迷惑メールフォルダも）をご確認ください。"
+      }
+    },
+    "resetPasswordPage": {
+      "title": "新しいパスワードの設定",
+      "subtitle": "新しく使用するパスワードを入力してください",
+      "newPassword": "新しいパスワード",
+      "confirmPassword": "新しいパスワード（確認）",
+      "error": "パスワードの変更に失敗しました。もう一度お試しください。",
+      "mismatchError": "パスワードが一致しません。"
+    }
   },
   "onboarding": {
     "title": "ようこそ！いくつか教えてください",
@@ -291,7 +314,14 @@
     "homeworkQuestionCount": "宿題の問題数（5〜30問）",
     "myPlan": "マイプラン",
     "homeworkQuestionCountHint": "現在のプランでは最大{max}問まで設定できます。",
-    "notificationsHint": "Discordを連携しておくと、毎日の宿題・プランナー・フィードバックが生成されるたびにDMでお知らせします。"
+    "notificationsHint": "Discordを連携しておくと、毎日の宿題・プランナー・フィードバックが生成されるたびにDMでお知らせします。",
+    "deleteAccount": {
+      "title": "危険ゾーン：アカウント削除",
+      "desc": "アカウントを削除すると、学習記録・XP・バッジなどすべてのデータが完全に削除され、元に戻せません。",
+      "warning": "この操作は取り消せません。アカウントに関連するすべてのデータ（学習記録、宿題、XP、バッジ、連携情報など）が即座に削除されます。",
+      "confirmLabel": "続けるには下に「{word}」と入力してください",
+      "button": "アカウントを完全に削除"
+    }
   },
   "notFound": {
     "message": "ページが見つかりません。",

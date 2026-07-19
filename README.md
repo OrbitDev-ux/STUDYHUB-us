@@ -49,8 +49,8 @@ npm install
 
 ### 2. Supabase 프로젝트 생성
 1. [supabase.com](https://supabase.com)에서 새 프로젝트 생성
-2. SQL Editor에서 `supabase/migrations/0001_init.sql` → `0002_leaderboard_and_xp_fix.sql` → `0003_lock_down_profiles_columns.sql` → `0004_badges_and_coins.sql` → `0005_maintenance_mode.sql` → `0006_homework_question_count.sql` → `0007_pricing_plans.sql` → `0008_discord_premium_sync.sql` → `0009_is_admin_helper.sql` → `0010_repair_schema_and_signup.sql` 순서대로 실행
-   (테이블/RLS/시드 데이터 생성 → 레벨/XP/리더보드 함수 → profiles 컬럼 권한 강화 → 배지/코인 지급 함수 → 점검 모드 테이블/함수 → 숙제 문제 수 설정 컬럼 → 유료 플랜 컬럼/함수 → Discord 프리미엄 역할 플랜 연동 → 관리자 권한 체크 공용 함수로 통합)
+2. SQL Editor에서 `supabase/migrations/0001_init.sql` → `0002_leaderboard_and_xp_fix.sql` → `0003_lock_down_profiles_columns.sql` → `0004_badges_and_coins.sql` → `0005_maintenance_mode.sql` → `0006_homework_question_count.sql` → `0007_pricing_plans.sql` → `0008_discord_premium_sync.sql` → `0009_is_admin_helper.sql` → `0010_repair_schema_and_signup.sql` → `0011_auth_rate_limiting.sql` 순서대로 실행
+   (테이블/RLS/시드 데이터 생성 → 레벨/XP/리더보드 함수 → profiles 컬럼 권한 강화 → 배지/코인 지급 함수 → 점검 모드 테이블/함수 → 숙제 문제 수 설정 컬럼 → 유료 플랜 컬럼/함수 → Discord 프리미엄 역할 플랜 연동 → 관리자 권한 체크 공용 함수로 통합 → 스키마 복구 → 로그인/가입 rate limiting용 테이블)
    `0010`은 일부 운영 DB에서 중간 마이그레이션이 누락된 경우를 복구하는 멱등
    마이그레이션이므로, 이미 최신 상태인 DB에서도 안전하게 실행할 수 있습니다.
 3. Authentication > Providers에서 Google, Discord OAuth 활성화 (선택)
