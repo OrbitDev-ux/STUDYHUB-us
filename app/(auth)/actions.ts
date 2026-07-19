@@ -16,6 +16,7 @@ export async function signInWithEmail(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
+    console.error("[login] Supabase signInWithPassword failed:", error.status, error.message);
     redirect("/login?error=invalid_credentials");
   }
 
@@ -46,6 +47,7 @@ export async function signUpWithEmail(formData: FormData) {
   });
 
   if (error) {
+    console.error("[signup] Supabase signUp failed:", error.status, error.message);
     redirect(`/signup?error=${encodeURIComponent(error.message)}`);
   }
 
@@ -64,6 +66,7 @@ export async function signInWithOAuth(provider: "google" | "discord") {
   });
 
   if (error || !data.url) {
+    console.error("[oauth] Supabase signInWithOAuth failed:", provider, error?.status, error?.message);
     redirect("/login?error=oauth_failed");
   }
 
