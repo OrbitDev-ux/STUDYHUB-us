@@ -100,7 +100,30 @@
       "description": "We've sent you a verification link. Click the link in your email to complete signup."
     },
     "agreeTerms": "I agree to the <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>",
-    "termsRequiredError": "You must agree to the Terms of Service and Privacy Policy to sign up."
+    "termsRequiredError": "You must agree to the Terms of Service and Privacy Policy to sign up.",
+    "forgotPassword": "Forgot password?",
+    "rateLimitedError": "Too many attempts. Please try again later.",
+    "passwordUpdated": "Your password has been changed. Please sign in with your new password.",
+    "resetSessionExpiredError": "Your password reset link has expired. Please request a new one.",
+    "forgotPasswordPage": {
+      "title": "Reset your password",
+      "subtitle": "We'll send a reset link to your registered email",
+      "submit": "Send reset link",
+      "error": "Something went wrong. Please try again shortly.",
+      "backToLogin": "Back to login",
+      "sent": {
+        "title": "Check your email",
+        "description": "If an account exists for that email, we've sent a password reset link. Check your inbox (and spam folder)."
+      }
+    },
+    "resetPasswordPage": {
+      "title": "Set a new password",
+      "subtitle": "Enter the new password you'd like to use",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "error": "Failed to update password. Please try again.",
+      "mismatchError": "Passwords don't match."
+    }
   },
   "onboarding": {
     "title": "Welcome! Tell us a bit about yourself",
@@ -291,7 +314,14 @@
     "homeworkQuestionCount": "Homework question count (5-30)",
     "myPlan": "My Plan",
     "homeworkQuestionCountHint": "Your current plan allows up to {max} questions.",
-    "notificationsHint": "If your Discord is linked, we'll DM you whenever daily homework, planner, or feedback is generated."
+    "notificationsHint": "If your Discord is linked, we'll DM you whenever daily homework, planner, or feedback is generated.",
+    "deleteAccount": {
+      "title": "Danger zone: delete account",
+      "desc": "Deleting your account permanently removes all your data (study history, XP, badges) and cannot be undone.",
+      "warning": "This action cannot be undone. All data associated with your account (study history, homework, XP, badges, linked accounts, etc.) will be deleted immediately.",
+      "confirmLabel": "Type \"{word}\" below to continue",
+      "button": "Permanently delete account"
+    }
   },
   "notFound": {
     "message": "Page not found.",

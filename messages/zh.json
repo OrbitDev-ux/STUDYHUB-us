@@ -100,7 +100,30 @@
       "description": "我们已发送验证链接。点击邮件中的链接即可完成注册。"
     },
     "agreeTerms": "我同意<terms>服务条款</terms>和<privacy>隐私政策</privacy>",
-    "termsRequiredError": "您必须同意服务条款和隐私政策才能注册。"
+    "termsRequiredError": "您必须同意服务条款和隐私政策才能注册。",
+    "forgotPassword": "忘记密码？",
+    "rateLimitedError": "尝试次数过多，请稍后重试。",
+    "passwordUpdated": "密码已修改，请使用新密码登录。",
+    "resetSessionExpiredError": "密码重置链接已过期，请重新申请。",
+    "forgotPasswordPage": {
+      "title": "重置密码",
+      "subtitle": "我们会向您注册的邮箱发送重置链接",
+      "submit": "发送重置链接",
+      "error": "请求时出现问题，请稍后重试。",
+      "backToLogin": "返回登录",
+      "sent": {
+        "title": "请查收邮箱",
+        "description": "如果该邮箱已注册，我们已发送密码重置链接。请查收邮箱（包括垃圾邮件文件夹）。"
+      }
+    },
+    "resetPasswordPage": {
+      "title": "设置新密码",
+      "subtitle": "请输入您要使用的新密码",
+      "newPassword": "新密码",
+      "confirmPassword": "确认新密码",
+      "error": "密码修改失败，请重试。",
+      "mismatchError": "两次输入的密码不一致。"
+    }
   },
   "onboarding": {
     "title": "欢迎！请告诉我们一些信息",
@@ -291,7 +314,14 @@
     "homeworkQuestionCount": "作业题目数量（5~30题）",
     "myPlan": "我的方案",
     "homeworkQuestionCountHint": "当前方案最多可设置 {max} 道题目。",
-    "notificationsHint": "绑定Discord账号后，每天生成作业·计划·反馈时会通过私信通知你。"
+    "notificationsHint": "绑定Discord账号后，每天生成作业·计划·反馈时会通过私信通知你。",
+    "deleteAccount": {
+      "title": "危险区域：删除账号",
+      "desc": "删除账号将永久删除学习记录、XP、徽章等所有数据，且无法恢复。",
+      "warning": "此操作无法撤销。与您账号相关的所有数据（学习记录、作业、XP、徽章、绑定信息等）将立即被删除。",
+      "confirmLabel": "请在下方输入「{word}」以继续",
+      "button": "永久删除账号"
+    }
   },
   "notFound": {
     "message": "找不到页面。",

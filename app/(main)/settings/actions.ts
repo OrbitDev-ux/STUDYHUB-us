@@ -139,6 +139,22 @@ export async function setUserPlan(targetUserId: string, plan: string) {
 }
 
 /**
+ * 계정 완전 삭제 (회원 탈퇴). auth.users 행을 지우면 모든 사용자 소유 테이블이
+ * on delete cascade로 함께 삭제된다 (profiles, homeworks, study_sessions,
+ * notifications 등 — 0001 마이그레이션 참고).
+ */
+export async function deleteAccount() {
+  const { supabase, user } = await requireUser();
+
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.deleteUser(user.id);
+  if (error) throw new Error(`계정 삭제 실패: ${error.message}`);
+
+  await supabase.auth.signOut();
+  redirect("/");
+}
+
+/**
  * 점검 모드 on/off. DB의 set_maintenance_mode()가 관리자 권한을 다시 검증하므로
  * 여기서는 별도 권한 체크 없이 그대로 위임한다 (UI는 관리자에게만 노출됨).
  */
