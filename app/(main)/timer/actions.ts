@@ -10,6 +10,7 @@ import type { SubjectId } from "@/types";
 // 누구나 직접 호출할 수 있는 공개 엔드포인트이므로, 클라이언트가 보낸 값을 그대로 믿고
 // XP를 지급하면 위조된 값으로 무제한 XP 획득이 가능하다.
 const MAX_SESSION_MINUTES = 240;
+const SUBJECT_IDS: SubjectId[] = ["math", "english", "social", "science"];
 
 export async function saveStudySession(input: {
   subjectId: SubjectId | null;
@@ -24,6 +25,13 @@ export async function saveStudySession(input: {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  if (input.subjectId !== null && !SUBJECT_IDS.includes(input.subjectId)) {
+    throw new Error("지원하지 않는 과목입니다.");
+  }
+  if (input.mode !== "pomodoro" && input.mode !== "free") {
+    throw new Error("지원하지 않는 타이머 모드입니다.");
+  }
+
   const focusMinutes = Math.min(
     Math.max(0, Math.round(Number.isFinite(input.focusMinutes) ? input.focusMinutes : 0)),
     MAX_SESSION_MINUTES
@@ -36,7 +44,7 @@ export async function saveStudySession(input: {
   const now = new Date();
   const startedAt = new Date(now.getTime() - focusMinutes * 60000).toISOString();
 
-  await supabase.from("study_sessions").insert({
+  const { error: sessionError } = await supabase.from("study_sessions").insert({
     user_id: user.id,
     subject_id: input.subjectId,
     mode: input.mode,
@@ -46,6 +54,7 @@ export async function saveStudySession(input: {
     break_minutes: breakMinutes,
     interrupted: input.interrupted,
   });
+  if (sessionError) throw new Error(`학습 기록 저장 실패: ${sessionError.message}`);
 
   // 연속 학습일 갱신 (원자적 RPC - 동시 세션 저장 시 레이스 컨디션 방지)
   await bumpStreak(supabase);

@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Sparkles, TrendingUp } from "lucide-react";
 import { planLimits } from "@/lib/plan";
 import { StudyChart } from "@/components/report/study-chart";
+import { getUserPlan } from "@/lib/supabase/compat";
 
 export async function generateMetadata() {
   const t = await getTranslations("report");
@@ -25,8 +26,8 @@ export default async function ReportPage() {
 
   const todayFeedback = await ensureTodayFeedback();
 
-  const { data: profile } = await supabase.from("profiles").select("plan").eq("id", user.id).single();
-  const historyLimit = planLimits(profile?.plan).reportHistoryLimit;
+  const currentPlan = await getUserPlan(supabase, user.id);
+  const historyLimit = planLimits(currentPlan).reportHistoryLimit;
 
   const { data: history } = await supabase
     .from("daily_feedback")

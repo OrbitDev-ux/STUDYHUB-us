@@ -10,7 +10,8 @@ export async function awardXP(supabase: SupabaseClient, amount: number, reason: 
 
   if (error) throw new Error(`XP 지급 실패: ${error.message}`);
 
-  return data as { new_xp: number; new_level: number; leveled_up: boolean; new_coins: number };
+  const result = data as { new_xp: number; new_level: number; leveled_up: boolean; new_coins?: number };
+  return { ...result, new_coins: result.new_coins ?? 0 };
 }
 
 /**
@@ -21,6 +22,12 @@ export async function awardXP(supabase: SupabaseClient, amount: number, reason: 
 export async function checkAndAwardBadges(supabase: SupabaseClient) {
   const { data, error } = await supabase.rpc("check_and_award_badges");
 
+  // 0004 마이그레이션이 아직 반영되지 않은 환경에서는 핵심 학습 기록/XP까지
+  // 실패시키지 않고 배지 판정만 건너뛴다. 0010 적용 후 자동으로 정상 지급된다.
+  if (error?.code === "PGRST202") {
+    console.warn("[gamification] check_and_award_badges RPC가 없어 배지 판정을 건너뜁니다.");
+    return [];
+  }
   if (error) throw new Error(`배지 판정 실패: ${error.message}`);
 
   return (data ?? []) as { code: string; name: string }[];

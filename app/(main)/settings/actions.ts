@@ -8,6 +8,7 @@ import { randomBytes } from "crypto";
 import { DISCORD_OAUTH_STATE_COOKIE } from "@/lib/discord/oauth";
 import { notifyMaintenanceModeChange } from "@/lib/discord/webhook";
 import { planLimits, isPlan } from "@/lib/plan";
+import { getUserPlan, isMissingColumnError } from "@/lib/supabase/compat";
 
 /** 로그인 사용자를 요구하는 서버 액션들의 공통 진입부 — 없으면 로그인 페이지로 보낸다. */
 async function requireUser() {
@@ -19,35 +20,49 @@ async function requireUser() {
   return { supabase, user };
 }
 
+function boundedInteger(value: FormDataEntryValue | null, fallback: number, min: number, max: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.min(max, Math.max(min, Math.round(parsed))) : fallback;
+}
+
 export async function updateSettings(formData: FormData) {
   const { supabase, user } = await requireUser();
 
-  const { data: profile } = await supabase.from("profiles").select("plan").eq("id", user.id).single();
-  const maxQuestions = planLimits(profile?.plan).homeworkQuestionMax;
+  const currentPlan = await getUserPlan(supabase, user.id);
+  const maxQuestions = planLimits(currentPlan).homeworkQuestionMax;
 
-  const homework_time = String(formData.get("homework_time") ?? "07:00");
+  const requestedHomeworkTime = String(formData.get("homework_time") ?? "07:00");
+  const homework_time = /^([01]\d|2[0-3]):[0-5]\d$/.test(requestedHomeworkTime) ? requestedHomeworkTime : "07:00";
   const notification_enabled = formData.get("notification_enabled") === "on";
-  const pomodoro_focus_min = Number(formData.get("pomodoro_focus_min") ?? 25);
-  const pomodoro_break_min = Number(formData.get("pomodoro_break_min") ?? 5);
+  const pomodoro_focus_min = boundedInteger(formData.get("pomodoro_focus_min"), 25, 1, 240);
+  const pomodoro_break_min = boundedInteger(formData.get("pomodoro_break_min"), 5, 1, 60);
   // DB 체크 제약(5~30)을 벗어나면 UPDATE 전체가 거부되어 다른 필드까지 저장되지 않으므로 미리 clamp.
   // 플랜 상한도 함께 적용 (예: free는 10문제까지만).
-  const homework_question_count = Math.min(
-    maxQuestions,
-    Math.max(5, Number(formData.get("homework_question_count") ?? 10))
-  );
+  const homework_question_count = boundedInteger(formData.get("homework_question_count"), 10, 5, maxQuestions);
 
-  await supabase
+  const baseSettings = { homework_time, notification_enabled, pomodoro_focus_min, pomodoro_break_min };
+  const { error } = await supabase
     .from("settings")
-    .update({ homework_time, notification_enabled, pomodoro_focus_min, pomodoro_break_min, homework_question_count })
+    .update({ ...baseSettings, homework_question_count })
     .eq("user_id", user.id);
+
+  // 구버전 DB에서는 새 컬럼만 제외하고 나머지 설정은 정상 저장한다.
+  if (isMissingColumnError(error)) {
+    const { error: fallbackError } = await supabase.from("settings").update(baseSettings).eq("user_id", user.id);
+    if (fallbackError) throw new Error(`설정 저장 실패: ${fallbackError.message}`);
+  } else if (error) {
+    throw new Error(`설정 저장 실패: ${error.message}`);
+  }
 
   revalidatePath("/settings");
 }
 
 /** Discord OAuth 연동 시작 (Supabase의 identity linking이 아닌, 별도 Discord 봇 연동용 OAuth) */
 export async function startDiscordLink() {
-  const origin = (await headers()).get("origin");
+  const requestHeaders = await headers();
+  const origin = (requestHeaders.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const clientId = process.env.DISCORD_CLIENT_ID;
+  if (!clientId) throw new Error("Discord OAuth 설정이 누락되었습니다.");
   const redirectUri = encodeURIComponent(`${origin}/api/discord/callback`);
 
   // OAuth 로그인 CSRF 방지용 state. 콜백에서 쿠키 값과 대조해 검증한다.
@@ -101,10 +116,14 @@ export async function findUserByEmail(
   }
   if (!authUser) return null;
 
-  const { data: profile } = await admin.from("profiles").select("nickname, plan").eq("id", authUser.id).single();
+  const [{ data: profile, error: profileError }, currentPlan] = await Promise.all([
+    admin.from("profiles").select("nickname").eq("id", authUser.id).single(),
+    getUserPlan(admin, authUser.id),
+  ]);
+  if (profileError) throw new Error(`사용자 프로필 조회 실패: ${profileError.message}`);
   if (!profile) return null;
 
-  return { id: authUser.id, nickname: profile.nickname, plan: profile.plan, email: authUser.email ?? "" };
+  return { id: authUser.id, nickname: profile.nickname, plan: currentPlan, email: authUser.email ?? "" };
 }
 
 /** 특정 유저의 플랜 변경 (관리자 전용). DB의 set_user_plan()이 관리자 권한을 다시 검증한다. */

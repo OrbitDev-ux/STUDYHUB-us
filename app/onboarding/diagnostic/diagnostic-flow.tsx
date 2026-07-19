@@ -15,7 +15,7 @@ import { Loader2, CheckCircle2 } from "lucide-react";
 
 const SUBJECT_IDS: SubjectId[] = ["math", "english", "social", "science"];
 
-type Phase = "loading" | "answering" | "grading" | "result";
+type Phase = "loading" | "answering" | "grading" | "result" | "error";
 
 export function DiagnosticFlow() {
   const router = useRouter();
@@ -31,17 +31,25 @@ export function DiagnosticFlow() {
     null
   );
   const [started, setStarted] = useState(false);
+  const [failedAction, setFailedAction] = useState<"load" | "submit" | null>(null);
 
   const subjectId = SUBJECT_IDS[subjectIndex]!;
   const subjectLabel = ts(subjectId);
 
-  async function loadSubject() {
+  async function loadSubject(subject: SubjectId = subjectId) {
     setPhase("loading");
+    setFailedAction(null);
     setQIndex(0);
     setAnswers([]);
-    const qs = await fetchDiagnosticQuestions(subjectId);
-    setQuestions(qs);
-    setPhase("answering");
+    try {
+      const qs = await fetchDiagnosticQuestions(subject);
+      setQuestions(qs);
+      setPhase("answering");
+    } catch (error) {
+      console.error("[diagnostic] question generation failed", error);
+      setFailedAction("load");
+      setPhase("error");
+    }
   }
 
   async function handleAnswer(choice: string) {
@@ -57,20 +65,28 @@ export function DiagnosticFlow() {
         correct: next[i] === q.answer,
         difficulty: q.difficulty,
       }));
-      const result = await submitDiagnosticResult({ subject: subjectId, answered });
-      setSummary({
-        grade: result.analysis.predicted_grade,
-        band: result.analysis.percentile_band,
-        message: result.analysis.ai_summary,
-      });
-      setPhase("result");
+      try {
+        const result = await submitDiagnosticResult({ subject: subjectId, answered });
+        setSummary({
+          grade: result.analysis.predicted_grade,
+          band: result.analysis.percentile_band,
+          message: result.analysis.ai_summary,
+        });
+        setPhase("result");
+      } catch (error) {
+        console.error("[diagnostic] result submission failed", error);
+        setFailedAction("submit");
+        setPhase("error");
+      }
     }
   }
 
   function handleNextSubject() {
     if (subjectIndex + 1 < SUBJECT_IDS.length) {
-      setSubjectIndex(subjectIndex + 1);
-      loadSubject();
+      const nextIndex = subjectIndex + 1;
+      const nextSubject = SUBJECT_IDS[nextIndex]!;
+      setSubjectIndex(nextIndex);
+      loadSubject(nextSubject);
     } else {
       router.push("/dashboard");
       router.refresh();
@@ -182,6 +198,31 @@ export function DiagnosticFlow() {
               <p className="text-sm leading-relaxed text-muted-foreground">{summary.message}</p>
               <Button onClick={handleNextSubject}>
                 {subjectIndex + 1 < SUBJECT_IDS.length ? t("nextSubject") : t("goDashboard")}
+              </Button>
+            </motion.div>
+          )}
+
+          {phase === "error" && (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center gap-4 py-10 text-center"
+            >
+              <p className="text-sm text-destructive">{t("error")}</p>
+              <Button
+                type="button"
+                onClick={() => {
+                  if (failedAction === "submit") {
+                    setQIndex(Math.max(questions.length - 1, 0));
+                    setAnswers((current) => current.slice(0, -1));
+                    setPhase("answering");
+                  } else {
+                    loadSubject();
+                  }
+                }}
+              >
+                {t("retry")}
               </Button>
             </motion.div>
           )}

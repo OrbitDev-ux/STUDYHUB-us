@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { updateSettings, startDiscordLink, unlinkDiscord, setMaintenanceMode } from "./actions";
 import { AdminPlanManager } from "@/components/settings/admin-plan-manager";
 import { planLimits } from "@/lib/plan";
+import { getUserPlan } from "@/lib/supabase/compat";
 
 export async function generateMetadata() {
   const t = await getTranslations("settings");
@@ -27,14 +28,15 @@ export default async function SettingsPage() {
   const ta = await getTranslations("settings.admin");
   const tp = await getTranslations("plan");
 
-  const [{ data: settings }, { data: discordLink }, { data: profile }] = await Promise.all([
+  const [{ data: settings }, { data: discordLink }, { data: profile }, currentPlan] = await Promise.all([
     supabase.from("settings").select("*").eq("user_id", user.id).single(),
     supabase.from("discord_links").select("*").eq("user_id", user.id).maybeSingle(),
-    supabase.from("profiles").select("role, plan").eq("id", user.id).single(),
+    supabase.from("profiles").select("role").eq("id", user.id).single(),
+    getUserPlan(supabase, user.id),
   ]);
 
   const isAdmin = profile?.role === "admin";
-  const maxQuestions = planLimits(profile?.plan).homeworkQuestionMax;
+  const maxQuestions = planLimits(currentPlan).homeworkQuestionMax;
 
   const { data: appSettings } = isAdmin
     ? await supabase.from("app_settings").select("*").eq("id", true).single()
@@ -48,7 +50,7 @@ export default async function SettingsPage() {
           <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Badge variant="secondary">
-          {t("myPlan")}: {tp(profile?.plan ?? "free")}
+          {t("myPlan")}: {tp(currentPlan)}
         </Badge>
       </div>
 

@@ -6,6 +6,15 @@ import { getWeakUnitsBySubject } from "@/lib/homework/weak-units";
 import { todayKST, currentHourKST } from "@/lib/utils/date";
 import { sendDiscordDM, getDiscordUserIdMap } from "@/lib/discord/bot";
 import { NextResponse } from "next/server";
+import { isMissingColumnError } from "@/lib/supabase/compat";
+
+type DueUserRow = {
+  user_id: string;
+  homework_time: string;
+  homework_question_count?: number | null;
+  notification_enabled: boolean;
+  profiles: unknown;
+};
 
 /**
  * Vercel Cron 등에서 매시간 호출됩니다.
@@ -25,20 +34,41 @@ export async function GET(request: Request) {
   // UTC 시(getUTCHours)가 아니라 KST 시로 비교해야 한다.
   const currentHour = currentHourKST();
 
-  const { data: dueUsers } = await admin
+  const hourStart = `${String(currentHour).padStart(2, "0")}:00:00`;
+  const hourEnd = `${String(currentHour).padStart(2, "0")}:59:59`;
+
+  let { data: dueUsers, error: dueUsersError } = await admin
     .from("settings")
     .select(
       "user_id, homework_time, homework_question_count, notification_enabled, profiles(grade_level, target_study_minutes, exam_date, plan)"
     )
-    .filter("homework_time", "gte", `${String(currentHour).padStart(2, "0")}:00`)
-    .filter("homework_time", "lt", `${String(currentHour + 1).padStart(2, "0")}:00`);
+    .gte("homework_time", hourStart)
+    .lte("homework_time", hourEnd);
 
-  const notifyUserIds = (dueUsers ?? []).filter((r) => r.notification_enabled).map((r) => r.user_id as string);
+  // 최신 컬럼이 누락된 구버전 DB에서도 무료 플랜/기본 10문제로 크론을 계속 실행한다.
+  if (isMissingColumnError(dueUsersError)) {
+    const fallback = await admin
+      .from("settings")
+      .select("user_id, homework_time, notification_enabled, profiles(grade_level, target_study_minutes, exam_date)")
+      .gte("homework_time", hourStart)
+      .lte("homework_time", hourEnd);
+    dueUsers = fallback.data as typeof dueUsers;
+    dueUsersError = fallback.error;
+  }
+
+  if (dueUsersError) {
+    console.error("[cron/daily-homework] 사용자 설정 조회 실패:", dueUsersError.message);
+    return NextResponse.json({ error: "settings_query_failed" }, { status: 500 });
+  }
+
+  const rows = (dueUsers ?? []) as unknown as DueUserRow[];
+
+  const notifyUserIds = rows.filter((r) => r.notification_enabled).map((r) => r.user_id);
   const discordUserIdByUserId = await getDiscordUserIdMap(admin, notifyUserIds);
 
   const results: { user_id: string; status: string }[] = [];
 
-  for (const row of dueUsers ?? []) {
+  for (const row of rows) {
     try {
       const userId = row.user_id as string;
       const profile = row.profiles as unknown as {
@@ -103,13 +133,17 @@ export async function GET(request: Request) {
         });
 
         const totalMinutes = plan.items.reduce((s, i) => s + i.planned_minutes, 0);
-        const { data: planRow } = await admin
+        const { data: planRow, error: planRowError } = await admin
           .from("study_plans")
           .insert({ user_id: userId, date: today, total_planned_minutes: totalMinutes, ai_summary: plan.summary })
           .select("id")
           .single();
 
-        await admin.from("study_plan_items").insert(
+        if (planRowError || !planRow) {
+          throw new Error(`플래너 저장 실패: ${planRowError?.message ?? "unknown error"}`);
+        }
+
+        const { error: planItemsError } = await admin.from("study_plan_items").insert(
           plan.items.map((item, idx) => ({
             plan_id: planRow!.id,
             subject_id: item.subject_id,
@@ -120,6 +154,10 @@ export async function GET(request: Request) {
             order_index: idx,
           }))
         );
+        if (planItemsError) {
+          await admin.from("study_plans").delete().eq("id", planRow.id).eq("user_id", userId);
+          throw new Error(`플래너 항목 저장 실패: ${planItemsError.message}`);
+        }
         createdSomething = true;
       }
 

@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { generateDailyStudyPlan } from "@/lib/ai/planner";
@@ -59,7 +59,10 @@ export async function ensureTodayPlan() {
 
   if (error || !plan) throw new Error(error?.message ?? "플래너 생성 실패");
 
-  await supabase.from("study_plan_items").insert(
+  // study_plan_items에는 부모 소유권 기반 INSERT 정책이 없을 수 있으므로, 서버가 방금
+  // 만든 본인 plan에 한해서 service role로 항목을 저장한다.
+  const admin = createAdminClient();
+  const { error: itemsError } = await admin.from("study_plan_items").insert(
     generated.items.map((item, idx) => ({
       plan_id: plan.id,
       subject_id: item.subject_id,
@@ -70,13 +73,22 @@ export async function ensureTodayPlan() {
       order_index: idx,
     }))
   );
+  if (itemsError) {
+    await admin.from("study_plans").delete().eq("id", plan.id).eq("user_id", user.id);
+    throw new Error(`플래너 항목 저장 실패: ${itemsError.message}`);
+  }
 
-  revalidatePath("/planner");
   return plan.id as string;
 }
 
 export async function togglePlanItem(itemId: string, completed: boolean) {
   const supabase = await createClient();
-  await supabase.from("study_plan_items").update({ completed }).eq("id", itemId);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { error } = await supabase.from("study_plan_items").update({ completed }).eq("id", itemId);
+  if (error) throw new Error(`플래너 상태 변경 실패: ${error.message}`);
   revalidatePath("/planner");
 }

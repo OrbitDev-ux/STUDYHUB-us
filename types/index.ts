@@ -17,6 +17,7 @@ export interface Profile {
   streak_days: number;
   last_study_date: string | null;
   role: "user" | "admin";
+  plan: "free" | "basic" | "pro";
 }
 
 export interface WeakUnit {

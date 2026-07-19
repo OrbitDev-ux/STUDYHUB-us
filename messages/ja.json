@@ -85,6 +85,7 @@
     "nicknamePlaceholder": "勉強マスター",
     "passwordHint": "8文字以上入力してください",
     "signupError": "登録中に問題が発生しました。もう一度お試しください。",
+    "signupRateLimitError": "確認メールのリクエストが多すぎます。しばらくしてからもう一度お試しください。",
     "signupSubmit": "登録して診断評価を始める",
     "haveAccount": "すでにアカウントをお持ちですか？",
     "continueWithGoogle": "Googleで続ける",
@@ -129,6 +130,8 @@
     "subjectResult": "{subject}診断結果",
     "loadingQuestions": "AIが最適な問題を出題しています...",
     "loadingAnalysis": "正誤パターンを分析して予想成績を計算しています...",
+    "error": "AI処理中に問題が発生しました。しばらくしてからもう一度お試しください。",
+    "retry": "もう一度試す",
     "nextSubject": "次の科目を診断する",
     "goDashboard": "ダッシュボードへ移動",
     "pageTitle": "AI診断評価"

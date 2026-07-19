@@ -44,6 +44,7 @@ async function LoginForm({
         </div>
 
         <form action={signInWithEmail} className="flex flex-col gap-4">
+          <input type="hidden" name="redirect" value={params.redirect ?? "/dashboard"} />
           <div className="flex flex-col gap-2">
             <Label htmlFor="email">{tc("email")}</Label>
             <Input id="email" name="email" type="email" placeholder="you@example.com" required />

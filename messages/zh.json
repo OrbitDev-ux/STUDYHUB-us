@@ -85,6 +85,7 @@
     "nicknamePlaceholder": "学习达人",
     "passwordHint": "请输入至少8个字符",
     "signupError": "注册时出现问题，请重试。",
+    "signupRateLimitError": "验证邮件请求过多，请稍后重试。",
     "signupSubmit": "注册并开始诊断评估",
     "haveAccount": "已经有账号了？",
     "continueWithGoogle": "使用Google继续",
@@ -129,6 +130,8 @@
     "subjectResult": "{subject}诊断结果",
     "loadingQuestions": "AI正在出题…",
     "loadingAnalysis": "正在分析答题规律并计算预测成绩…",
+    "error": "AI 处理时出现问题，请稍后重试。",
+    "retry": "重试",
     "nextSubject": "下一科目诊断",
     "goDashboard": "前往仪表盘",
     "pageTitle": "AI诊断评估"

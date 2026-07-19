@@ -85,6 +85,7 @@
     "nicknamePlaceholder": "공부왕",
     "passwordHint": "8자 이상 입력해주세요",
     "signupError": "가입 중 문제가 발생했어요. 다시 시도해주세요.",
+    "signupRateLimitError": "인증 메일 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
     "signupSubmit": "가입하고 진단평가 시작하기",
     "haveAccount": "이미 계정이 있나요?",
     "continueWithGoogle": "Google로 계속하기",
@@ -129,6 +130,8 @@
     "subjectResult": "{subject} 진단 결과",
     "loadingQuestions": "AI가 맞춤 문제를 출제하고 있어요...",
     "loadingAnalysis": "정오답 패턴을 분석해서 예상 등급을 계산하고 있어요...",
+    "error": "AI 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+    "retry": "다시 시도",
     "nextSubject": "다음 과목 진단받기",
     "goDashboard": "대시보드로 이동",
     "pageTitle": "AI 진단평가"

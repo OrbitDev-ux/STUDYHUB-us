@@ -85,6 +85,7 @@
     "nicknamePlaceholder": "StudyMaster",
     "passwordHint": "Use at least 8 characters",
     "signupError": "Something went wrong during signup. Please try again.",
+    "signupRateLimitError": "Too many verification emails were requested. Please try again shortly.",
     "signupSubmit": "Sign up and start diagnostic",
     "haveAccount": "Already have an account?",
     "continueWithGoogle": "Continue with Google",
@@ -129,6 +130,8 @@
     "subjectResult": "{subject} results",
     "loadingQuestions": "AI is generating personalized questions...",
     "loadingAnalysis": "Analyzing your answer patterns to predict your grade...",
+    "error": "Something went wrong while processing with AI. Please try again shortly.",
+    "retry": "Try again",
     "nextSubject": "Next subject",
     "goDashboard": "Go to dashboard",
     "pageTitle": "AI Diagnostic"

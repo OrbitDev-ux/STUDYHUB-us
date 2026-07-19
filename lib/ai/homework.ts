@@ -24,13 +24,36 @@ interface HomeworkGenerationInput {
   plan: string | null | undefined;
 }
 
+function fallbackHomeworkItem(
+  subject: SubjectId,
+  index: number,
+  unitName: string,
+  category: GeneratedHomeworkItem["category"]
+): GeneratedHomeworkItem {
+  const difficulty = (index % 3) + 1;
+  if (subject === "math") {
+    const left = index + 3;
+    const right = (index % 5) + 2;
+    const answer = String(left * right);
+    return { content: `${left} × ${right}의 값은 무엇인가요?`, type: "multiple_choice", choices: [String(left + right), answer, String(left * right + 1), String(left * right - 1)], answer, explanation: `${left}를 ${right}번 더하면 ${answer}입니다.`, subject_id: subject, unit_name: unitName, category, difficulty };
+  }
+  if (subject === "english") {
+    return { content: "빈칸에 알맞은 말은? She ___ kind.", type: "multiple_choice", choices: ["am", "is", "are", "be"], answer: "is", explanation: "3인칭 단수 주어 She 뒤에는 is를 씁니다.", subject_id: subject, unit_name: unitName, category, difficulty };
+  }
+  if (subject === "social") {
+    return { content: "국민이 대표자를 직접 선택하는 제도는 무엇인가요?", type: "multiple_choice", choices: ["선거", "재판", "조세", "무역"], answer: "선거", explanation: "선거는 국민이 대표자를 선택하는 민주주의의 기본 제도입니다.", subject_id: subject, unit_name: unitName, category, difficulty };
+  }
+  return { content: "식물이 빛을 이용해 양분을 만드는 과정은 무엇인가요?", type: "multiple_choice", choices: ["광합성", "증발", "응결", "연소"], answer: "광합성", explanation: "식물은 빛에너지를 이용한 광합성으로 양분을 만듭니다.", subject_id: subject, unit_name: unitName, category, difficulty };
+}
+
 /** 매일 숙제 자동 생성 — 취약 단원 + 오답 복습 위주, 총 문제 수는 사용자 설정(플랜 상한 이내)을 따른다 */
 export async function generateDailyHomework(
   input: HomeworkGenerationInput
 ): Promise<{ rationale: string; items: GeneratedHomeworkItem[] }> {
   // 호출부마다 플랜 상한을 따로 적용하면 클램프를 빼먹은 경로가 생길 수 있으므로,
   // 생성 함수 자체에서 항상 적용한다.
-  const questionCount = Math.min(input.requestedQuestionCount, planLimits(input.plan).homeworkQuestionMax);
+  const requestedCount = Number.isFinite(input.requestedQuestionCount) ? Math.round(input.requestedQuestionCount) : 10;
+  const questionCount = Math.max(5, Math.min(requestedCount, planLimits(input.plan).homeworkQuestionMax));
 
   // 최근 오답이 없으면(예: 크론 경로는 항상 빈 배열로 호출) 복습 문제를 요구하지 않는다.
   // 데이터 없이 "오답 복습 N개 필수"를 강제하면 AI가 없는 오답을 지어내게 된다.
@@ -77,6 +100,21 @@ JSON 스키마:
   ]
 }`,
     maxTokens: Math.min(8000, 1500 + questionCount * 220),
+    fallback: () => {
+      const subjects: SubjectId[] = ["math", "english", "social", "science"];
+      const items = Array.from({ length: questionCount }, (_, index) => {
+        const wrong = input.wrongQuestionSummaries[index];
+        const subject = wrong?.subject ?? subjects[index % subjects.length]!;
+        const weak = input.weakUnitsBySubject.find((row) => row.subject === subject)?.units[0];
+        const unitName = wrong?.unit ?? weak ?? ({ math: "수와 연산", english: "영어 문법", social: "민주 정치", science: "생명과학" }[subject]);
+        const category: GeneratedHomeworkItem["category"] = index < reviewCount ? "오답복습" : subject === "english" && index % 2 === 0 ? "단어" : "신규";
+        return fallbackHomeworkItem(subject, index, unitName, category);
+      });
+      return {
+        rationale: "현재 학습 정보와 취약 단원을 바탕으로 네 과목을 균형 있게 연습하도록 구성했습니다. 기본 개념을 확인한 뒤 점차 난이도를 높여보세요.",
+        items,
+      };
+    },
   });
 }
 
@@ -105,5 +143,6 @@ export async function generateSimilarQuestion(original: {
   "difficulty": ${original.difficulty}
 }`,
     maxTokens: 1000,
+    fallback: () => fallbackHomeworkItem(original.subject_id, 1, original.unit_name, "오답복습"),
   });
 }

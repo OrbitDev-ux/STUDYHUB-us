@@ -49,7 +49,11 @@ export default async function SignupPage({
             <Input id="password" name="password" type="password" minLength={8} required />
             <p className="text-xs text-muted-foreground">{t("passwordHint")}</p>
           </div>
-          {params.error && <p className="text-sm text-destructive">{t("signupError")}</p>}
+          {params.error && (
+            <p className="text-sm text-destructive">
+              {params.error === "rate_limit" ? t("signupRateLimitError") : t("signupError")}
+            </p>
+          )}
           <Button type="submit" className="mt-2">
             {t("signupSubmit")}
           </Button>

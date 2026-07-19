@@ -18,6 +18,43 @@ export interface GeneratedQuestion {
   difficulty: number;
 }
 
+function fallbackDiagnosticQuestion(subject: SubjectId, index: number): GeneratedQuestion {
+  if (subject === "math") {
+    const left = index + 2;
+    const right = (index % 7) + 1;
+    const answer = String(left + right);
+    return {
+      content: `${left} + ${right}의 값은 무엇인가요?`,
+      type: "multiple_choice",
+      choices: [String(left + right - 1), answer, String(left + right + 1), String(left + right + 2)],
+      answer,
+      explanation: `${left}와 ${right}를 더하면 ${answer}입니다.`,
+      unit_name: "수와 연산",
+      difficulty: (index % 5) + 1,
+    };
+  }
+
+  const banks: Record<Exclude<SubjectId, "math">, Array<Omit<GeneratedQuestion, "difficulty">>> = {
+    english: [
+      { content: "'apple'의 뜻은 무엇인가요?", type: "multiple_choice", choices: ["사과", "학교", "책", "물"], answer: "사과", explanation: "apple은 사과라는 뜻입니다.", unit_name: "기초 어휘" },
+      { content: "빈칸에 알맞은 말은? I ___ a student.", type: "multiple_choice", choices: ["am", "is", "are", "be"], answer: "am", explanation: "주어 I 뒤에는 am을 씁니다.", unit_name: "be동사" },
+      { content: "'go'의 과거형은 무엇인가요?", type: "multiple_choice", choices: ["goed", "gone", "went", "going"], answer: "went", explanation: "go의 과거형은 went입니다.", unit_name: "동사의 시제" },
+    ],
+    social: [
+      { content: "대한민국의 수도는 어디인가요?", type: "multiple_choice", choices: ["서울", "부산", "대전", "광주"], answer: "서울", explanation: "대한민국의 수도는 서울입니다.", unit_name: "우리나라의 지리" },
+      { content: "국민이 대표를 뽑는 제도는 무엇인가요?", type: "multiple_choice", choices: ["선거", "재판", "조세", "무역"], answer: "선거", explanation: "선거를 통해 국민의 대표를 선출합니다.", unit_name: "민주 정치" },
+      { content: "물건과 서비스를 사고파는 활동은 무엇인가요?", type: "multiple_choice", choices: ["경제 활동", "기상 관측", "문화재 보호", "행정 구역"], answer: "경제 활동", explanation: "생산·분배·소비는 경제 활동에 속합니다.", unit_name: "경제 생활" },
+    ],
+    science: [
+      { content: "물이 표준 기압에서 끓는 온도는 몇 도인가요?", type: "multiple_choice", choices: ["0℃", "50℃", "100℃", "200℃"], answer: "100℃", explanation: "표준 기압에서 물의 끓는점은 100℃입니다.", unit_name: "물질의 상태" },
+      { content: "식물이 빛을 이용해 양분을 만드는 과정은 무엇인가요?", type: "multiple_choice", choices: ["광합성", "호흡", "증발", "응결"], answer: "광합성", explanation: "식물은 광합성으로 양분을 만듭니다.", unit_name: "식물과 에너지" },
+      { content: "지구가 태양 주위를 도는 운동은 무엇인가요?", type: "multiple_choice", choices: ["자전", "공전", "진동", "대류"], answer: "공전", explanation: "지구가 태양 주위를 도는 운동을 공전이라고 합니다.", unit_name: "지구와 우주" },
+    ],
+  };
+  const template = banks[subject][index % banks[subject].length]!;
+  return { ...template, difficulty: (index % 5) + 1 };
+}
+
 /** 1. 진단평가 문항 생성. count는 호출부(fetchDiagnosticQuestions)에서 매번 20~30 사이로 무작위 지정한다. */
 export async function generateDiagnosticQuestions(
   subject: SubjectId,
@@ -44,6 +81,9 @@ export async function generateDiagnosticQuestions(
   ]
 }`,
     maxTokens: Math.min(8000, 1200 + count * 220),
+    fallback: () => ({
+      questions: Array.from({ length: count }, (_, index) => fallbackDiagnosticQuestion(subject, index)),
+    }),
   });
   return result.questions;
 }
@@ -80,5 +120,34 @@ export async function analyzeDiagnosticResult(
   "ai_summary": "3~4문장의 총평. 격려와 구체적 다음 스텝 포함"
 }`,
     maxTokens: 2000,
+    fallback: () => {
+      const score = Math.round((answered.filter((item) => item.correct).length / Math.max(answered.length, 1)) * 100);
+      const grade = score >= 95 ? "A+" : score >= 85 ? "A" : score >= 75 ? "B+" : score >= 65 ? "B" : score >= 55 ? "C+" : score >= 45 ? "C" : "D";
+      const band = score >= 90 ? "상위 10%" : score >= 70 ? "상위 30%" : score >= 50 ? "상위 50%" : score >= 30 ? "상위 70%" : "하위권";
+      const byUnit = new Map<string, { correct: number; total: number }>();
+      for (const item of answered) {
+        const current = byUnit.get(item.unit_name) ?? { correct: 0, total: 0 };
+        current.total += 1;
+        if (item.correct) current.correct += 1;
+        byUnit.set(item.unit_name, current);
+      }
+      const strong_units: StrongUnit[] = [];
+      const weak_units: WeakUnit[] = [];
+      for (const [name, stats] of byUnit) {
+        if (stats.correct / stats.total >= 0.7) {
+          strong_units.push({ unit_id: name, name, reason: "이 단원의 정답률이 높습니다." });
+        } else {
+          weak_units.push({ unit_id: name, name, reason: "이 단원의 오답 비율이 높습니다.", recommendation: "핵심 개념을 복습한 뒤 기본 문제부터 다시 풀어보세요." });
+        }
+      }
+      return {
+        score,
+        predicted_grade: grade,
+        percentile_band: band,
+        strong_units,
+        weak_units,
+        ai_summary: `이번 진단평가 점수는 ${score}점입니다. 잘한 단원은 유지하고, 오답이 많았던 단원은 개념 복습부터 차근차근 시작해보세요.`,
+      };
+    },
   });
 }

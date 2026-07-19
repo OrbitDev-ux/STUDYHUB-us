@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy, Flame, Medal, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { PLANS, PLAN_LIMITS } from "@/lib/plan";
+import { getUserPlan } from "@/lib/supabase/compat";
 
 export async function generateMetadata() {
   const t = await getTranslations("rank");
@@ -32,13 +33,13 @@ export default async function RankPage() {
   const tc = await getTranslations("common");
   const tp = await getTranslations("plan");
 
-  const [{ data: topUsers }, { data: allBadges }, { data: myBadges }, { data: profile }] = await Promise.all([
+  const [{ data: topUsers }, { data: allBadges }, { data: myBadges }, currentPlan] = await Promise.all([
     supabase.rpc("get_leaderboard", { limit_count: 20 }) as unknown as Promise<{
       data: LeaderboardRow[] | null;
     }>,
     supabase.from("badges").select("*"),
     supabase.from("user_badges").select("badge_id").eq("user_id", user.id),
-    supabase.from("profiles").select("plan").eq("id", user.id).single(),
+    getUserPlan(supabase, user.id),
   ]);
 
   const earnedIds = new Set((myBadges ?? []).map((b) => b.badge_id));
@@ -128,7 +129,7 @@ export default async function RankPage() {
         <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {PLANS.map((plan) => {
             const limits = PLAN_LIMITS[plan];
-            const isCurrent = (profile?.plan ?? "free") === plan;
+            const isCurrent = currentPlan === plan;
             return (
               <div
                 key={plan}

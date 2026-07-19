@@ -9,6 +9,7 @@ import { getWeakUnitsBySubject } from "@/lib/homework/weak-units";
 import { awardXP, checkAndAwardBadges } from "@/lib/gamification/xp";
 import { todayKST } from "@/lib/utils/date";
 import type { SubjectId } from "@/types";
+import { getHomeworkQuestionCount, getUserPlan } from "@/lib/supabase/compat";
 
 /** 오늘 숙제가 없으면 AI로 생성해서 DB에 저장 (사용자가 처음 /homework 접속 시 or 크론에서도 호출) */
 export async function ensureTodayHomework() {
@@ -29,9 +30,10 @@ export async function ensureTodayHomework() {
 
   if (existing) return existing.id as string;
 
-  const [{ data: profile }, { data: settings }, weakUnitsBySubject, { data: wrongAnswers }] = await Promise.all([
-    supabase.from("profiles").select("grade_level, target_study_minutes, plan").eq("id", user.id).single(),
-    supabase.from("settings").select("homework_question_count").eq("user_id", user.id).single(),
+  const [{ data: profile }, plan, homeworkQuestionCount, weakUnitsBySubject, { data: wrongAnswers }] = await Promise.all([
+    supabase.from("profiles").select("grade_level, target_study_minutes").eq("id", user.id).single(),
+    getUserPlan(supabase, user.id),
+    getHomeworkQuestionCount(supabase, user.id),
     getWeakUnitsBySubject(supabase, user.id),
     supabase
       .from("wrong_answers")
@@ -54,8 +56,8 @@ export async function ensureTodayHomework() {
     wrongQuestionSummaries: wrongSummaries,
     targetMinutes: profile?.target_study_minutes ?? 60,
     // 설정 저장 이후 플랜이 강등됐을 수도 있으므로 상한 적용은 생성 함수 내부에서 이뤄진다.
-    requestedQuestionCount: settings?.homework_question_count ?? 10,
-    plan: profile?.plan,
+    requestedQuestionCount: homeworkQuestionCount,
+    plan,
   });
 
   const admin = createAdminClient();
@@ -68,9 +70,13 @@ export async function ensureTodayHomework() {
 
   if (hwError || !homework) throw new Error(hwError?.message ?? "숙제 생성 실패");
 
-  await insertHomeworkItems(admin, homework.id, generated.items);
+  try {
+    await insertHomeworkItems(admin, homework.id, generated.items);
+  } catch (error) {
+    await admin.from("homeworks").delete().eq("id", homework.id).eq("user_id", user.id);
+    throw error;
+  }
 
-  revalidatePath("/homework");
   return homework.id as string;
 }
 
@@ -104,10 +110,11 @@ export async function submitHomeworkAnswer(itemId: string, questionId: string, u
 
   const isCorrect = question.answer.trim() === userAnswer.trim();
 
-  await supabase
+  const { error: answerError } = await supabase
     .from("homework_items")
     .update({ user_answer: userAnswer, is_correct: isCorrect, answered_at: new Date().toISOString() })
     .eq("id", itemId);
+  if (answerError) throw new Error(`답안 저장 실패: ${answerError.message}`);
 
   if (!isCorrect) {
     const { data: existingWrong } = await supabase
@@ -118,7 +125,7 @@ export async function submitHomeworkAnswer(itemId: string, questionId: string, u
       .maybeSingle();
 
     if (existingWrong) {
-      await supabase
+      const { error: wrongUpdateError } = await supabase
         .from("wrong_answers")
         .update({
           wrong_count: existingWrong.wrong_count + 1,
@@ -127,21 +134,24 @@ export async function submitHomeworkAnswer(itemId: string, questionId: string, u
           mastered: false,
         })
         .eq("id", existingWrong.id);
+      if (wrongUpdateError) throw new Error(`오답 기록 갱신 실패: ${wrongUpdateError.message}`);
     } else {
-      await supabase.from("wrong_answers").insert({
+      const { error: wrongInsertError } = await supabase.from("wrong_answers").insert({
         user_id: user.id,
         question_id: questionId,
         subject_id: question.subject_id,
         unit_id: question.unit_id,
         user_answer: userAnswer,
       });
+      if (wrongInsertError) throw new Error(`오답 기록 저장 실패: ${wrongInsertError.message}`);
     }
   } else {
-    await supabase
+    const { error: masteredError } = await supabase
       .from("wrong_answers")
       .update({ mastered: true })
       .eq("user_id", user.id)
       .eq("question_id", questionId);
+    if (masteredError) throw new Error(`오답 상태 갱신 실패: ${masteredError.message}`);
 
     await awardXP(supabase, 5, "숙제 정답");
   }
@@ -152,15 +162,26 @@ export async function submitHomeworkAnswer(itemId: string, questionId: string, u
 
 export async function completeHomeworkIfDone(homeworkId: string) {
   const supabase = await createClient();
-  const { data: items } = await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: items, error: itemsError } = await supabase
     .from("homework_items")
     .select("is_correct")
     .eq("homework_id", homeworkId);
+  if (itemsError) throw new Error(`숙제 상태 조회 실패: ${itemsError.message}`);
 
   const list = items ?? [];
   const allAnswered = list.length > 0 && list.every((i) => i.is_correct !== null);
   if (allAnswered) {
-    await supabase.from("homeworks").update({ status: "completed" }).eq("id", homeworkId);
+    const { error: completionError } = await supabase
+      .from("homeworks")
+      .update({ status: "completed" })
+      .eq("id", homeworkId)
+      .eq("user_id", user.id);
+    if (completionError) throw new Error(`숙제 완료 처리 실패: ${completionError.message}`);
     // 숙제 완료 수 기반 배지(homework_100) 판정
     await checkAndAwardBadges(supabase);
   }

@@ -37,5 +37,14 @@ export async function generateDailyFeedback(input: FeedbackInput): Promise<Gener
   "ai_message": "3~4문장의 피드백 메시지. '오늘 OO분 공부했습니다. 목표 달성률 OO%.' 형식으로 시작하고, 향상된 점과 내일 추천사항을 자연스럽게 포함"
 }`,
     maxTokens: 800,
+    fallback: () => {
+      const rate = Math.round((input.studyMinutes / Math.max(input.targetMinutes, 1)) * 100);
+      const nextUnit = input.weakUnits[0] ?? "오늘 틀린 문제";
+      return {
+        goal_achievement_rate: rate,
+        recommended_next: `내일은 ${nextUnit}을(를) 가장 먼저 복습해보세요.`,
+        ai_message: `오늘 ${input.studyMinutes}분 공부했습니다. 목표 달성률은 ${rate}%입니다. 숙제 완료율은 ${input.homeworkCompletionRate}%, 정답률은 ${input.correctRate}%였어요. 오늘의 흐름을 이어 내일도 한 단계씩 꾸준히 학습해보세요.`,
+      };
+    },
   });
 }

@@ -50,5 +50,28 @@ export async function generateDailyStudyPlan(
   ]
 }`,
     maxTokens: 2000,
+    fallback: () => {
+      const subjects: SubjectId[] = ["math", "english", "social", "science"];
+      const targetMinutes = Number.isFinite(input.targetMinutes) ? Math.max(10, Math.round(input.targetMinutes)) : 60;
+      const baseMinutes = Math.floor(targetMinutes / subjects.length);
+      const remainder = targetMinutes % subjects.length;
+      const subjectNames: Record<SubjectId, string> = { math: "수학", english: "영어", social: "사회", science: "과학" };
+      const items = subjects.map((subject, index): GeneratedPlanItem => {
+        const unitName = input.weakUnitsBySubject.find((row) => row.subject === subject)?.units[0] ?? null;
+        const carried = input.yesterdayIncomplete[index];
+        return {
+          subject_id: subject,
+          unit_name: unitName,
+          title: carried ?? `${subjectNames[subject]} ${unitName ? `${unitName} 복습` : "핵심 개념 학습"}`,
+          planned_minutes: baseMinutes + (index < remainder ? 1 : 0),
+          priority: (index === 0 ? 1 : index < 3 ? 2 : 3) as 1 | 2 | 3,
+          type: unitName || carried ? "review" : "new",
+        };
+      });
+      return {
+        summary: "목표 학습시간에 맞춰 네 과목을 균형 있게 배분했습니다. 취약 단원과 전날 미완료 항목을 먼저 학습하세요.",
+        items,
+      };
+    },
   });
 }

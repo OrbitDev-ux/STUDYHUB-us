@@ -2,7 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import { generateDailyFeedback } from "@/lib/ai/feedback";
 import { todayKST } from "@/lib/utils/date";
 
@@ -77,6 +76,5 @@ export async function ensureTodayFeedback() {
     .select("*")
     .single();
 
-  revalidatePath("/report");
   return feedback;
 }

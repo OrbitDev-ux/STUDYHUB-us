@@ -11,20 +11,25 @@ export async function resolveOrCreateUnitId(
   subjectId: string,
   unitName: string
 ): Promise<string | undefined> {
-  const { data: unit } = await admin
+  const { data: unit, error: findError } = await admin
     .from("units")
     .select("id")
     .eq("subject_id", subjectId)
     .eq("name", unitName)
+    .limit(1)
     .maybeSingle();
+
+  if (findError) throw new Error(`단원 조회 실패: ${findError.message}`);
 
   if (unit?.id) return unit.id as string;
 
-  const { data: newUnit } = await admin
+  const { data: newUnit, error: insertError } = await admin
     .from("units")
     .insert({ subject_id: subjectId, name: unitName })
     .select("id")
     .single();
+
+  if (insertError || !newUnit) throw new Error(`단원 저장 실패: ${insertError?.message ?? "unknown error"}`);
 
   return newUnit?.id as string | undefined;
 }
@@ -38,7 +43,7 @@ export async function insertHomeworkItems(
   for (const [i, item] of items.entries()) {
     const unitId = await resolveOrCreateUnitId(admin, item.subject_id, item.unit_name);
 
-    const { data: question } = await admin
+    const { data: question, error: questionError } = await admin
       .from("questions")
       .insert({
         subject_id: item.subject_id,
@@ -54,14 +59,17 @@ export async function insertHomeworkItems(
       .select("id")
       .single();
 
-    if (!question) continue;
+    if (questionError || !question) {
+      throw new Error(`숙제 문제 저장 실패: ${questionError?.message ?? "unknown error"}`);
+    }
 
-    await admin.from("homework_items").insert({
+    const { error: itemError } = await admin.from("homework_items").insert({
       homework_id: homeworkId,
       question_id: question.id,
       subject_id: item.subject_id,
       category: item.category,
       order_index: i,
     });
+    if (itemError) throw new Error(`숙제 항목 저장 실패: ${itemError.message}`);
   }
 }
