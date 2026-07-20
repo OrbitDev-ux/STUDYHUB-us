@@ -3,6 +3,7 @@ import { generateDailyFeedback } from "@/lib/ai/feedback";
 import { todayKST } from "@/lib/utils/date";
 import { sendDiscordDM, getDiscordUserIdMap } from "@/lib/discord/bot";
 import { createNotification } from "@/lib/notifications/create";
+import { computeHomeworkCompletionStats } from "@/lib/homework/completion";
 import { NextResponse } from "next/server";
 
 /** Vercel Cron에서 매일 23:30 (KST) 경 1회 호출됩니다. */
@@ -66,10 +67,7 @@ export async function GET(request: Request) {
         .maybeSingle();
 
       const items = homework?.homework_items ?? [];
-      const answered = items.filter((i: { is_correct: boolean | null }) => i.is_correct !== null);
-      const correct = items.filter((i: { is_correct: boolean | null }) => i.is_correct === true);
-      const completionRate = items.length ? Math.round((answered.length / items.length) * 100) : 0;
-      const correctRate = answered.length ? Math.round((correct.length / answered.length) * 100) : 0;
+      const { completionRate, correctRate } = computeHomeworkCompletionStats(items);
 
       const generated = await generateDailyFeedback({
         nickname: profile.nickname,

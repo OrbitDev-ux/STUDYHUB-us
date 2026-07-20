@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCachedProfile } from "@/lib/supabase/profile";
 import { redirect } from "next/navigation";
 import { SideNav } from "@/components/shared/side-nav";
 import { MobileNav } from "@/components/shared/mobile-nav";
@@ -11,8 +12,8 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: profile }, { data: notifications }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).single(),
+  const [profile, { data: notifications }] = await Promise.all([
+    getCachedProfile(user.id),
     supabase
       .from("notifications")
       .select("id, type, title, body, read, created_at")

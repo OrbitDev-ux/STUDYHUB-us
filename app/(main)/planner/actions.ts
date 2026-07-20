@@ -6,6 +6,7 @@ import { generateDailyStudyPlan } from "@/lib/ai/planner";
 import { getWeakUnitsBySubject } from "@/lib/homework/weak-units";
 import { todayKST } from "@/lib/utils/date";
 import { requireUser } from "@/lib/auth/require-user";
+import { insertStudyPlanItems } from "@/lib/planner/persist";
 
 export async function ensureTodayPlan() {
   const { supabase, user } = await requireUser();
@@ -58,21 +59,7 @@ export async function ensureTodayPlan() {
   // study_plan_items에는 부모 소유권 기반 INSERT 정책이 없을 수 있으므로, 서버가 방금
   // 만든 본인 plan에 한해서 service role로 항목을 저장한다.
   const admin = createAdminClient();
-  const { error: itemsError } = await admin.from("study_plan_items").insert(
-    generated.items.map((item, idx) => ({
-      plan_id: plan.id,
-      subject_id: item.subject_id,
-      title: item.title,
-      planned_minutes: item.planned_minutes,
-      priority: item.priority,
-      type: item.type,
-      order_index: idx,
-    }))
-  );
-  if (itemsError) {
-    await admin.from("study_plans").delete().eq("id", plan.id).eq("user_id", user.id);
-    throw new Error(`플래너 항목 저장 실패: ${itemsError.message}`);
-  }
+  await insertStudyPlanItems(admin, plan.id, user.id, generated.items);
 
   return plan.id as string;
 }

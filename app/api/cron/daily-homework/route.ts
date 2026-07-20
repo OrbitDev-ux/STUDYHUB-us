@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { generateDailyHomework } from "@/lib/ai/homework";
 import { generateDailyStudyPlan } from "@/lib/ai/planner";
 import { insertHomeworkItems } from "@/lib/homework/persist";
+import { insertStudyPlanItems } from "@/lib/planner/persist";
 import { getWeakUnitsBySubject } from "@/lib/homework/weak-units";
 import { todayKST, currentHourKST } from "@/lib/utils/date";
 import { sendDiscordDM, getDiscordUserIdMap } from "@/lib/discord/bot";
@@ -153,21 +154,7 @@ export async function GET(request: Request) {
           throw new Error(`플래너 저장 실패: ${planRowError?.message ?? "unknown error"}`);
         }
 
-        const { error: planItemsError } = await admin.from("study_plan_items").insert(
-          plan.items.map((item, idx) => ({
-            plan_id: planRow!.id,
-            subject_id: item.subject_id,
-            title: item.title,
-            planned_minutes: item.planned_minutes,
-            priority: item.priority,
-            type: item.type,
-            order_index: idx,
-          }))
-        );
-        if (planItemsError) {
-          await admin.from("study_plans").delete().eq("id", planRow.id).eq("user_id", userId);
-          throw new Error(`플래너 항목 저장 실패: ${planItemsError.message}`);
-        }
+        await insertStudyPlanItems(admin, planRow.id, userId, plan.items);
         createdSomething = true;
       }
 

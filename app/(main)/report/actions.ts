@@ -3,6 +3,7 @@
 import { generateDailyFeedback } from "@/lib/ai/feedback";
 import { todayKST } from "@/lib/utils/date";
 import { requireUser } from "@/lib/auth/require-user";
+import { computeHomeworkCompletionStats } from "@/lib/homework/completion";
 
 export async function ensureTodayFeedback() {
   const { supabase, user } = await requireUser();
@@ -32,10 +33,7 @@ export async function ensureTodayFeedback() {
 
   const studyMinutes = (sessions ?? []).reduce((s, x) => s + (x.focus_minutes ?? 0), 0);
   const items = homework?.homework_items ?? [];
-  const answered = items.filter((i: { is_correct: boolean | null }) => i.is_correct !== null);
-  const correct = items.filter((i: { is_correct: boolean | null }) => i.is_correct === true);
-  const completionRate = items.length ? Math.round((answered.length / items.length) * 100) : 0;
-  const correctRate = answered.length ? Math.round((correct.length / answered.length) * 100) : 0;
+  const { completionRate, correctRate } = computeHomeworkCompletionStats(items);
 
   const weakUnits = new Set<string>();
   for (const d of diagnostics ?? []) {

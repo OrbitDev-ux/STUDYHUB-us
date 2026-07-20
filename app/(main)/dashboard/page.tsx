@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCachedProfile } from "@/lib/supabase/profile";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,9 +28,9 @@ export default async function DashboardPage() {
 
   const today = todayKST();
 
-  const [{ data: profile }, { data: stats }, { data: todaySessions }, { data: homework }, { data: recentDiagnostics }] =
+  const [profile, { data: stats }, { data: todaySessions }, { data: homework }, { data: recentDiagnostics }] =
     await Promise.all([
-      supabase.from("profiles").select("*").eq("id", user.id).single(),
+      getCachedProfile(user.id),
       supabase.from("user_subject_stats").select("*").eq("user_id", user.id),
       supabase.from("study_sessions").select("focus_minutes").eq("user_id", user.id).gte("started_at", `${today}T00:00:00+09:00`),
       supabase

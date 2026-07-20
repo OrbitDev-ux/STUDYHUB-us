@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCachedProfile } from "@/lib/supabase/profile";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -29,10 +30,10 @@ export default async function SettingsPage() {
   const ta = await getTranslations("settings.admin");
   const tp = await getTranslations("plan");
 
-  const [{ data: settings }, { data: discordLink }, { data: profile }, currentPlan] = await Promise.all([
+  const [{ data: settings }, { data: discordLink }, profile, currentPlan] = await Promise.all([
     supabase.from("settings").select("*").eq("user_id", user.id).single(),
     supabase.from("discord_links").select("*").eq("user_id", user.id).maybeSingle(),
-    supabase.from("profiles").select("role").eq("id", user.id).single(),
+    getCachedProfile(user.id),
     getUserPlan(supabase, user.id),
   ]);
 

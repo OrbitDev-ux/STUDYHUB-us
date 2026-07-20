@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCachedProfile } from "@/lib/supabase/profile";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,8 +27,8 @@ export default async function ProfilePage() {
   const ts = await getTranslations("subjects");
   const tp = await getTranslations("plan");
 
-  const [{ data: profile }, { data: stats }, { data: badgeCount }, { data: totalSessions }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).single(),
+  const [profile, { data: stats }, { data: badgeCount }, { data: totalSessions }] = await Promise.all([
+    getCachedProfile(user.id),
     supabase.from("user_subject_stats").select("*").eq("user_id", user.id),
     supabase.from("user_badges").select("id", { count: "exact" }).eq("user_id", user.id),
     supabase.from("study_sessions").select("focus_minutes").eq("user_id", user.id),
