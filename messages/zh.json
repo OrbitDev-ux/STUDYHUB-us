@@ -97,7 +97,10 @@
     "continueWithDiscord": "使用Discord继续",
     "checkEmail": {
       "title": "请查收邮箱",
-      "description": "我们已发送验证链接。点击邮件中的链接即可完成注册。"
+      "description": "我们已发送验证链接。点击邮件中的链接即可完成注册。",
+      "resend": "重新发送验证邮件",
+      "resent": "已重新发送",
+      "resentHint": "请查收邮箱（包括垃圾邮件文件夹）。"
     },
     "agreeTerms": "我同意<terms>服务条款</terms>和<privacy>隐私政策</privacy>",
     "termsRequiredError": "您必须同意服务条款和隐私政策才能注册。",
@@ -123,7 +126,11 @@
       "confirmPassword": "确认新密码",
       "error": "密码修改失败，请重试。",
       "mismatchError": "两次输入的密码不一致。"
-    }
+    },
+    "callbackFailedError": "该确认链接已过期或已被使用，请重试。",
+    "emailTakenError": "该邮箱已注册，请直接登录。",
+    "confirmPasswordLabel": "确认密码",
+    "passwordMismatchError": "两次输入的密码不一致。"
   },
   "onboarding": {
     "title": "欢迎！请告诉我们一些信息",

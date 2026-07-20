@@ -67,7 +67,9 @@ async function LoginForm({
                 ? t("rateLimitedError")
                 : params.error === "reset_session_expired"
                   ? t("resetSessionExpiredError")
-                  : t("loginError")}
+                  : params.error === "auth_callback_failed"
+                    ? t("callbackFailedError")
+                    : t("loginError")}
             </p>
           )}
           <SubmitButton className="mt-2">{tc("login")}</SubmitButton>

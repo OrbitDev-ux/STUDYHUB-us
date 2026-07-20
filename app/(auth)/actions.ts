@@ -29,6 +29,17 @@ function safeRedirectPath(value: FormDataEntryValue | null, fallback: string) {
   return path.startsWith("/") && !path.startsWith("//") ? path : fallback;
 }
 
+/**
+ * Supabase의 "이미 가입된 이메일" 에러는 SDK 버전/설정에 따라 code나 message
+ * 형태가 조금씩 달라서, 알려진 패턴 여러 개를 함께 확인한다.
+ */
+function isEmailAlreadyRegistered(error: { code?: string; message?: string } | null | undefined) {
+  if (!error) return false;
+  if (error.code === "user_already_exists" || error.code === "email_exists") return true;
+  const message = error.message?.toLowerCase() ?? "";
+  return message.includes("already registered") || message.includes("already exists");
+}
+
 export async function signInWithEmail(formData: FormData) {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
@@ -56,6 +67,7 @@ export async function signInWithEmail(formData: FormData) {
 export async function signUpWithEmail(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
   const nickname = String(formData.get("nickname") ?? "").trim();
   const agreedToTerms = formData.get("agreeTerms") === "on";
 
@@ -64,6 +76,9 @@ export async function signUpWithEmail(formData: FormData) {
   }
   if (password.length < 8) {
     redirect("/signup?error=weak_password");
+  }
+  if (password !== confirmPassword) {
+    redirect("/signup?error=password_mismatch");
   }
 
   if (nickname.length > 20) {
@@ -97,7 +112,7 @@ export async function signUpWithEmail(formData: FormData) {
 
     if (createError || !created.user) {
       console.error("[signup] Supabase admin createUser failed:", createError?.status, createError?.message);
-      redirect("/signup?error=signup_failed");
+      redirect(`/signup?error=${isEmailAlreadyRegistered(createError) ? "email_taken" : "signup_failed"}`);
     }
 
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
@@ -122,14 +137,43 @@ export async function signUpWithEmail(formData: FormData) {
   if (error) {
     console.error("[signup] Supabase signUp failed:", error.status, error.message);
     const isEmailSendRateLimited = error.status === 429 || error.code?.includes("rate_limit");
-    redirect(`/signup?error=${isEmailSendRateLimited ? "rate_limit" : "signup_failed"}`);
+    const errorCode = isEmailSendRateLimited
+      ? "rate_limit"
+      : isEmailAlreadyRegistered(error)
+        ? "email_taken"
+        : "signup_failed";
+    redirect(`/signup?error=${errorCode}`);
   }
 
   // Supabase의 이메일 확인 옵션이 꺼져 있으면 signUp 즉시 세션이 발급된다.
   // 이 경우 존재하지 않는 인증 메일을 기다리게 하지 않고 바로 온보딩으로 이동한다.
   if (data.session) redirect("/onboarding");
 
-  redirect("/signup/check-email");
+  redirect(`/signup/check-email?email=${encodeURIComponent(email)}`);
+}
+
+export async function resendConfirmationEmail(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) return { ok: false as const };
+
+  if (await isRateLimited(`resend-signup:${normalizedEmail}`, 3, 10 * 60 * 1000)) {
+    // 등록 여부를 드러내지 않기 위해 실패도 성공과 동일하게 보인다.
+    return { ok: true as const };
+  }
+
+  const origin = await getRequestOrigin();
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email: normalizedEmail,
+    options: { emailRedirectTo: `${origin}/api/auth/callback?next=/onboarding` },
+  });
+
+  if (error) {
+    console.error("[signup] resend confirmation failed:", error.status, error.message);
+  }
+
+  return { ok: true as const };
 }
 
 export async function signInWithOAuth(provider: "google" | "discord") {
