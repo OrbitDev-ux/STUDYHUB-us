@@ -34,7 +34,8 @@
     "wrongNotes": "错题本",
     "report": "AI报告",
     "rank": "排行/徽章",
-    "profile": "个人资料"
+    "profile": "个人资料",
+    "admin": "管理员"
   },
   "topbar": {
     "greeting": "你好，<b>{nickname}</b>",
@@ -300,23 +301,6 @@
     "premium": "高级",
     "unlink": "解除绑定",
     "linkDiscord": "绑定Discord账号",
-    "admin": {
-      "title": "管理员：服务器维护",
-      "desc": "开启维护模式后，除管理员外的所有用户都会看到维护页面。",
-      "enabled": "维护模式：开启",
-      "disabled": "维护模式：关闭",
-      "messageLabel": "维护提示信息（可选）",
-      "messagePlaceholder": "例：今晚12点前进行服务器维护。",
-      "enableButton": "开启维护模式",
-      "disableButton": "关闭维护模式",
-      "userPlanTitle": "管理员：用户方案管理",
-      "userPlanDesc": "通过邮箱查找用户并手动更改其方案（确认付款后操作）。",
-      "emailPlaceholder": "user@example.com",
-      "searchButton": "搜索",
-      "notFound": "未找到该邮箱对应的用户。",
-      "currentPlan": "当前方案",
-      "discordNotifyHint": "如已配置，维护开始/结束时也会通知到 Discord 频道（DISCORD_MAINTENANCE_WEBHOOK_URL）。"
-    },
     "homeworkQuestionCount": "作业题目数量（5~30题）",
     "myPlan": "我的方案",
     "homeworkQuestionCountHint": "当前方案最多可设置 {max} 道题目。",
@@ -327,6 +311,64 @@
       "warning": "此操作无法撤销。与您账号相关的所有数据（学习记录、作业、XP、徽章、绑定信息等）将立即被删除。",
       "confirmLabel": "请在下方输入「{word}」以继续",
       "button": "永久删除账号"
+    },
+    "adminDashboardTitle": "管理员仪表盘",
+    "adminDashboardDesc": "会员管理、站点统计和维护模式已移动到管理员仪表盘",
+    "adminDashboardLink": "打开仪表盘"
+  },
+  "admin": {
+    "nav": {
+      "dashboardTitle": "管理员仪表盘",
+      "overview": "概览",
+      "users": "会员管理",
+      "site": "站点设置"
+    },
+    "overview": {
+      "title": "管理员仪表盘",
+      "subtitle": "一目了然地查看整个网站的运行状况",
+      "maintenanceOn": "维护模式已开启",
+      "maintenanceOff": "正常运行中",
+      "totalUsers": "全部会员",
+      "newUsersToday": "今日注册",
+      "newUsersWeek": "本周注册",
+      "dau": "今日活跃会员",
+      "studyMinutesToday": "今日总学习时长(分钟)",
+      "homeworkToday": "今日作业完成/生成",
+      "homeworkTodayHint": "完成 / 生成",
+      "discordLinked": "已连接 Discord 的会员",
+      "adminCount": "管理员人数",
+      "planDistribution": "套餐分布",
+      "planDistributionDesc": "全部会员按套餐的占比"
+    },
+    "users": {
+      "title": "会员管理",
+      "subtitle": "按邮箱搜索，或管理最近注册的会员",
+      "searchTitle": "按邮箱搜索",
+      "searchDesc": "通过邮箱查找用户并直接更改其套餐和权限",
+      "emailPlaceholder": "user@example.com",
+      "searchButton": "搜索",
+      "notFound": "找不到该邮箱对应的用户。",
+      "currentPlan": "当前套餐",
+      "roleAdmin": "管理员",
+      "roleUser": "普通会员",
+      "makeAdmin": "设为管理员",
+      "removeAdmin": "取消管理员",
+      "recentTitle": "最近注册的会员",
+      "recentDesc": "最近注册的20位会员",
+      "noUsers": "暂时没有注册会员。"
+    },
+    "site": {
+      "title": "站点设置",
+      "subtitle": "管理维护模式等站点全局设置",
+      "maintenanceTitle": "服务器维护模式",
+      "maintenanceDesc": "开启维护模式后，除管理员外的所有用户都会看到维护提示页面。",
+      "enabled": "维护模式已开启",
+      "disabled": "维护模式已关闭",
+      "messageLabel": "维护提示信息（可选）",
+      "messagePlaceholder": "例如：今晚12点前服务器将进行维护。",
+      "enableButton": "开启维护模式",
+      "disableButton": "关闭维护模式",
+      "discordNotifyHint": "如已配置，维护开始/结束通知也会发送到 Discord 频道（DISCORD_MAINTENANCE_WEBHOOK_URL）。"
     }
   },
   "notFound": {

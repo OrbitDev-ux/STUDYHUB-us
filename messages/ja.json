@@ -34,7 +34,8 @@
     "wrongNotes": "間違いノート",
     "report": "AIレポート",
     "rank": "ランキング/バッジ",
-    "profile": "プロフィール"
+    "profile": "プロフィール",
+    "admin": "管理者"
   },
   "topbar": {
     "greeting": "こんにちは、<b>{nickname}</b>さん",
@@ -300,23 +301,6 @@
     "premium": "プレミアム",
     "unlink": "連携解除",
     "linkDiscord": "Discordアカウントを連携する",
-    "admin": {
-      "title": "管理者：サーバーメンテナンス",
-      "desc": "メンテナンスモードをオンにすると、管理者以外の全ユーザーにメンテナンスページが表示されます。",
-      "enabled": "メンテナンスモード：オン",
-      "disabled": "メンテナンスモード：オフ",
-      "messageLabel": "メンテナンス案内メッセージ（任意）",
-      "messagePlaceholder": "例：本日24時までメンテナンスを実施します。",
-      "enableButton": "メンテナンスモードをオンにする",
-      "disableButton": "メンテナンスモードをオフにする",
-      "userPlanTitle": "管理者：ユーザープラン管理",
-      "userPlanDesc": "メールでユーザーを検索し、プランを手動で変更します（入金確認後に操作）。",
-      "emailPlaceholder": "user@example.com",
-      "searchButton": "検索",
-      "notFound": "該当するユーザーが見つかりません。",
-      "currentPlan": "現在のプラン",
-      "discordNotifyHint": "設定されていれば、メンテナンスの開始/終了時にDiscordチャンネルにも通知されます（DISCORD_MAINTENANCE_WEBHOOK_URL）。"
-    },
     "homeworkQuestionCount": "宿題の問題数（5〜30問）",
     "myPlan": "マイプラン",
     "homeworkQuestionCountHint": "現在のプランでは最大{max}問まで設定できます。",
@@ -327,6 +311,64 @@
       "warning": "この操作は取り消せません。アカウントに関連するすべてのデータ（学習記録、宿題、XP、バッジ、連携情報など）が即座に削除されます。",
       "confirmLabel": "続けるには下に「{word}」と入力してください",
       "button": "アカウントを完全に削除"
+    },
+    "adminDashboardTitle": "管理者ダッシュボード",
+    "adminDashboardDesc": "会員管理・サイト統計・メンテナンスモードは管理者ダッシュボードに移動しました",
+    "adminDashboardLink": "ダッシュボードを開く"
+  },
+  "admin": {
+    "nav": {
+      "dashboardTitle": "管理者ダッシュボード",
+      "overview": "概要",
+      "users": "会員管理",
+      "site": "サイト設定"
+    },
+    "overview": {
+      "title": "管理者ダッシュボード",
+      "subtitle": "サイト全体の状況をひと目で確認できます",
+      "maintenanceOn": "メンテナンスモード中",
+      "maintenanceOff": "正常運用中",
+      "totalUsers": "全会員数",
+      "newUsersToday": "本日の新規登録",
+      "newUsersWeek": "今週の新規登録",
+      "dau": "本日の活動会員",
+      "studyMinutesToday": "本日の総学習時間(分)",
+      "homeworkToday": "本日の宿題 完了/生成",
+      "homeworkTodayHint": "完了 / 生成",
+      "discordLinked": "Discord連携会員",
+      "adminCount": "管理者数",
+      "planDistribution": "プラン分布",
+      "planDistributionDesc": "全会員のプラン別の割合です"
+    },
+    "users": {
+      "title": "会員管理",
+      "subtitle": "メールで検索するか、最近登録した会員を管理します",
+      "searchTitle": "メールで検索",
+      "searchDesc": "メールでユーザーを検索し、プランと権限を直接変更します",
+      "emailPlaceholder": "user@example.com",
+      "searchButton": "検索",
+      "notFound": "該当するメールのユーザーが見つかりません。",
+      "currentPlan": "現在のプラン",
+      "roleAdmin": "管理者",
+      "roleUser": "一般会員",
+      "makeAdmin": "管理者に指定",
+      "removeAdmin": "管理者を解除",
+      "recentTitle": "最近登録した会員",
+      "recentDesc": "直近に登録した20名です",
+      "noUsers": "まだ登録された会員がいません。"
+    },
+    "site": {
+      "title": "サイト設定",
+      "subtitle": "メンテナンスモードなどサイト全体の設定を管理します",
+      "maintenanceTitle": "サーバーメンテナンスモード",
+      "maintenanceDesc": "メンテナンスモードをオンにすると、管理者以外の全ユーザーにメンテナンス案内ページが表示されます。",
+      "enabled": "メンテナンスモード オン",
+      "disabled": "メンテナンスモード オフ",
+      "messageLabel": "メンテナンス案内メッセージ（任意）",
+      "messagePlaceholder": "例: 本日24時までサーバーメンテナンスを行います。",
+      "enableButton": "メンテナンスモードをオンにする",
+      "disableButton": "メンテナンスモードをオフにする",
+      "discordNotifyHint": "設定されていればDiscordチャンネルにもメンテナンス開始/終了通知が送信されます (DISCORD_MAINTENANCE_WEBHOOK_URL)。"
     }
   },
   "notFound": {

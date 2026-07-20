@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
 
-const PROTECTED_PREFIXES = ["/dashboard", "/homework", "/planner", "/timer", "/wrong-notes", "/report", "/rank", "/profile", "/settings", "/onboarding"];
+const PROTECTED_PREFIXES = ["/dashboard", "/homework", "/planner", "/timer", "/wrong-notes", "/report", "/rank", "/profile", "/settings", "/onboarding", "/admin"];
 
 // 점검 모드가 켜져 있어도 반드시 접근 가능해야 하는 경로.
 // /login과 /api/auth/callback이 막히면 관리자조차 로그인해서 점검 모드를 끌 수 없게 된다.

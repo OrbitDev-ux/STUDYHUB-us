@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { updateSettings, startDiscordLink, unlinkDiscord, setMaintenanceMode } from "./actions";
-import { AdminPlanManager } from "@/components/settings/admin-plan-manager";
+import { updateSettings, startDiscordLink, unlinkDiscord } from "./actions";
 import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 import { planLimits } from "@/lib/plan";
 import { getUserPlan } from "@/lib/supabase/compat";
+import { ShieldCheck } from "lucide-react";
+import Link from "next/link";
 
 export async function generateMetadata() {
   const t = await getTranslations("settings");
@@ -27,7 +28,6 @@ export default async function SettingsPage() {
 
   const t = await getTranslations("settings");
   const tc = await getTranslations("common");
-  const ta = await getTranslations("settings.admin");
   const tp = await getTranslations("plan");
 
   const [{ data: settings }, { data: discordLink }, profile, currentPlan] = await Promise.all([
@@ -39,10 +39,6 @@ export default async function SettingsPage() {
 
   const isAdmin = profile?.role === "admin";
   const maxQuestions = planLimits(currentPlan).homeworkQuestionMax;
-
-  const { data: appSettings } = isAdmin
-    ? await supabase.from("app_settings").select("*").eq("id", true).single()
-    : { data: null };
 
   return (
     <div className="flex flex-col gap-6">
@@ -158,52 +154,24 @@ export default async function SettingsPage() {
       </Card>
 
       {isAdmin && (
-        <>
-          <Card className="border-warning/50">
-            <CardHeader>
-              <CardTitle className="text-base">{ta("userPlanTitle")}</CardTitle>
-              <CardDescription>{ta("userPlanDesc")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AdminPlanManager />
-            </CardContent>
-          </Card>
-
-          <Card className="border-warning/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                {ta("title")}
-                <Badge variant={appSettings?.maintenance_mode ? "warning" : "outline"} className="text-[10px]">
-                  {appSettings?.maintenance_mode ? ta("enabled") : ta("disabled")}
-                </Badge>
-              </CardTitle>
-              <CardDescription>{ta("desc")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form action={setMaintenanceMode} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="message">{ta("messageLabel")}</Label>
-                  <Input
-                    id="message"
-                    name="message"
-                    defaultValue={appSettings?.maintenance_message ?? ""}
-                    placeholder={ta("messagePlaceholder")}
-                  />
-                  <p className="text-xs text-muted-foreground">{ta("discordNotifyHint")}</p>
-                </div>
-                {appSettings?.maintenance_mode ? (
-                  <Button type="submit" name="enabled" value="off" variant="outline" className="self-start">
-                    {ta("disableButton")}
-                  </Button>
-                ) : (
-                  <Button type="submit" name="enabled" value="on" variant="destructive" className="self-start">
-                    {ta("enableButton")}
-                  </Button>
-                )}
-              </form>
-            </CardContent>
-          </Card>
-        </>
+        <Card className="border-warning/50">
+          <CardContent className="flex items-center justify-between gap-3 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary">
+                <ShieldCheck className="h-4 w-4 text-warning" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">{t("adminDashboardTitle")}</p>
+                <p className="text-xs text-muted-foreground">{t("adminDashboardDesc")}</p>
+              </div>
+            </div>
+            <Link href="/admin">
+              <Button type="button" variant="outline" size="sm">
+                {t("adminDashboardLink")}
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

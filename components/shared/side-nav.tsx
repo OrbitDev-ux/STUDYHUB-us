@@ -5,13 +5,14 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { NAV_ITEMS } from "./nav-items";
 import { cn } from "@/lib/utils/cn";
-import { Flame } from "lucide-react";
+import { Flame, ShieldCheck } from "lucide-react";
 import type { Profile } from "@/types";
 
 export function SideNav({ profile }: { profile: Profile | null }) {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const tc = useTranslations("common");
+  const isAdmin = profile?.role === "admin";
 
   return (
     <aside className="hidden w-60 shrink-0 flex-col border-r border-border px-4 py-6 md:flex">
@@ -48,6 +49,24 @@ export function SideNav({ profile }: { profile: Profile | null }) {
           );
         })}
       </nav>
+
+      {isAdmin && (
+        <>
+          <div className="my-4 border-t border-border" />
+          <Link
+            href="/admin"
+            className={cn(
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+              pathname.startsWith("/admin")
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+            )}
+          >
+            <ShieldCheck className="h-4 w-4" />
+            {t("admin")}
+          </Link>
+        </>
+      )}
     </aside>
   );
 }

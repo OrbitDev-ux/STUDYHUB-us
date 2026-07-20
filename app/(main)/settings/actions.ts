@@ -6,8 +6,7 @@ import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { randomBytes } from "crypto";
 import { DISCORD_OAUTH_STATE_COOKIE } from "@/lib/discord/oauth";
-import { notifyMaintenanceModeChange } from "@/lib/discord/webhook";
-import { planLimits, isPlan } from "@/lib/plan";
+import { planLimits } from "@/lib/plan";
 import { getUserPlan, isMissingColumnError } from "@/lib/supabase/compat";
 import { requireUser } from "@/lib/auth/require-user";
 
@@ -82,56 +81,6 @@ export async function unlinkDiscord() {
 }
 
 /**
- * 이메일로 사용자를 찾아 닉네임/현재 플랜을 반환한다 (관리자 전용).
- * service_role로 auth.users를 조회해야 하므로, DB RPC의 보호를 받지 못하는 이
- * 함수 자체에서 admin 여부를 직접 검증한다 (다른 관리자 액션과 달리 RPC를 거치지 않음).
- */
-export async function findUserByEmail(
-  email: string
-): Promise<{ id: string; nickname: string; plan: string; email: string } | null> {
-  const { supabase, user } = await requireUser();
-
-  const { data: caller } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (caller?.role !== "admin") throw new Error("관리자만 사용할 수 있습니다.");
-
-  const trimmed = email.trim().toLowerCase();
-  if (!trimmed) return null;
-
-  const admin = createAdminClient();
-  // Admin Auth API에 이메일 직접 필터가 없어 페이지를 넘기며 직접 매칭한다.
-  // (유저 수가 훨씬 많아지면 profiles에 email 컬럼을 추가하는 방식으로 바꿔야 한다.)
-  const perPage = 1000;
-  let authUser: { id: string; email?: string } | undefined;
-  for (let page = 1; page <= 20; page++) {
-    const { data } = await admin.auth.admin.listUsers({ page, perPage });
-    authUser = data?.users.find((u) => u.email?.toLowerCase() === trimmed);
-    if (authUser || !data || data.users.length < perPage) break;
-  }
-  if (!authUser) return null;
-
-  const [{ data: profile, error: profileError }, currentPlan] = await Promise.all([
-    admin.from("profiles").select("nickname").eq("id", authUser.id).single(),
-    getUserPlan(admin, authUser.id),
-  ]);
-  if (profileError) throw new Error(`사용자 프로필 조회 실패: ${profileError.message}`);
-  if (!profile) return null;
-
-  return { id: authUser.id, nickname: profile.nickname, plan: currentPlan, email: authUser.email ?? "" };
-}
-
-/** 특정 유저의 플랜 변경 (관리자 전용). DB의 set_user_plan()이 관리자 권한을 다시 검증한다. */
-export async function setUserPlan(targetUserId: string, plan: string) {
-  const { supabase } = await requireUser();
-
-  if (!isPlan(plan)) throw new Error("잘못된 플랜입니다.");
-
-  const { error } = await supabase.rpc("set_user_plan", { p_target_user_id: targetUserId, p_plan: plan });
-  if (error) throw new Error(`플랜 변경 실패: ${error.message}`);
-
-  revalidatePath("/settings");
-}
-
-/**
  * 계정 완전 삭제 (회원 탈퇴). auth.users 행을 지우면 모든 사용자 소유 테이블이
  * on delete cascade로 함께 삭제된다 (profiles, homeworks, study_sessions,
  * notifications 등 — 0001 마이그레이션 참고).
@@ -145,22 +94,4 @@ export async function deleteAccount() {
 
   await supabase.auth.signOut();
   redirect("/");
-}
-
-/**
- * 점검 모드 on/off. DB의 set_maintenance_mode()가 관리자 권한을 다시 검증하므로
- * 여기서는 별도 권한 체크 없이 그대로 위임한다 (UI는 관리자에게만 노출됨).
- */
-export async function setMaintenanceMode(formData: FormData) {
-  const { supabase } = await requireUser();
-
-  const enabled = formData.get("enabled") === "on";
-  const message = String(formData.get("message") ?? "").trim() || null;
-
-  const { error } = await supabase.rpc("set_maintenance_mode", { p_enabled: enabled, p_message: message });
-  if (error) throw new Error(`점검 모드 변경 실패: ${error.message}`);
-
-  await notifyMaintenanceModeChange(enabled, message);
-
-  revalidatePath("/settings");
 }

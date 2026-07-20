@@ -94,6 +94,41 @@ export interface StudyPlan {
   items: StudyPlanItem[];
 }
 
+export interface AdminStats {
+  total_users: number;
+  new_users_today: number;
+  new_users_week: number;
+  admin_count: number;
+  plan_free: number;
+  plan_basic: number;
+  plan_pro: number;
+  dau: number;
+  study_minutes_today: number;
+  homeworks_today: number;
+  homeworks_completed_today: number;
+  discord_linked: number;
+  maintenance_mode: boolean;
+}
+
+export interface AdminUserSummary {
+  id: string;
+  nickname: string;
+  grade_level: string | null;
+  plan: "free" | "basic" | "pro";
+  role: "user" | "admin";
+  level: number;
+  streak_days: number;
+  created_at: string;
+}
+
+export interface AdminUserSearchResult {
+  id: string;
+  nickname: string;
+  email: string;
+  plan: "free" | "basic" | "pro";
+  role: "user" | "admin";
+}
+
 export interface DailyFeedback {
   id: string;
   date: string;
