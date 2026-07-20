@@ -97,7 +97,10 @@
     "continueWithDiscord": "Continue with Discord",
     "checkEmail": {
       "title": "Check your email",
-      "description": "We've sent you a verification link. Click the link in your email to complete signup."
+      "description": "We've sent you a verification link. Click the link in your email to complete signup.",
+      "resend": "Resend confirmation email",
+      "resent": "Sent again",
+      "resentHint": "Check your inbox (and spam folder)."
     },
     "agreeTerms": "I agree to the <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>",
     "termsRequiredError": "You must agree to the Terms of Service and Privacy Policy to sign up.",
@@ -123,7 +126,11 @@
       "confirmPassword": "Confirm new password",
       "error": "Failed to update password. Please try again.",
       "mismatchError": "Passwords don't match."
-    }
+    },
+    "callbackFailedError": "That confirmation link has expired or was already used. Please try again.",
+    "emailTakenError": "This email is already registered. Please log in instead.",
+    "confirmPasswordLabel": "Confirm password",
+    "passwordMismatchError": "Passwords don't match."
   },
   "onboarding": {
     "title": "Welcome! Tell us a bit about yourself",

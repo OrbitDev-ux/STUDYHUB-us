@@ -41,6 +41,10 @@ export function SignupForm({ error }: { error?: string }) {
           <Input id="password" name="password" type="password" minLength={8} required />
           <p className="text-xs text-muted-foreground">{t("passwordHint")}</p>
         </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="confirmPassword">{t("confirmPasswordLabel")}</Label>
+          <Input id="confirmPassword" name="confirmPassword" type="password" minLength={8} required />
+        </div>
         <label className="flex items-start gap-2 text-xs text-muted-foreground">
           <input
             type="checkbox"
@@ -73,7 +77,18 @@ export function SignupForm({ error }: { error?: string }) {
                 ? t("rateLimitedError")
                 : error === "terms_required"
                   ? t("termsRequiredError")
-                  : t("signupError")}
+                  : error === "password_mismatch"
+                    ? t("passwordMismatchError")
+                    : error === "email_taken"
+                      ? (
+                          <>
+                            {t("emailTakenError")}{" "}
+                            <Link href="/login" className="font-medium underline">
+                              {tc("login")}
+                            </Link>
+                          </>
+                        )
+                      : t("signupError")}
           </p>
         )}
         <SubmitButton className="mt-2" disabled={!agreed}>

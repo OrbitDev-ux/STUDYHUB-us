@@ -97,7 +97,10 @@
     "continueWithDiscord": "Discordで続ける",
     "checkEmail": {
       "title": "メールをご確認ください",
-      "description": "認証リンクを送信しました。メール内のリンクをクリックすると登録が完了します。"
+      "description": "認証リンクを送信しました。メール内のリンクをクリックすると登録が完了します。",
+      "resend": "確認メールを再送信",
+      "resent": "再送信しました",
+      "resentHint": "受信トレイ（迷惑メールフォルダも）をご確認ください。"
     },
     "agreeTerms": "<terms>利用規約</terms>および<privacy>プライバシーポリシー</privacy>に同意します",
     "termsRequiredError": "利用規約とプライバシーポリシーに同意しないと登録できません。",
@@ -123,7 +126,11 @@
       "confirmPassword": "新しいパスワード（確認）",
       "error": "パスワードの変更に失敗しました。もう一度お試しください。",
       "mismatchError": "パスワードが一致しません。"
-    }
+    },
+    "callbackFailedError": "認証リンクの有効期限が切れているか、すでに使用されています。もう一度お試しください。",
+    "emailTakenError": "このメールはすでに登録されています。ログインしてください。",
+    "confirmPasswordLabel": "パスワード（確認）",
+    "passwordMismatchError": "パスワードが一致しません。"
   },
   "onboarding": {
     "title": "ようこそ！いくつか教えてください",

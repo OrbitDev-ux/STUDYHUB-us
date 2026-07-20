@@ -97,7 +97,10 @@
     "continueWithDiscord": "Discord로 계속하기",
     "checkEmail": {
       "title": "이메일을 확인해주세요",
-      "description": "인증 링크를 보내드렸어요. 이메일의 링크를 클릭하면 가입이 완료됩니다."
+      "description": "인증 링크를 보내드렸어요. 이메일의 링크를 클릭하면 가입이 완료됩니다.",
+      "resend": "인증 메일 다시 보내기",
+      "resent": "다시 보냈어요",
+      "resentHint": "메일함(스팸함 포함)을 확인해주세요."
     },
     "agreeTerms": "<terms>이용약관</terms> 및 <privacy>개인정보처리방침</privacy>에 동의합니다",
     "termsRequiredError": "이용약관 및 개인정보처리방침에 동의해야 가입할 수 있어요.",
@@ -123,7 +126,11 @@
       "confirmPassword": "새 비밀번호 확인",
       "error": "비밀번호 변경에 실패했어요. 다시 시도해주세요.",
       "mismatchError": "비밀번호가 일치하지 않아요."
-    }
+    },
+    "callbackFailedError": "인증 링크가 만료되었거나 이미 사용됐어요. 다시 시도해주세요.",
+    "emailTakenError": "이미 가입된 이메일이에요. 로그인해주세요.",
+    "confirmPasswordLabel": "비밀번호 확인",
+    "passwordMismatchError": "비밀번호가 일치하지 않아요."
   },
   "onboarding": {
     "title": "반가워요! 몇 가지만 알려주세요",
