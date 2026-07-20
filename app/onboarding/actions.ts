@@ -1,18 +1,14 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { generateDiagnosticQuestions, analyzeDiagnosticResult } from "@/lib/ai/diagnostic";
+import { requireUser } from "@/lib/auth/require-user";
 import type { SubjectId } from "@/types";
 
 const GRADE_LEVELS = ["초4", "초5", "초6", "중1", "중2", "중3", "고1", "고2", "고3"];
 
 export async function saveOnboardingInfo(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
   const nickname = String(formData.get("nickname") ?? "").trim();
   const grade_level = String(formData.get("grade_level") ?? "");
@@ -53,11 +49,7 @@ function isSubjectId(value: string): value is SubjectId {
 
 /** 진단평가 문항 세트를 생성해서 클라이언트에 반환 (풀이는 클라이언트 상태로, 제출 시에만 DB 기록) */
 export async function fetchDiagnosticQuestions(subject: SubjectId) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
   if (!isSubjectId(subject)) throw new Error("지원하지 않는 과목입니다.");
 
   const { data: profile, error: profileError } = await supabase
@@ -83,11 +75,7 @@ interface SubmitPayload {
 
 /** 채점 결과 제출 → AI 분석 → diagnostic_results 저장 → user_subject_stats 갱신 */
 export async function submitDiagnosticResult({ subject, answered }: SubmitPayload) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
   if (!isSubjectId(subject) || !Array.isArray(answered) || answered.length === 0) {
     throw new Error("유효하지 않은 진단평가 결과입니다.");
   }

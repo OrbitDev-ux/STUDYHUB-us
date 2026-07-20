@@ -59,7 +59,10 @@ export async function GET(request: Request) {
   const premiumRoleGranted = profile?.plan === "basic" || profile?.plan === "pro";
 
   // 4) discord_links 테이블에 upsert
-  await supabase.from("discord_links").upsert(
+  // discord_user_id에도 별도 unique 제약이 있어(이미 다른 계정에 연동된 디스코드),
+  // onConflict: "user_id"로는 잡히지 않는 충돌이 날 수 있다. 조용히 무시하면
+  // 실패했는데도 "연동 성공" 화면으로 보내게 되므로 에러를 반드시 확인한다.
+  const { error: linkError } = await supabase.from("discord_links").upsert(
     {
       user_id: user.id,
       discord_user_id: me.id,
@@ -69,6 +72,12 @@ export async function GET(request: Request) {
     },
     { onConflict: "user_id" }
   );
+
+  if (linkError) {
+    console.error("[discord/callback] discord_links upsert 실패:", linkError.message);
+    const errorCode = linkError.code === "23505" ? "discord_already_linked" : "discord_link_failed";
+    return NextResponse.redirect(`${origin}/settings?error=${errorCode}`);
+  }
 
   // 5) (선택) 실제 Discord 길드 역할 부여는 봇 토큰 + 길드 관리 권한이 필요한 서버사이드
   //    작업이라 여기서는 DB 플래그만 세팅하고, 실제 역할 부여는 별도의 Discord 봇

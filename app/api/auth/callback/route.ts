@@ -1,11 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-
-// 외부로 리다이렉트되는 오픈 리다이렉트를 막기 위해, "/"로 시작하고 "//"(프로토콜
-// 상대 URL)나 "@"(userinfo 트릭)를 포함하지 않는 내부 경로만 허용한다.
-function isSafeRedirectPath(path: string): boolean {
-  return path.startsWith("/") && !path.startsWith("//") && !path.includes("@") && !path.includes("://");
-}
+import { isSafeRedirectPath } from "@/lib/utils/safe-redirect";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -30,7 +25,9 @@ export async function GET(request: Request) {
           .eq("id", user.id)
           .single();
 
-        if (profile && !profile.onboarding_completed) {
+        // 비밀번호 재설정처럼 명시적으로 지정된 목적지는 온보딩 완료 여부와 무관하게
+        // 항상 존중해야 한다 (아니면 온보딩을 안 끝낸 유저는 비밀번호를 재설정할 방법이 없어진다).
+        if (profile && !profile.onboarding_completed && next !== "/reset-password") {
           return NextResponse.redirect(`${origin}/onboarding`);
         }
       }

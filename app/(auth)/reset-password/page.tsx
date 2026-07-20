@@ -19,6 +19,7 @@ export default async function ResetPasswordPage({
 }) {
   const params = await searchParams;
   const t = await getTranslations("auth.resetPasswordPage");
+  const ta = await getTranslations("auth");
   const tc = await getTranslations("common");
 
   // 이메일의 재설정 링크(→ /api/auth/callback)를 거쳐야만 세션이 생긴다.
@@ -47,7 +48,7 @@ export default async function ResetPasswordPage({
           </div>
           {params.error && (
             <p className="text-sm text-destructive">
-              {params.error === "password_mismatch" ? t("mismatchError") : t("error")}
+              {params.error === "password_mismatch" ? ta("passwordMismatchError") : t("error")}
             </p>
           )}
           <SubmitButton className="mt-2">{tc("save")}</SubmitButton>

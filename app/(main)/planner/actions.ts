@@ -1,18 +1,14 @@
 "use server";
 
-import { createClient, createAdminClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { generateDailyStudyPlan } from "@/lib/ai/planner";
 import { getWeakUnitsBySubject } from "@/lib/homework/weak-units";
 import { todayKST } from "@/lib/utils/date";
+import { requireUser } from "@/lib/auth/require-user";
 
 export async function ensureTodayPlan() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
   const today = todayKST();
   const yesterday = todayKST(new Date(Date.now() - 86400000));
@@ -82,11 +78,7 @@ export async function ensureTodayPlan() {
 }
 
 export async function togglePlanItem(itemId: string, completed: boolean) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase } = await requireUser();
 
   const { error } = await supabase.from("study_plan_items").update({ completed }).eq("id", itemId);
   if (error) throw new Error(`플래너 상태 변경 실패: ${error.message}`);

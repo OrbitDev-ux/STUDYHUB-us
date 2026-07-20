@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
@@ -9,16 +9,7 @@ import { DISCORD_OAUTH_STATE_COOKIE } from "@/lib/discord/oauth";
 import { notifyMaintenanceModeChange } from "@/lib/discord/webhook";
 import { planLimits, isPlan } from "@/lib/plan";
 import { getUserPlan, isMissingColumnError } from "@/lib/supabase/compat";
-
-/** 로그인 사용자를 요구하는 서버 액션들의 공통 진입부 — 없으면 로그인 페이지로 보낸다. */
-async function requireUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  return { supabase, user };
-}
+import { requireUser } from "@/lib/auth/require-user";
 
 function boundedInteger(value: FormDataEntryValue | null, fallback: number, min: number, max: number) {
   const parsed = Number(value);
@@ -59,6 +50,8 @@ export async function updateSettings(formData: FormData) {
 
 /** Discord OAuth 연동 시작 (Supabase의 identity linking이 아닌, 별도 Discord 봇 연동용 OAuth) */
 export async function startDiscordLink() {
+  await requireUser();
+
   const requestHeaders = await headers();
   const origin = (requestHeaders.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const clientId = process.env.DISCORD_CLIENT_ID;

@@ -4,6 +4,7 @@ import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { isRateLimited } from "@/lib/rate-limit";
+import { safeRedirectPath } from "@/lib/utils/safe-redirect";
 
 async function getRequestOrigin() {
   const requestHeaders = await headers();
@@ -24,11 +25,6 @@ async function getClientIp() {
   return forwardedFor?.split(",")[0]?.trim() || requestHeaders.get("x-real-ip") || "unknown";
 }
 
-function safeRedirectPath(value: FormDataEntryValue | null, fallback: string) {
-  const path = String(value ?? "");
-  return path.startsWith("/") && !path.startsWith("//") ? path : fallback;
-}
-
 /**
  * Supabase의 "이미 가입된 이메일" 에러는 SDK 버전/설정에 따라 code나 message
  * 형태가 조금씩 달라서, 알려진 패턴 여러 개를 함께 확인한다.
@@ -41,7 +37,7 @@ function isEmailAlreadyRegistered(error: { code?: string; message?: string } | n
 }
 
 export async function signInWithEmail(formData: FormData) {
-  const email = String(formData.get("email") ?? "");
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const next = safeRedirectPath(formData.get("redirect"), "/dashboard");
 

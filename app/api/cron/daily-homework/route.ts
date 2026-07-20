@@ -112,16 +112,25 @@ export async function GET(request: Request) {
           plan: profile?.plan,
         });
 
-        const { data: homework } = await admin
+        const { data: homework, error: homeworkError } = await admin
           .from("homeworks")
           .insert({ user_id: userId, date: today, status: "pending", ai_rationale: generated.rationale })
           .select("id")
           .single();
 
-        if (homework) {
-          await insertHomeworkItems(admin, homework.id, generated.items);
-          createdSomething = true;
+        if (homeworkError || !homework) {
+          throw new Error(`숙제 저장 실패: ${homeworkError?.message ?? "unknown error"}`);
         }
+
+        try {
+          await insertHomeworkItems(admin, homework.id, generated.items);
+        } catch (itemsError) {
+          // 문제 저장 중간에 실패하면 방금 만든 빈 homeworks 행이 남아, 다음 실행에서
+          // "이미 오늘 숙제가 있음"으로 판단해 재생성이 영구히 막힌다. 롤백한다.
+          await admin.from("homeworks").delete().eq("id", homework.id).eq("user_id", userId);
+          throw itemsError;
+        }
+        createdSomething = true;
       }
 
       if (!existingPlan) {

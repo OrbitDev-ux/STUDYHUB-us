@@ -1,10 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { awardXP, bumpStreak, checkAndAwardBadges } from "@/lib/gamification/xp";
 import { notifyNewBadges } from "@/lib/notifications/create";
+import { requireUser } from "@/lib/auth/require-user";
 import type { SubjectId } from "@/types";
 
 // 한 세션(타이머 종료 1회 호출)에서 인정하는 최대 시간. Server Action은 인증만 되어 있으면
@@ -20,11 +19,7 @@ export async function saveStudySession(input: {
   breakMinutes: number;
   interrupted: boolean;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
   if (input.subjectId !== null && !SUBJECT_IDS.includes(input.subjectId)) {
     throw new Error("지원하지 않는 과목입니다.");

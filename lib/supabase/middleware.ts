@@ -16,6 +16,34 @@ const MAINTENANCE_ALLOWED = [
   "/api/discord/callback",
 ];
 
+// app_settings.maintenance_mode는 관리자가 가끔 토글하는 값이라 매 요청마다
+// DB를 조회할 필요는 없다. 미들웨어 인스턴스(웜 상태) 안에서 짧게 캐싱해서
+// 트래픽이 몰릴 때 DB 부하를 줄인다 — 최대 지연은 캐시 TTL만큼이다.
+const MAINTENANCE_CACHE_TTL_MS = 5000;
+let maintenanceModeCache: { value: boolean; expiresAt: number } | null = null;
+
+async function isMaintenanceModeOn(
+  supabase: ReturnType<typeof createServerClient>
+): Promise<boolean> {
+  if (maintenanceModeCache && maintenanceModeCache.expiresAt > Date.now()) {
+    return maintenanceModeCache.value;
+  }
+
+  const { data, error } = await supabase.from("app_settings").select("maintenance_mode").eq("id", true).single();
+
+  // 조회 실패 시 점검 모드를 "꺼짐"으로 간주하고 통과시킨다(fail-open) — 하지만
+  // 원인 파악이 가능하도록 에러 자체는 로그로 남긴다. 실패 결과는 캐싱하지 않아
+  // 다음 요청에서 바로 다시 시도한다.
+  if (error) {
+    console.error("[middleware] app_settings 조회 실패:", error.message);
+    return false;
+  }
+
+  const value = Boolean(data?.maintenance_mode);
+  maintenanceModeCache = { value, expiresAt: Date.now() + MAINTENANCE_CACHE_TTL_MS };
+  return value;
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -49,19 +77,7 @@ export async function updateSession(request: NextRequest) {
   const isMaintenanceAllowed = isCron || MAINTENANCE_ALLOWED.some((p) => path === p || path.startsWith(`${p}/`));
 
   if (!isMaintenanceAllowed) {
-    const { data: appSettings, error: appSettingsError } = await supabase
-      .from("app_settings")
-      .select("maintenance_mode")
-      .eq("id", true)
-      .single();
-
-    // 조회 실패 시 점검 모드를 "꺼짐"으로 간주하고 통과시킨다(fail-open) — 하지만
-    // 원인 파악이 가능하도록 에러 자체는 로그로 남긴다.
-    if (appSettingsError) {
-      console.error("[middleware] app_settings 조회 실패:", appSettingsError.message);
-    }
-
-    if (appSettings?.maintenance_mode) {
+    if (await isMaintenanceModeOn(supabase)) {
       let isAdmin = false;
       if (user) {
         const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();

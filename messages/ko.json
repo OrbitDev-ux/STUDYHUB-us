@@ -124,8 +124,7 @@
       "subtitle": "새로 사용할 비밀번호를 입력해주세요",
       "newPassword": "새 비밀번호",
       "confirmPassword": "새 비밀번호 확인",
-      "error": "비밀번호 변경에 실패했어요. 다시 시도해주세요.",
-      "mismatchError": "비밀번호가 일치하지 않아요."
+      "error": "비밀번호 변경에 실패했어요. 다시 시도해주세요."
     },
     "callbackFailedError": "인증 링크가 만료되었거나 이미 사용됐어요. 다시 시도해주세요.",
     "emailTakenError": "이미 가입된 이메일이에요. 로그인해주세요.",

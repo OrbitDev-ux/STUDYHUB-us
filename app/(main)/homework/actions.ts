@@ -1,8 +1,8 @@
 "use server";
 
-import { createClient, createAdminClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { requireUser } from "@/lib/auth/require-user";
 import { generateDailyHomework } from "@/lib/ai/homework";
 import { insertHomeworkItems } from "@/lib/homework/persist";
 import { getWeakUnitsBySubject } from "@/lib/homework/weak-units";
@@ -14,11 +14,7 @@ import { getHomeworkQuestionCount, getUserPlan } from "@/lib/supabase/compat";
 
 /** 오늘 숙제가 없으면 AI로 생성해서 DB에 저장 (사용자가 처음 /homework 접속 시 or 크론에서도 호출) */
 export async function ensureTodayHomework() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
   const today = todayKST();
 
@@ -82,11 +78,7 @@ export async function ensureTodayHomework() {
 }
 
 export async function submitHomeworkAnswer(itemId: string, questionId: string, userAnswer: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
   // 소유권 + 중복 제출 여부 확인. homework_items에는 user_id가 없으므로 homeworks를 조인해서 확인한다.
   // 이 체크가 없으면 같은 itemId로 반복 호출(devtools 재전송 등)할 때마다 XP가 무한히 지급된다.
@@ -162,11 +154,7 @@ export async function submitHomeworkAnswer(itemId: string, questionId: string, u
 }
 
 export async function completeHomeworkIfDone(homeworkId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase, user } = await requireUser();
 
   const { data: items, error: itemsError } = await supabase
     .from("homework_items")

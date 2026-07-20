@@ -1,17 +1,13 @@
 "use server";
 
 import { createClient, createAdminClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { generateSimilarQuestion } from "@/lib/ai/homework";
+import { requireUser } from "@/lib/auth/require-user";
 import type { SubjectId } from "@/types";
 
 export async function generateSimilarQuestionForWrongAnswer(wrongAnswerId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { supabase } = await requireUser();
 
   const { data: wrong } = await supabase
     .from("wrong_answers")
@@ -36,7 +32,7 @@ export async function generateSimilarQuestionForWrongAnswer(wrongAnswerId: strin
   });
 
   const admin = createAdminClient();
-  const { data: newQuestion } = await admin
+  const { data: newQuestion, error: questionError } = await admin
     .from("questions")
     .insert({
       subject_id: generated.subject_id,
@@ -53,11 +49,15 @@ export async function generateSimilarQuestionForWrongAnswer(wrongAnswerId: strin
     .select("id")
     .single();
 
-  const updatedIds = [...(wrong.similar_question_ids ?? []), newQuestion!.id];
+  if (questionError || !newQuestion) {
+    throw new Error(`유사 문제 저장 실패: ${questionError?.message ?? "unknown error"}`);
+  }
+
+  const updatedIds = [...(wrong.similar_question_ids ?? []), newQuestion.id];
   await supabase.from("wrong_answers").update({ similar_question_ids: updatedIds }).eq("id", wrongAnswerId);
 
   revalidatePath(`/wrong-notes/${wrongAnswerId}`);
-  return newQuestion!.id as string;
+  return newQuestion.id as string;
 }
 
 export async function retrySimilarQuestion(wrongAnswerId: string, questionId: string, userAnswer: string) {

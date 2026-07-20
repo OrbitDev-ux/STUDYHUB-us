@@ -124,8 +124,7 @@
       "subtitle": "Enter the new password you'd like to use",
       "newPassword": "New password",
       "confirmPassword": "Confirm new password",
-      "error": "Failed to update password. Please try again.",
-      "mismatchError": "Passwords don't match."
+      "error": "Failed to update password. Please try again."
     },
     "callbackFailedError": "That confirmation link has expired or was already used. Please try again.",
     "emailTakenError": "This email is already registered. Please log in instead.",

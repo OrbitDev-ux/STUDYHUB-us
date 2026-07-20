@@ -124,8 +124,7 @@
       "subtitle": "请输入您要使用的新密码",
       "newPassword": "新密码",
       "confirmPassword": "确认新密码",
-      "error": "密码修改失败，请重试。",
-      "mismatchError": "两次输入的密码不一致。"
+      "error": "密码修改失败，请重试。"
     },
     "callbackFailedError": "该确认链接已过期或已被使用，请重试。",
     "emailTakenError": "该邮箱已注册，请直接登录。",
