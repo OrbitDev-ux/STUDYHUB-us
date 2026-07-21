@@ -314,7 +314,16 @@
     },
     "adminDashboardTitle": "管理者ダッシュボード",
     "adminDashboardDesc": "会員管理・サイト統計・メンテナンスモードは管理者ダッシュボードに移動しました",
-    "adminDashboardLink": "ダッシュボードを開く"
+    "adminDashboardLink": "ダッシュボードを開く",
+    "claimAdmin": {
+      "title": "管理者コードをお持ちですか？",
+      "desc": "管理者コードを入力すると、このアカウントが管理者になります。",
+      "placeholder": "管理者コード",
+      "button": "適用",
+      "invalidError": "管理者コードが正しくありません。",
+      "rateLimitedError": "試行回数が多すぎます。しばらくしてからもう一度お試しください。",
+      "success": "管理者権限が付与されました。更新すると反映されます。"
+    }
   },
   "admin": {
     "nav": {

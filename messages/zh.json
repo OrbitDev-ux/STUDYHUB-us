@@ -314,7 +314,16 @@
     },
     "adminDashboardTitle": "管理员仪表盘",
     "adminDashboardDesc": "会员管理、站点统计和维护模式已移动到管理员仪表盘",
-    "adminDashboardLink": "打开仪表盘"
+    "adminDashboardLink": "打开仪表盘",
+    "claimAdmin": {
+      "title": "有管理员代码吗？",
+      "desc": "输入管理员代码即可将此账户变为管理员。",
+      "placeholder": "管理员代码",
+      "button": "应用",
+      "invalidError": "管理员代码不正确。",
+      "rateLimitedError": "尝试次数过多，请稍后重试。",
+      "success": "已授予管理员权限，刷新页面即可生效。"
+    }
   },
   "admin": {
     "nav": {

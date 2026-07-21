@@ -314,7 +314,16 @@
     },
     "adminDashboardTitle": "Admin Dashboard",
     "adminDashboardDesc": "User management, site stats, and maintenance mode have moved to the admin dashboard",
-    "adminDashboardLink": "Open dashboard"
+    "adminDashboardLink": "Open dashboard",
+    "claimAdmin": {
+      "title": "Have an admin code?",
+      "desc": "Enter the admin code to turn this account into an admin.",
+      "placeholder": "Admin code",
+      "button": "Apply",
+      "invalidError": "That admin code isn't correct.",
+      "rateLimitedError": "Too many attempts. Please try again later.",
+      "success": "Admin access granted. Refresh to see it take effect."
+    }
   },
   "admin": {
     "nav": {

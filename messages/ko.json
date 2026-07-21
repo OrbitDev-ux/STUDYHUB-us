@@ -314,7 +314,16 @@
     },
     "adminDashboardTitle": "관리자 대시보드",
     "adminDashboardDesc": "회원 관리, 사이트 통계, 점검 모드는 관리자 대시보드로 이동했어요",
-    "adminDashboardLink": "대시보드 열기"
+    "adminDashboardLink": "대시보드 열기",
+    "claimAdmin": {
+      "title": "관리자 코드가 있으신가요?",
+      "desc": "관리자 코드를 입력하면 이 계정이 관리자로 전환됩니다.",
+      "placeholder": "관리자 코드",
+      "button": "적용",
+      "invalidError": "관리자 코드가 올바르지 않아요.",
+      "rateLimitedError": "시도가 너무 많아요. 잠시 후 다시 시도해주세요.",
+      "success": "관리자 권한이 부여됐어요. 새로고침하면 반영돼요."
+    }
   },
   "admin": {
     "nav": {

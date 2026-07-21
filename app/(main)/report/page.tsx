@@ -1,13 +1,15 @@
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ensureTodayFeedback } from "./actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, TrendingUp } from "lucide-react";
 import { planLimits } from "@/lib/plan";
-import { StudyChart } from "@/components/report/study-chart";
 import { getUserPlan } from "@/lib/supabase/compat";
+import { StudyChartLazy } from "@/components/report/study-chart-lazy";
 
 export async function generateMetadata() {
   const t = await getTranslations("report");
@@ -15,6 +17,40 @@ export async function generateMetadata() {
 }
 
 export default async function ReportPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const t = await getTranslations("report");
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+      </div>
+
+      {/* 오늘 피드백이 아직 없으면 AI 생성을 기다려야 하는데, 페이지 전체를 막지 않고
+          이 부분만 스트리밍해서 첫 방문 체감 속도를 크게 줄인다. */}
+      <Suspense fallback={<ReportSkeleton />}>
+        <ReportContent />
+      </Suspense>
+    </div>
+  );
+}
+
+function ReportSkeleton() {
+  return (
+    <div className="flex flex-col gap-6">
+      <Skeleton className="h-32 w-full" />
+      <Skeleton className="h-64 w-full" />
+    </div>
+  );
+}
+
+async function ReportContent() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -37,12 +73,7 @@ export default async function ReportPage() {
     .limit(historyLimit);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
-      </div>
-
+    <>
       {!todayFeedback ? (
         <Card>
           <CardContent className="p-8 text-center text-sm text-muted-foreground">{t("empty")}</CardContent>
@@ -79,7 +110,7 @@ export default async function ReportPage() {
         <CardContent className="flex flex-col gap-4">
           {(history ?? []).length === 0 && <p className="text-sm text-muted-foreground">{t("noHistory")}</p>}
           {/* history는 최신순이라 slice(0, 30)이 최근 30일치. 차트가 너무 빽빽해지지 않게 상한을 둔다. */}
-          {(history ?? []).length > 0 && <StudyChart history={(history ?? []).slice(0, 30)} />}
+          {(history ?? []).length > 0 && <StudyChartLazy history={(history ?? []).slice(0, 30)} />}
           {(history ?? []).map((h) => (
             <div key={h.id} className="flex items-center justify-between border-b border-border py-2 text-sm last:border-0">
               <span className="text-muted-foreground">{h.date}</span>
@@ -89,6 +120,6 @@ export default async function ReportPage() {
           ))}
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 }

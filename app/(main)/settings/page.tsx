@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { updateSettings, startDiscordLink, unlinkDiscord } from "./actions";
+import { updateSettings, startDiscordLink, unlinkDiscord, claimAdminRole } from "./actions";
 import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 import { planLimits } from "@/lib/plan";
 import { getUserPlan } from "@/lib/supabase/compat";
@@ -19,7 +19,12 @@ export async function generateMetadata() {
   return { title: t("title") };
 }
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; message?: string }>;
+}) {
+  const params = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -152,6 +157,32 @@ export default async function SettingsPage() {
           <DeleteAccountForm />
         </CardContent>
       </Card>
+
+      {!isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t("claimAdmin.title")}</CardTitle>
+            <CardDescription>{t("claimAdmin.desc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            <form action={claimAdminRole} className="flex flex-wrap gap-2">
+              <Input name="code" type="password" placeholder={t("claimAdmin.placeholder")} className="max-w-xs" />
+              <Button type="submit" variant="outline">
+                {t("claimAdmin.button")}
+              </Button>
+            </form>
+            {params.error === "admin_code_invalid" && (
+              <p className="text-sm text-destructive">{t("claimAdmin.invalidError")}</p>
+            )}
+            {params.error === "admin_code_rate_limited" && (
+              <p className="text-sm text-destructive">{t("claimAdmin.rateLimitedError")}</p>
+            )}
+            {params.message === "admin_granted" && (
+              <p className="text-sm text-success">{t("claimAdmin.success")}</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {isAdmin && (
         <Card className="border-warning/50">

@@ -9,6 +9,7 @@ import { DISCORD_OAUTH_STATE_COOKIE } from "@/lib/discord/oauth";
 import { planLimits } from "@/lib/plan";
 import { getUserPlan, isMissingColumnError } from "@/lib/supabase/compat";
 import { requireUser } from "@/lib/auth/require-user";
+import { isRateLimited } from "@/lib/rate-limit";
 
 function boundedInteger(value: FormDataEntryValue | null, fallback: number, min: number, max: number) {
   const parsed = Number(value);
@@ -94,4 +95,32 @@ export async function deleteAccount() {
 
   await supabase.auth.signOut();
   redirect("/");
+}
+
+/**
+ * 관리자 코드로 본인 계정을 관리자로 승격한다 (SQL Editor 없이 최초 관리자를 만들기
+ * 위한 셀프 등록용). profiles.role은 컬럼 단위 권한(0003)으로 클라이언트 UPDATE가
+ * 막혀 있으므로, 코드가 ADMIN_SETUP_SECRET과 일치할 때만 admin 클라이언트로 직접
+ * 바꾼다. 무차별 대입을 막기 위해 계정당 시도 횟수를 제한한다.
+ */
+export async function claimAdminRole(formData: FormData) {
+  const { user } = await requireUser();
+
+  if (await isRateLimited(`admin-claim:${user.id}`, 5, 15 * 60 * 1000)) {
+    redirect("/settings?error=admin_code_rate_limited");
+  }
+
+  const code = String(formData.get("code") ?? "");
+  const secret = process.env.ADMIN_SETUP_SECRET;
+
+  if (!secret || !code || code !== secret) {
+    redirect("/settings?error=admin_code_invalid");
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("profiles").update({ role: "admin" }).eq("id", user.id);
+  if (error) throw new Error(`관리자 권한 부여 실패: ${error.message}`);
+
+  revalidatePath("/settings");
+  redirect("/settings?message=admin_granted");
 }

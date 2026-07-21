@@ -3,8 +3,13 @@ const ANTHROPIC_MODEL = "claude-sonnet-4-6";
 
 const GLM_API_URL = "https://api.z.ai/api/paas/v4/chat/completions";
 const GLM_MODEL = "glm-5.2-lite";
-const AI_TIMEOUT_MS = 60_000;
-const AI_MAX_ATTEMPTS = 3;
+// 이 함수들은 페이지 렌더링 경로(homework/planner/report)에서 직접 await되므로,
+// 타임아웃/재시도를 길게 잡으면 AI 제공자가 느리거나 오류를 반복할 때 요청 자체가
+// 서버리스 함수 제한 시간을 넘겨 죽어버릴 수 있다 (그 결과가 클라이언트에서는
+// "Application error"로 보인다). 실패 시 fallback이 항상 있으므로, 오래 매달리는
+// 것보다 빨리 포기하고 fallback으로 넘어가는 쪽이 사용자 경험에 낫다.
+const AI_TIMEOUT_MS = 20_000;
+const AI_MAX_ATTEMPTS = 2;
 
 interface AICallOptions<T> {
   system: string;

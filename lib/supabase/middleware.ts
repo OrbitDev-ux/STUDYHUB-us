@@ -22,6 +22,19 @@ const MAINTENANCE_ALLOWED = [
 const MAINTENANCE_CACHE_TTL_MS = 5000;
 let maintenanceModeCache: { value: boolean; expiresAt: number } | null = null;
 
+// Supabase가 느려지거나 잠시 응답이 없어도(무료 플랜 콜드스타트, 일시적 장애 등)
+// 미들웨어가 무한정 매달리면 사이트의 모든 페이지가 똑같이 멈춘 것처럼 보인다.
+// 인증 확인과 점검모드 조회 둘 다 짧게 타임아웃을 두고, 넘기면 안전한 기본값으로
+// 폴백한다(로그인 안 된 것으로 간주 / 점검모드 꺼짐으로 간주).
+const MIDDLEWARE_QUERY_TIMEOUT_MS = 2500;
+
+function withTimeout<T>(promise: PromiseLike<T>, ms: number): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`timeout after ${ms}ms`)), ms)),
+  ]);
+}
+
 async function isMaintenanceModeOn(
   supabase: ReturnType<typeof createServerClient>
 ): Promise<boolean> {
@@ -29,19 +42,27 @@ async function isMaintenanceModeOn(
     return maintenanceModeCache.value;
   }
 
-  const { data, error } = await supabase.from("app_settings").select("maintenance_mode").eq("id", true).single();
+  try {
+    const { data, error } = await withTimeout(
+      supabase.from("app_settings").select("maintenance_mode").eq("id", true).single(),
+      MIDDLEWARE_QUERY_TIMEOUT_MS
+    );
 
-  // 조회 실패 시 점검 모드를 "꺼짐"으로 간주하고 통과시킨다(fail-open) — 하지만
-  // 원인 파악이 가능하도록 에러 자체는 로그로 남긴다. 실패 결과는 캐싱하지 않아
-  // 다음 요청에서 바로 다시 시도한다.
-  if (error) {
-    console.error("[middleware] app_settings 조회 실패:", error.message);
+    // 조회 실패 시 점검 모드를 "꺼짐"으로 간주하고 통과시킨다(fail-open) — 하지만
+    // 원인 파악이 가능하도록 에러 자체는 로그로 남긴다. 실패 결과는 캐싱하지 않아
+    // 다음 요청에서 바로 다시 시도한다.
+    if (error) {
+      console.error("[middleware] app_settings 조회 실패:", error.message);
+      return false;
+    }
+
+    const value = Boolean(data?.maintenance_mode);
+    maintenanceModeCache = { value, expiresAt: Date.now() + MAINTENANCE_CACHE_TTL_MS };
+    return value;
+  } catch (e) {
+    console.error("[middleware] app_settings 조회 타임아웃/예외:", e);
     return false;
   }
-
-  const value = Boolean(data?.maintenance_mode);
-  maintenanceModeCache = { value, expiresAt: Date.now() + MAINTENANCE_CACHE_TTL_MS };
-  return value;
 }
 
 export async function updateSession(request: NextRequest) {
@@ -66,9 +87,15 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const result = await withTimeout(supabase.auth.getUser(), MIDDLEWARE_QUERY_TIMEOUT_MS);
+    user = result.data.user;
+  } catch (e) {
+    // 인증 서버가 느리거나 응답이 없으면 로그인 안 된 것으로 간주한다 — 보호된
+    // 페이지는 /login으로 보내고, 이미 로그인된 사용자는 다음 요청에서 다시 통과된다.
+    console.error("[middleware] auth.getUser() 실패/타임아웃:", e);
+  }
 
   const path = request.nextUrl.pathname;
 
