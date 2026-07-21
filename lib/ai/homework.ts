@@ -1,5 +1,6 @@
 import { callAIForJSON } from "./client";
 import { planLimits } from "@/lib/plan";
+import { refineQuestionBatch, shuffleChoices } from "./question-quality";
 import type { SubjectId } from "@/types";
 
 export interface GeneratedHomeworkItem {
@@ -68,7 +69,7 @@ export async function generateDailyHomework(
       ? `- 그 중 ${reviewCount}문제는 최근 오답을 변형하여 재출제 (category: "오답복습")\n- 나머지 ${newCount}문제는`
       : `- 최근 오답 데이터가 없으므로 오답 복습 문제는 포함하지 마세요.\n- ${newCount}문제 전부`;
 
-  return callAIForJSON<{ rationale: string; items: GeneratedHomeworkItem[] }>({
+  const result = await callAIForJSON<{ rationale: string; items: GeneratedHomeworkItem[] }>({
     system:
       "당신은 학생 개인별 취약점에 맞춰 매일 숙제를 설계하는 AI 과외 선생님입니다. 신규 문제와 오답 복습을 균형 있게 배치합니다.",
     prompt: `학년: ${input.gradeLevel}
@@ -81,6 +82,8 @@ export async function generateDailyHomework(
 ${reviewGuide} 취약 단원 위주의 신규 문제로, 수학/영어/사회/과학에 균형 있게 배분
   (영어는 단어 문제(category: "단어")와 문법 문제(category: "신규")를 섞어도 됩니다)
 - category는 "신규" 또는 "오답복습" 또는 "단어" 중 하나
+- ${questionCount}문제는 서로 내용이 겹치거나 숫자·표현만 바꾼 유사 문제가 없도록 각각 확실히 다른 내용으로 출제하세요.
+- choices 안에서 정답의 위치도 문제마다 골고루 바뀌게 하세요 — 정답을 매번 같은 자리에 두지 마세요.
 
 JSON 스키마:
 {
@@ -116,6 +119,8 @@ JSON 스키마:
       };
     },
   });
+
+  return { ...result, items: refineQuestionBatch(result.items) };
 }
 
 /** 오답노트에서 유사 문제 재생성 */
@@ -125,7 +130,7 @@ export async function generateSimilarQuestion(original: {
   unit_name: string;
   difficulty: number;
 }): Promise<GeneratedHomeworkItem> {
-  return callAIForJSON<GeneratedHomeworkItem>({
+  const item = await callAIForJSON<GeneratedHomeworkItem>({
     system: "당신은 원본 문제와 동일한 개념·난이도의 유사 문제를 새로 출제하는 AI입니다.",
     prompt: `원본 문제: ${original.content}
 과목: ${original.subject_id}, 단원: ${original.unit_name}, 난이도: ${original.difficulty}
@@ -145,4 +150,6 @@ export async function generateSimilarQuestion(original: {
     maxTokens: 1000,
     fallback: () => fallbackHomeworkItem(original.subject_id, 1, original.unit_name, "오답복습"),
   });
+
+  return shuffleChoices(item);
 }

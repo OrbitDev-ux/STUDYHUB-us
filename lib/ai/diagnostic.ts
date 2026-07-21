@@ -1,4 +1,5 @@
 import { callAIForJSON } from "./client";
+import { refineQuestionBatch } from "./question-quality";
 import type { SubjectId, WeakUnit, StrongUnit } from "@/types";
 
 const SUBJECT_NAMES: Record<SubjectId, string> = {
@@ -67,6 +68,7 @@ export async function generateDiagnosticQuestions(
     prompt: `학년: ${gradeLevel}
 과목: ${SUBJECT_NAMES[subject]}
 다음 JSON 스키마로 진단평가 문항 ${count}개를 생성하세요. 난이도(1~5)는 골고루 분포시키고, 여러 단원에 걸쳐 골고루 출제하세요 (같은 단원이 반복돼도 되지만 한두 단원에 몰리지 않게 하세요).
+${count}개는 서로 내용이 겹치거나 숫자·인물·표현만 바꾼 유사 문제가 없도록 각각 확실히 다른 내용으로 출제하세요. choices 안에서 정답의 위치(1~4번째)도 문제마다 골고루 바뀌게 하세요 — 정답을 매번 같은 자리에 두지 마세요.
 {
   "questions": [
     {
@@ -85,7 +87,7 @@ export async function generateDiagnosticQuestions(
       questions: Array.from({ length: count }, (_, index) => fallbackDiagnosticQuestion(subject, index)),
     }),
   });
-  return result.questions;
+  return refineQuestionBatch(result.questions);
 }
 
 export interface DiagnosticAnalysis {
