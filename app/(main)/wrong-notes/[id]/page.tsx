@@ -28,11 +28,11 @@ export default async function WrongNoteDetailPage({ params }: { params: Promise<
 
   if (!wrong) redirect("/wrong-notes");
 
-  let similarQuestions: { id: string; content: string; choices: string[] | null; explanation: string | null }[] = [];
+  let similarQuestions: { id: string; content: string; type: string; choices: string[] | null; explanation: string | null }[] = [];
   if (wrong.similar_question_ids?.length) {
     const { data } = await supabase
       .from("questions")
-      .select("id, content, choices, explanation")
+      .select("id, content, type, choices, explanation")
       .in("id", wrong.similar_question_ids);
     similarQuestions = data ?? [];
   }

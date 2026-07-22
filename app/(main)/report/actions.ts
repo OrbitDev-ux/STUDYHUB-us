@@ -4,8 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { generateDailyFeedback } from "@/lib/ai/feedback";
 import { todayKST } from "@/lib/utils/date";
+import { revalidatePath } from "next/cache";
+import { isRateLimited } from "@/lib/rate-limit";
 
-export async function ensureTodayFeedback() {
+export async function ensureTodayFeedback(forceRefresh = false) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -21,7 +23,10 @@ export async function ensureTodayFeedback() {
     .eq("date", today)
     .maybeSingle();
 
-  if (existing) return existing;
+  if (existing && !forceRefresh) return existing;
+  if (existing && forceRefresh && (await isRateLimited(`feedback-refresh:${user.id}`, 3, 15 * 60 * 1000))) {
+    return existing;
+  }
 
   const [{ data: profile }, { data: sessions }, { data: homework }, { data: diagnostics }] = await Promise.all([
     supabase.from("profiles").select("nickname, target_study_minutes, streak_days").eq("id", user.id).single(),
@@ -47,7 +52,7 @@ export async function ensureTodayFeedback() {
     for (const u of (d.weak_units as { name: string }[]) ?? []) weakUnits.add(u.name);
   }
 
-  if (studyMinutes === 0 && items.length === 0) {
+  if (studyMinutes === 0 && answered.length === 0) {
     return null; // 아직 오늘 활동이 없으면 피드백 생성 안 함
   }
 
@@ -62,9 +67,7 @@ export async function ensureTodayFeedback() {
     streakDays: profile?.streak_days ?? 0,
   });
 
-  const { data: feedback } = await supabase
-    .from("daily_feedback")
-    .insert({
+  const payload = {
       user_id: user.id,
       date: today,
       study_minutes: studyMinutes,
@@ -72,9 +75,31 @@ export async function ensureTodayFeedback() {
       improved_units: [],
       recommended_next: generated.recommended_next,
       ai_message: generated.ai_message,
-    })
+  };
+
+  const query = existing
+    ? supabase.from("daily_feedback").update(payload).eq("id", existing.id)
+    : supabase.from("daily_feedback").insert(payload);
+  const { data: feedback, error: feedbackError } = await query
     .select("*")
     .single();
 
+  // 23:30 크론과 페이지 진입이 동시에 피드백을 만들면 유니크 충돌이 날 수 있다.
+  if (feedbackError?.code === "23505") {
+    const { data: concurrentFeedback } = await supabase
+      .from("daily_feedback")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("date", today)
+      .single();
+    return concurrentFeedback;
+  }
+  if (feedbackError) throw new Error(`피드백 저장 실패: ${feedbackError.message}`);
+
   return feedback;
+}
+
+export async function refreshTodayFeedback() {
+  await ensureTodayFeedback(true);
+  revalidatePath("/report");
 }

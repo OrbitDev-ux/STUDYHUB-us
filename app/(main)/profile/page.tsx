@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { updateProfile } from "./actions";
 import { Flame, Zap, Coins, Clock } from "lucide-react";
+import { ProfileMediaEditor } from "@/components/profile/profile-media-editor";
 
 export async function generateMetadata() {
   const t = await getTranslations("nav");
@@ -37,12 +38,14 @@ export default async function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="h-32 w-full rounded-2xl bg-gradient-to-br from-primary/70 to-accent" />
+      <ProfileMediaEditor
+        userId={user.id}
+        nickname={profile?.nickname ?? ""}
+        avatarUrl={profile?.avatar_url ?? null}
+        bannerUrl={profile?.banner_url ?? null}
+      />
 
-      <div className="-mt-16 flex items-end gap-4 px-2">
-        <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-background bg-secondary text-3xl font-bold">
-          {profile?.nickname?.[0] ?? "?"}
-        </div>
+      <div className="flex items-end justify-between px-2">
         <div className="flex flex-1 items-end justify-between pb-1">
           <div>
             <h1 className="text-xl font-bold">{profile?.nickname}</h1>

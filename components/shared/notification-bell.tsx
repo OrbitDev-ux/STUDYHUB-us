@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Bell, BookOpen, Medal, Sparkles, CreditCard } from "lucide-react";
+import { Bell, BookOpen, Medal, Sparkles, CalendarClock } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { ko, enUS, zhCN, ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
-import { markAllNotificationsRead, markNotificationRead } from "@/app/(main)/notifications/actions";
+import { clearReadNotifications, markAllNotificationsRead, markNotificationRead } from "@/app/(main)/notifications/actions";
+import { useRouter } from "next/navigation";
 
 const DATE_FNS_LOCALES = { ko, en: enUS, zh: zhCN, ja } as const;
 
@@ -15,7 +16,14 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
   homework: BookOpen,
   feedback: Sparkles,
   badge: Medal,
-  plan: CreditCard,
+  plan: CalendarClock,
+};
+
+const TYPE_LINKS: Record<string, string> = {
+  homework: "/homework",
+  feedback: "/report",
+  badge: "/rank",
+  plan: "/planner",
 };
 
 export interface NotificationRow {
@@ -29,6 +37,7 @@ export interface NotificationRow {
 
 export function NotificationBell({ initialNotifications }: { initialNotifications: NotificationRow[] }) {
   const t = useTranslations("notifications");
+  const router = useRouter();
   const locale = useLocale();
   const dateLocale = DATE_FNS_LOCALES[locale as keyof typeof DATE_FNS_LOCALES] ?? ko;
 
@@ -44,18 +53,36 @@ export function NotificationBell({ initialNotifications }: { initialNotification
     function handleClickOutside(e: MouseEvent) {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) setOpen(false);
     }
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, [open]);
 
   function handleNotificationClick(id: string) {
+    const notification = notifications.find((item) => item.id === id);
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     startTransition(() => markNotificationRead(id));
+    const href = TYPE_LINKS[notification?.type ?? ""];
+    if (href) {
+      setOpen(false);
+      router.push(href);
+    }
   }
 
   function handleMarkAllRead() {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     startTransition(() => markAllNotificationsRead());
+  }
+
+  function handleClearRead() {
+    setNotifications((prev) => prev.filter((notification) => !notification.read));
+    startTransition(() => clearReadNotifications());
   }
 
   return (
@@ -79,15 +106,18 @@ export function NotificationBell({ initialNotifications }: { initialNotification
         <div className="absolute right-0 top-full z-40 mt-2 w-80 rounded-xl border border-border bg-background shadow-lg">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <span className="text-sm font-semibold">{t("title")}</span>
-            {unreadCount > 0 && (
-              <button
-                type="button"
-                onClick={handleMarkAllRead}
-                className="text-xs font-medium text-primary hover:underline"
-              >
-                {t("markAllRead")}
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {notifications.some((notification) => notification.read) && (
+                <button type="button" onClick={handleClearRead} className="text-xs text-muted-foreground hover:underline">
+                  {t("clearRead")}
+                </button>
+              )}
+              {unreadCount > 0 && (
+                <button type="button" onClick={handleMarkAllRead} className="text-xs font-medium text-primary hover:underline">
+                  {t("markAllRead")}
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="max-h-96 overflow-y-auto">

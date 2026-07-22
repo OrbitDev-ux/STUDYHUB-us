@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { submitHomeworkAnswer, completeHomeworkIfDone } from "@/app/(main)/homework/actions";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { QuestionAnswerControls } from "./question-answer-controls";
 
 interface Item {
   id: string;
@@ -30,19 +30,28 @@ export function HomeworkList({ homeworkId, items }: { homeworkId: string; items:
   const tc = useTranslations("common");
   const [localItems, setLocalItems] = useState(items);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [correctAnswers, setCorrectAnswers] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
 
   async function handleAnswer(item: Item, answer: string) {
     setPendingId(item.id);
-    const result = await submitHomeworkAnswer(item.id, item.questions.id, answer);
-    setLocalItems((prev) =>
-      prev.map((i) => (i.id === item.id ? { ...i, user_answer: answer, is_correct: result.isCorrect } : i))
-    );
-    setPendingId(null);
+    setError(null);
+    try {
+      const result = await submitHomeworkAnswer(item.id, item.questions.id, answer);
+      setLocalItems((prev) =>
+        prev.map((i) => (i.id === item.id ? { ...i, user_answer: answer, is_correct: result.isCorrect } : i))
+      );
+      setCorrectAnswers((prev) => ({ ...prev, [item.id]: result.correctAnswer }));
 
-    const allDone = localItems.every((i) => i.id === item.id || i.is_correct !== null);
-    if (allDone) {
-      await completeHomeworkIfDone(homeworkId);
-      router.refresh();
+      const allDone = localItems.every((i) => i.id === item.id || i.is_correct !== null);
+      if (allDone) {
+        await completeHomeworkIfDone(homeworkId);
+        router.refresh();
+      }
+    } catch {
+      setError(t("actionError"));
+    } finally {
+      setPendingId(null);
     }
   }
 
@@ -53,6 +62,7 @@ export function HomeworkList({ homeworkId, items }: { homeworkId: string; items:
       <p className="text-sm text-muted-foreground">
         {t("completedProgress", { completed: completedCount, total: localItems.length })}
       </p>
+      {error && <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
       {localItems.map((item, idx) => (
         <Card key={item.id}>
           <CardContent className="flex flex-col gap-3 p-5">
@@ -70,19 +80,14 @@ export function HomeworkList({ homeworkId, items }: { homeworkId: string; items:
             <p className="font-medium leading-relaxed">{item.questions.content}</p>
 
             {item.is_correct === null ? (
-              <div className="flex flex-col gap-2">
-                {(item.questions.choices ?? ["O", "X"]).map((choice) => (
-                  <Button
-                    key={choice}
-                    variant="outline"
-                    disabled={pendingId === item.id}
-                    className="h-auto justify-start whitespace-normal py-3 text-left"
-                    onClick={() => handleAnswer(item, choice)}
-                  >
-                    {choice}
-                  </Button>
-                ))}
-              </div>
+              <QuestionAnswerControls
+                type={item.questions.type}
+                choices={item.questions.choices}
+                disabled={pendingId === item.id}
+                onAnswer={(answer) => handleAnswer(item, answer)}
+                submitLabel={t("submitAnswer")}
+                placeholder={t("answerPlaceholder")}
+              />
             ) : (
               <div
                 className={`rounded-xl p-3 text-sm ${
@@ -92,6 +97,9 @@ export function HomeworkList({ homeworkId, items }: { homeworkId: string; items:
                 <p className="font-medium">
                   {item.is_correct ? tc("correct") : t("wrongAnswer", { answer: item.user_answer ?? "" })}
                 </p>
+                {!item.is_correct && correctAnswers[item.id] && (
+                  <p className="mt-1 text-foreground/90">{t("correctAnswer", { answer: correctAnswers[item.id] ?? "" })}</p>
+                )}
                 {item.questions.explanation && (
                   <p className="mt-1 text-foreground/80">{item.questions.explanation}</p>
                 )}

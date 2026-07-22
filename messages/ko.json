@@ -43,6 +43,7 @@
   "notifications": {
     "title": "알림",
     "markAllRead": "모두 읽음",
+    "clearRead": "읽은 알림 삭제",
     "empty": "알림이 없어요"
   },
   "landing": {
@@ -186,6 +187,12 @@
     "goalRateSub": "오늘 기준",
     "goalCardTitle": "오늘 목표 달성률",
     "goalCaption": "{studied}분 / {target}분 ({rate}%)",
+    "weeklyTitle": "최근 7일 학습 흐름",
+    "weeklyTotal": "주간 합계",
+    "activeDays": "학습한 날",
+    "dailyAverage": "학습일 평균",
+    "planProgressTitle": "오늘의 계획",
+    "planProgressCaption": "{completed}/{total}개 계획 완료",
     "noDiagnostic": "아직 진단평가 결과가 없어요.",
     "weakUnitsTitle": "취약 단원",
     "noWeakUnits": "취약 단원이 아직 없어요.",
@@ -198,6 +205,10 @@
     "rationaleTitle": "AI의 숙제 구성 이유",
     "completedProgress": "{completed} / {total} 완료",
     "wrongAnswer": "오답: {answer}",
+    "correctAnswer": "정답: {answer}",
+    "answerPlaceholder": "답을 입력하세요",
+    "submitAnswer": "제출",
+    "actionError": "답안을 저장하지 못했어요. 잠시 후 다시 시도해주세요.",
     "categories": {
       "신규": "신규",
       "오답복습": "오답복습",
@@ -210,6 +221,9 @@
     "summaryTitle": "오늘의 계획 요약",
     "totalTime": "총 계획 시간: {minutes}분",
     "priorityLabel": "우선순위 {level}",
+    "progress": "오늘 계획 진행률",
+    "rewardEarned": "계획을 완료해 3 XP를 획득했어요!",
+    "toggleError": "상태를 저장하지 못했어요. 다시 시도해주세요.",
     "priority": {
       "high": "높음",
       "medium": "보통",
@@ -220,13 +234,25 @@
   },
   "timer": {
     "title": "공부 타이머",
-    "subtitle": "25분 집중, 5분 휴식으로 몰입해요.",
+    "subtitle": "설정한 {focus}분 집중, {break}분 휴식 리듬으로 몰입해요.",
     "focusLabel": "집중 시간",
     "breakLabel": "휴식 시간",
     "pause": "일시정지",
     "start": "시작",
+    "starting": "준비 중",
     "stopAndSave": "종료 및 저장",
-    "sessionTotal": "이번 세션 누적 집중 시간: {minutes}분"
+    "sessionTotal": "이번 세션 누적 집중 시간: {minutes}분",
+    "todayMinutes": "오늘 집중 시간(분)",
+    "todaySessions": "오늘 완료 세션",
+    "minimumSave": "30초 이상 집중한 뒤 저장할 수 있어요.",
+    "saved": "학습 기록과 XP를 저장했어요.",
+    "saveError": "학습 기록을 저장하지 못했어요. 다시 시도해주세요.",
+    "startError": "타이머 세션을 시작하지 못했어요. 다시 시도해주세요.",
+    "recentSessions": "최근 학습 세션",
+    "noSessions": "아직 저장된 학습 세션이 없어요.",
+    "generalStudy": "일반 학습",
+    "interrupted": "중간 종료",
+    "focusValue": "집중 {minutes}분"
   },
   "wrongNotes": {
     "title": "오답노트",
@@ -239,7 +265,10 @@
     "correctAnswer": "정답:",
     "generateSimilar": "AI로 유사 문제 생성해서 재도전하기",
     "masteredMessage": "이 개념을 극복했어요!",
-    "wrongAgain": "다시 틀렸어요"
+    "wrongAgain": "다시 틀렸어요",
+    "answerPlaceholder": "답을 입력하세요",
+    "submitAnswer": "제출",
+    "actionError": "처리하지 못했어요. 잠시 후 다시 시도해주세요."
   },
   "report": {
     "title": "AI 일일 피드백",
@@ -249,7 +278,12 @@
     "recommendedNext": "내일 추천",
     "recentHistory": "최근 학습 기록",
     "noHistory": "기록이 없어요.",
-    "studyMinutesLabel": "공부 시간"
+    "studyMinutesLabel": "공부 시간",
+    "refreshFeedback": "최신 활동으로 다시 분석",
+    "downloadCsv": "CSV 내려받기",
+    "printReport": "인쇄하기",
+    "csvDate": "날짜",
+    "csvGoalRate": "목표 달성률(%)"
   },
   "rank": {
     "title": "랭킹 & 배지",
@@ -284,7 +318,12 @@
     "badgeCount": "배지 {count}개",
     "editProfile": "프로필 수정",
     "bio": "소개",
-    "bioPlaceholder": "한 줄 소개를 남겨보세요"
+    "bioPlaceholder": "한 줄 소개를 남겨보세요",
+    "changeAvatar": "프로필 사진 변경",
+    "changeBanner": "배너 이미지 변경",
+    "imageHint": "사진을 눌러 변경 · JPG, PNG, WebP, GIF · 최대 5MB",
+    "imageInvalid": "5MB 이하의 JPG, PNG, WebP, GIF 이미지를 선택해주세요.",
+    "imageUploadError": "이미지를 업로드하지 못했어요. 저장소 설정을 확인해주세요."
   },
   "settings": {
     "title": "설정",

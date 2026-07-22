@@ -43,6 +43,7 @@
   "notifications": {
     "title": "通知",
     "markAllRead": "全部标记为已读",
+    "clearRead": "删除已读",
     "empty": "暂无通知"
   },
   "landing": {
@@ -186,6 +187,12 @@
     "goalRateSub": "今日",
     "goalCardTitle": "今日目标达成率",
     "goalCaption": "{studied}分钟 / {target}分钟（{rate}%）",
+    "weeklyTitle": "最近7天学习趋势",
+    "weeklyTotal": "本周合计",
+    "activeDays": "学习天数",
+    "dailyAverage": "学习日平均",
+    "planProgressTitle": "今日计划",
+    "planProgressCaption": "已完成 {completed}/{total} 项",
     "noDiagnostic": "还没有诊断评估结果。",
     "weakUnitsTitle": "薄弱单元",
     "noWeakUnits": "暂无薄弱单元。",
@@ -198,6 +205,10 @@
     "rationaleTitle": "AI布置这些作业的原因",
     "completedProgress": "已完成 {completed} / {total}",
     "wrongAnswer": "错误答案：{answer}",
+    "correctAnswer": "正确答案：{answer}",
+    "answerPlaceholder": "请输入答案",
+    "submitAnswer": "提交",
+    "actionError": "无法保存答案，请稍后重试。",
     "categories": {
       "신규": "新题",
       "오답복습": "错题复习",
@@ -210,6 +221,9 @@
     "summaryTitle": "今日计划摘要",
     "totalTime": "总计划时间：{minutes}分钟",
     "priorityLabel": "优先级 {level}",
+    "progress": "今日计划进度",
+    "rewardEarned": "完成计划，获得了3 XP！",
+    "toggleError": "无法保存状态，请重试。",
     "priority": {
       "high": "高",
       "medium": "中",
@@ -220,13 +234,25 @@
   },
   "timer": {
     "title": "学习计时器",
-    "subtitle": "专注25分钟，休息5分钟，进入状态。",
+    "subtitle": "按设置专注{focus}分钟、休息{break}分钟。",
     "focusLabel": "专注时间",
     "breakLabel": "休息时间",
     "pause": "暂停",
     "start": "开始",
+    "starting": "准备中",
     "stopAndSave": "结束并保存",
-    "sessionTotal": "本次会话累计专注时间：{minutes}分钟"
+    "sessionTotal": "本次会话累计专注时间：{minutes}分钟",
+    "todayMinutes": "今日专注时间（分钟）",
+    "todaySessions": "今日完成次数",
+    "minimumSave": "专注至少30秒后才能保存。",
+    "saved": "学习记录和XP已保存。",
+    "saveError": "无法保存学习记录，请重试。",
+    "startError": "无法启动计时器，请重试。",
+    "recentSessions": "最近学习记录",
+    "noSessions": "暂无已保存的学习记录。",
+    "generalStudy": "一般学习",
+    "interrupted": "提前结束",
+    "focusValue": "专注{minutes}分钟"
   },
   "wrongNotes": {
     "title": "错题本",
@@ -239,7 +265,10 @@
     "correctAnswer": "正确答案：",
     "generateSimilar": "用AI生成类似题再挑战一次",
     "masteredMessage": "你已经掌握这个知识点了！",
-    "wrongAgain": "又答错了"
+    "wrongAgain": "又答错了",
+    "answerPlaceholder": "请输入答案",
+    "submitAnswer": "提交",
+    "actionError": "操作失败，请稍后重试。"
   },
   "report": {
     "title": "AI每日反馈",
@@ -249,7 +278,12 @@
     "recommendedNext": "明日推荐",
     "recentHistory": "最近学习记录",
     "noHistory": "暂无记录。",
-    "studyMinutesLabel": "学习时间"
+    "studyMinutesLabel": "学习时间",
+    "refreshFeedback": "根据最新活动重新分析",
+    "downloadCsv": "下载CSV",
+    "printReport": "打印报告",
+    "csvDate": "日期",
+    "csvGoalRate": "目标达成率（%）"
   },
   "rank": {
     "title": "排行榜与徽章",
@@ -284,7 +318,12 @@
     "badgeCount": "{count}个徽章",
     "editProfile": "编辑资料",
     "bio": "简介",
-    "bioPlaceholder": "写一句自我介绍吧"
+    "bioPlaceholder": "写一句自我介绍吧",
+    "changeAvatar": "更换头像",
+    "changeBanner": "更换横幅图片",
+    "imageHint": "点击图片即可更换 · JPG、PNG、WebP、GIF · 最大5MB",
+    "imageInvalid": "请选择5MB以内的JPG、PNG、WebP或GIF图片。",
+    "imageUploadError": "图片上传失败，请检查存储设置。"
   },
   "settings": {
     "title": "设置",

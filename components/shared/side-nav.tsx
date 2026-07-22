@@ -20,11 +20,20 @@ export function SideNav({ profile }: { profile: Profile | null }) {
       </Link>
 
       {profile && (
-        <div className="mb-6 flex items-center gap-2 rounded-xl bg-secondary px-3 py-2.5 text-sm">
-          <Flame className="h-4 w-4 text-warning" />
-          <span className="font-medium">
-            {tc("streak")} {tc("daysSuffix", { days: profile.streak_days })}
-          </span>
+        <div className="mb-6 flex items-center gap-3 rounded-xl bg-secondary px-3 py-2.5 text-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background font-semibold">
+            {profile.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+            ) : profile.nickname?.[0] ?? "?"}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate font-medium">{profile.nickname}</p>
+            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Flame className="h-3 w-3 text-warning" />
+              {tc("streak")} {tc("daysSuffix", { days: profile.streak_days })}
+            </p>
+          </div>
         </div>
       )}
 

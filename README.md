@@ -49,8 +49,8 @@ npm install
 
 ### 2. Supabase 프로젝트 생성
 1. [supabase.com](https://supabase.com)에서 새 프로젝트 생성
-2. SQL Editor에서 `supabase/migrations/0001_init.sql` → `0002_leaderboard_and_xp_fix.sql` → `0003_lock_down_profiles_columns.sql` → `0004_badges_and_coins.sql` → `0005_maintenance_mode.sql` → `0006_homework_question_count.sql` → `0007_pricing_plans.sql` → `0008_discord_premium_sync.sql` → `0009_is_admin_helper.sql` → `0010_repair_schema_and_signup.sql` → `0011_auth_rate_limiting.sql` 순서대로 실행
-   (테이블/RLS/시드 데이터 생성 → 레벨/XP/리더보드 함수 → profiles 컬럼 권한 강화 → 배지/코인 지급 함수 → 점검 모드 테이블/함수 → 숙제 문제 수 설정 컬럼 → 유료 플랜 컬럼/함수 → Discord 프리미엄 역할 플랜 연동 → 관리자 권한 체크 공용 함수로 통합 → 스키마 복구 → 로그인/가입 rate limiting용 테이블)
+2. SQL Editor에서 `supabase/migrations/0001_init.sql`부터 `0013_engagement_hardening.sql`까지 번호 순서대로 실행
+   (기본 스키마/RLS → 레벨·XP·배지·코인 → 점검 모드 → 숙제/플랜 → Discord → 스키마 복구 → 로그인/가입 rate limiting → 프로필 이미지 Storage → 플래너 보상 및 세션 판정 강화)
    `0010`은 일부 운영 DB에서 중간 마이그레이션이 누락된 경우를 복구하는 멱등
    마이그레이션이므로, 이미 최신 상태인 DB에서도 안전하게 실행할 수 있습니다.
 3. Authentication > Providers에서 Google, Discord OAuth 활성화 (선택)
@@ -93,6 +93,8 @@ http://localhost:3000 접속
 
 ### 5. 타입 체크 / 빌드
 ```bash
+npm test
+npm run lint
 npm run typecheck
 npm run build
 ```
@@ -130,15 +132,11 @@ docker compose up --build
 
 ## 알려진 제약 / 다음 단계
 
-이 저장소는 실제 서비스로 배포 가능한 수준의 **동작하는 스캐폴드**입니다. 다음 항목은 실제 운영 전 추가 작업이 필요합니다:
+이 저장소는 실제 서비스로 배포 가능한 수준의 **동작하는 스캐폴드**입니다. 알림 센터, 배지 자동 지급, AI 재시도/타임아웃, 프로필 이미지 업로드는 구현되어 있습니다. 다음 항목은 외부 서비스 계약이나 운영 인프라가 필요한 범위입니다:
 
 - Discord 봇을 통한 실제 역할(role) 자동 지급 (현재는 계정 연동까지만 구현, 역할 부여는 `DISCORD_BOT_TOKEN` 기반 별도 워커 필요)
-- 배지 자동 지급 로직 (스트릭/숙제 완료 수 기준 트리거 또는 크론 작업 추가 필요 — `user_badges`에 insert하는 코드가 아직 없음)
-- 이미지 업로드(프로필 사진/배너) — Supabase Storage 버킷 설정 및 업로드 UI 추가 필요
-- 알림 센터 UI (notifications 테이블은 준비되어 있으나 UI 미구현)
-- E2E/유닛 테스트
-- Rate limiting 및 AI 호출 비용 모니터링
-- AI 호출(`lib/ai/client.ts`)에 재시도/타임아웃 없음 — Anthropic API가 일시적으로 실패하면 그날의 숙제/플래너/피드백이 통째로 생성되지 않음
+- 브라우저 기반 E2E 테스트와 배포 후 합성 모니터링
+- AI 호출 비용·품질 모니터링과 운영 대시보드
 
 ### ✅ 0002 마이그레이션에서 수정된 버그
 - `/rank` 랭킹이 `profiles` 테이블을 직접 select했는데 RLS가 본인 행만 허용해 항상 빈 배열이 반환되던 버그

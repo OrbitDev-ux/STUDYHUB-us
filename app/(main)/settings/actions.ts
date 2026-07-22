@@ -147,6 +147,15 @@ export async function deleteAccount() {
   const { supabase, user } = await requireUser();
 
   const admin = createAdminClient();
+  // auth.users 삭제는 DB 행을 cascade하지만 Storage 객체는 자동으로 없어지지 않는다.
+  // 회원 탈퇴 전에 본인 폴더의 프로필 이미지를 함께 정리한다.
+  const { data: mediaFiles, error: mediaListError } = await admin.storage.from("profile-media").list(user.id, { limit: 100 });
+  if (!mediaListError && mediaFiles?.length) {
+    const { error: mediaDeleteError } = await admin.storage
+      .from("profile-media")
+      .remove(mediaFiles.map((file) => `${user.id}/${file.name}`));
+    if (mediaDeleteError) console.error("[account-delete] 프로필 이미지 삭제 실패:", mediaDeleteError.message);
+  }
   const { error } = await admin.auth.admin.deleteUser(user.id);
   if (error) throw new Error(`계정 삭제 실패: ${error.message}`);
 

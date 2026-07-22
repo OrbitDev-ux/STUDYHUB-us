@@ -11,6 +11,7 @@ import { notifyNewBadges } from "@/lib/notifications/create";
 import { todayKST } from "@/lib/utils/date";
 import type { SubjectId } from "@/types";
 import { getHomeworkQuestionCount, getUserPlan } from "@/lib/supabase/compat";
+import { answersMatch } from "@/lib/homework/answer";
 
 /** 오늘 숙제가 없으면 AI로 생성해서 DB에 저장 (사용자가 처음 /homework 접속 시 or 크론에서도 호출) */
 export async function ensureTodayHomework() {
@@ -69,6 +70,17 @@ export async function ensureTodayHomework() {
     .select("id")
     .single();
 
+  // 페이지 진입과 크론이 동시에 실행될 수 있다. (user_id, date) 유니크 충돌이면
+  // 다른 요청이 만든 오늘 숙제를 그대로 사용한다.
+  if (hwError?.code === "23505") {
+    const { data: concurrentHomework } = await supabase
+      .from("homeworks")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("date", today)
+      .single();
+    if (concurrentHomework) return concurrentHomework.id as string;
+  }
   if (hwError || !homework) throw new Error(hwError?.message ?? "숙제 생성 실패");
 
   try {
@@ -106,16 +118,40 @@ export async function submitHomeworkAnswer(itemId: string, questionId: string, u
 
   if (existingItem.is_correct !== null) {
     // 이미 채점된 문제 - XP를 다시 지급하지 않고 기존 결과만 반환한다.
-    return { isCorrect: existingItem.is_correct, explanation: question.explanation as string };
+    return {
+      isCorrect: existingItem.is_correct,
+      explanation: (question.explanation as string | null) ?? "",
+      correctAnswer: question.answer as string,
+    };
   }
 
-  const isCorrect = question.answer.trim() === userAnswer.trim();
+  const answer = userAnswer.trim().slice(0, 500);
+  if (!answer) throw new Error("답을 입력해주세요.");
 
-  const { error: answerError } = await supabase
+  const isCorrect = answersMatch(question.answer, answer);
+
+  // is_correct가 아직 NULL인 행만 갱신해 동시 더블클릭/재전송 중 단 하나만 채점 권한을 얻는다.
+  // 이 조건이 없으면 두 요청이 모두 기존 NULL을 읽고 정답 XP를 중복 지급할 수 있다.
+  const { data: claimedItem, error: answerError } = await supabase
     .from("homework_items")
-    .update({ user_answer: userAnswer, is_correct: isCorrect, answered_at: new Date().toISOString() })
-    .eq("id", itemId);
+    .update({ user_answer: answer, is_correct: isCorrect, answered_at: new Date().toISOString() })
+    .eq("id", itemId)
+    .is("is_correct", null)
+    .select("id")
+    .maybeSingle();
   if (answerError) throw new Error(`답안 저장 실패: ${answerError.message}`);
+  if (!claimedItem) {
+    const { data: latestItem } = await supabase
+      .from("homework_items")
+      .select("is_correct")
+      .eq("id", itemId)
+      .maybeSingle();
+    return {
+      isCorrect: Boolean(latestItem?.is_correct),
+      explanation: (question.explanation as string | null) ?? "",
+      correctAnswer: question.answer as string,
+    };
+  }
 
   if (!isCorrect) {
     const { data: existingWrong } = await supabase
@@ -130,7 +166,7 @@ export async function submitHomeworkAnswer(itemId: string, questionId: string, u
         .from("wrong_answers")
         .update({
           wrong_count: existingWrong.wrong_count + 1,
-          user_answer: userAnswer,
+          user_answer: answer,
           last_wrong_at: new Date().toISOString(),
           mastered: false,
         })
@@ -142,7 +178,7 @@ export async function submitHomeworkAnswer(itemId: string, questionId: string, u
         question_id: questionId,
         subject_id: question.subject_id,
         unit_id: question.unit_id,
-        user_answer: userAnswer,
+        user_answer: answer,
       });
       if (wrongInsertError) throw new Error(`오답 기록 저장 실패: ${wrongInsertError.message}`);
     }
@@ -155,10 +191,15 @@ export async function submitHomeworkAnswer(itemId: string, questionId: string, u
     if (masteredError) throw new Error(`오답 상태 갱신 실패: ${masteredError.message}`);
 
     await awardXP(supabase, 5, "숙제 정답");
+    revalidatePath("/", "layout");
   }
 
   revalidatePath(`/homework`);
-  return { isCorrect, explanation: question.explanation as string };
+  return {
+    isCorrect,
+    explanation: (question.explanation as string | null) ?? "",
+    correctAnswer: question.answer as string,
+  };
 }
 
 export async function completeHomeworkIfDone(homeworkId: string) {

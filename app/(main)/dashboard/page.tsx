@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Flame, Clock, NotebookPen, Target, TrendingUp } from "lucide-react";
+import { Flame, Clock, NotebookPen, Target, TrendingUp, BarChart3, CalendarCheck2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { todayKST } from "@/lib/utils/date";
@@ -27,7 +27,8 @@ export default async function DashboardPage() {
 
   const today = todayKST();
 
-  const [{ data: profile }, { data: stats }, { data: todaySessions }, { data: homework }, { data: recentDiagnostics }] =
+  const weekStart = todayKST(new Date(Date.now() - 6 * 86400000));
+  const [{ data: profile }, { data: stats }, { data: todaySessions }, { data: homework }, { data: recentDiagnostics }, { data: weekSessions }, { data: todayPlan }] =
     await Promise.all([
       supabase.from("profiles").select("*").eq("id", user.id).single(),
       supabase.from("user_subject_stats").select("*").eq("user_id", user.id),
@@ -43,6 +44,18 @@ export default async function DashboardPage() {
         .select("subject_id, weak_units")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("study_sessions")
+        .select("started_at, focus_minutes")
+        .eq("user_id", user.id)
+        .not("ended_at", "is", null)
+        .gte("started_at", `${weekStart}T00:00:00+09:00`),
+      supabase
+        .from("study_plans")
+        .select("study_plan_items(completed)")
+        .eq("user_id", user.id)
+        .eq("date", today)
+        .maybeSingle(),
     ]);
 
   const todayMinutes = (todaySessions ?? []).reduce((sum, s) => sum + (s.focus_minutes ?? 0), 0);
@@ -60,6 +73,21 @@ export default async function DashboardPage() {
     }
   }
   const allWeakUnits = [...weakByLatestSubject.values()].flat().slice(0, 6);
+
+  const weekDates = Array.from({ length: 7 }, (_, index) => todayKST(new Date(Date.now() - (6 - index) * 86400000)));
+  const minutesByDate = new Map(weekDates.map((date) => [date, 0]));
+  for (const session of weekSessions ?? []) {
+    const date = todayKST(new Date(session.started_at));
+    if (minutesByDate.has(date)) minutesByDate.set(date, (minutesByDate.get(date) ?? 0) + (session.focus_minutes ?? 0));
+  }
+  const weekValues = weekDates.map((date) => minutesByDate.get(date) ?? 0);
+  const weekTotal = weekValues.reduce((sum, value) => sum + value, 0);
+  const activeDays = weekValues.filter((value) => value > 0).length;
+  const weekAverage = activeDays ? Math.round(weekTotal / activeDays) : 0;
+  const maxDailyMinutes = Math.max(targetMinutes, ...weekValues, 1);
+  const planItems = todayPlan?.study_plan_items ?? [];
+  const completedPlanItems = planItems.filter((item: { completed: boolean }) => item.completed).length;
+  const planRate = planItems.length ? Math.round((completedPlanItems / planItems.length) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -88,6 +116,51 @@ export default async function DashboardPage() {
           </p>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <BarChart3 className="h-4 w-4 text-primary" /> {t("weeklyTitle")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4 flex gap-6 text-sm">
+              <div><p className="text-xs text-muted-foreground">{t("weeklyTotal")}</p><p className="font-semibold">{tc("minutes", { n: weekTotal })}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t("activeDays")}</p><p className="font-semibold">{tc("daysSuffix", { days: activeDays })}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t("dailyAverage")}</p><p className="font-semibold">{tc("minutes", { n: weekAverage })}</p></div>
+            </div>
+            <div className="flex h-32 items-end gap-2" aria-label={t("weeklyTitle")}>
+              {weekDates.map((date, index) => {
+                const value = weekValues[index] ?? 0;
+                return (
+                  <div key={date} className="flex flex-1 flex-col items-center gap-1">
+                    <span className="text-[10px] text-muted-foreground">{value || ""}</span>
+                    <div className="flex h-20 w-full items-end overflow-hidden rounded-md bg-secondary">
+                      <div className="w-full rounded-md bg-primary transition-all" style={{ height: `${Math.max(value ? 8 : 0, (value / maxDailyMinutes) * 100)}%` }} />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{date.slice(5).replace("-", "/")}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CalendarCheck2 className="h-4 w-4 text-success" /> {t("planProgressTitle")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <div className="text-3xl font-bold">{planRate}%</div>
+            <Progress value={planRate} />
+            <p className="text-xs text-muted-foreground">{t("planProgressCaption", { completed: completedPlanItems, total: planItems.length })}</p>
+            <Button asChild variant="outline" size="sm"><Link href="/planner">{t("goPlanner")}</Link></Button>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>

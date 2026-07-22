@@ -85,6 +85,8 @@ export default async function SettingsPage() {
                   id="pomodoro_focus_min"
                   name="pomodoro_focus_min"
                   type="number"
+                  min={1}
+                  max={240}
                   defaultValue={settings?.pomodoro_focus_min ?? 25}
                 />
               </div>
@@ -94,6 +96,8 @@ export default async function SettingsPage() {
                   id="pomodoro_break_min"
                   name="pomodoro_break_min"
                   type="number"
+                  min={1}
+                  max={60}
                   defaultValue={settings?.pomodoro_break_min ?? 5}
                 />
               </div>

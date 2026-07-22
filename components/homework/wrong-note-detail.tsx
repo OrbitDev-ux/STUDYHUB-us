@@ -9,10 +9,12 @@ import {
   generateSimilarQuestionForWrongAnswer,
   retrySimilarQuestion,
 } from "@/app/(main)/wrong-notes/actions";
+import { QuestionAnswerControls } from "./question-answer-controls";
 
 interface SimilarQuestion {
   id: string;
   content: string;
+  type: string;
   choices: string[] | null;
   explanation: string | null;
 }
@@ -28,24 +30,40 @@ export function WrongNoteDetail({
 }) {
   const t = useTranslations("wrongNotes");
   const tc = useTranslations("common");
-  const [questions, setQuestions] = useState(similarQuestions);
+  const [questions] = useState(similarQuestions);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<Record<string, { correct: boolean; explanation: string; answer: string }>>({});
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [results, setResults] = useState<Record<string, { correct: boolean; explanation: string; answer: string; correctAnswer: string }>>({});
   const [isMastered, setIsMastered] = useState(mastered);
 
   async function handleGenerate() {
     setLoading(true);
-    const newId = await generateSimilarQuestionForWrongAnswer(wrongAnswerId);
-    // fetch로 새 문제 상세를 다시 불러오기 위해 간단히 페이지 새로고침 대신 낙관적 갱신
-    setQuestions((prev) => [...prev, { id: newId, content: "", choices: null, explanation: null }]);
-    setLoading(false);
-    window.location.reload();
+    setError(null);
+    try {
+      await generateSimilarQuestionForWrongAnswer(wrongAnswerId);
+      window.location.reload();
+    } catch {
+      setError(t("actionError"));
+      setLoading(false);
+    }
   }
 
   async function handleAnswer(q: SimilarQuestion, answer: string) {
-    const result = await retrySimilarQuestion(wrongAnswerId, q.id, answer);
-    setResults((prev) => ({ ...prev, [q.id]: { correct: result.isCorrect, explanation: result.explanation, answer } }));
-    if (result.isCorrect) setIsMastered(true);
+    setPendingId(q.id);
+    setError(null);
+    try {
+      const result = await retrySimilarQuestion(wrongAnswerId, q.id, answer);
+      setResults((prev) => ({
+        ...prev,
+        [q.id]: { correct: result.isCorrect, explanation: result.explanation, correctAnswer: result.correctAnswer, answer },
+      }));
+      if (result.isCorrect) setIsMastered(true);
+    } catch {
+      setError(t("actionError"));
+    } finally {
+      setPendingId(null);
+    }
   }
 
   return (
@@ -61,6 +79,7 @@ export function WrongNoteDetail({
           <CheckCircle2 className="h-4 w-4" /> {t("masteredMessage")}
         </div>
       )}
+      {error && <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
 
       {questions
         .filter((q) => q.content)
@@ -71,18 +90,14 @@ export function WrongNoteDetail({
               <CardContent className="flex flex-col gap-3 p-5">
                 <p className="font-medium leading-relaxed">{q.content}</p>
                 {!result ? (
-                  <div className="flex flex-col gap-2">
-                    {(q.choices ?? ["O", "X"]).map((choice) => (
-                      <Button
-                        key={choice}
-                        variant="outline"
-                        className="h-auto justify-start whitespace-normal py-3 text-left"
-                        onClick={() => handleAnswer(q, choice)}
-                      >
-                        {choice}
-                      </Button>
-                    ))}
-                  </div>
+                  <QuestionAnswerControls
+                    type={q.type}
+                    choices={q.choices}
+                    disabled={pendingId === q.id}
+                    onAnswer={(answer) => handleAnswer(q, answer)}
+                    submitLabel={t("submitAnswer")}
+                    placeholder={t("answerPlaceholder")}
+                  />
                 ) : (
                   <div
                     className={`flex items-start gap-2 rounded-xl p-3 text-sm ${
@@ -92,6 +107,7 @@ export function WrongNoteDetail({
                     {result.correct ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <XCircle className="mt-0.5 h-4 w-4 shrink-0" />}
                     <div>
                       <p className="font-medium">{result.correct ? tc("correct") : t("wrongAgain")}</p>
+                      {!result.correct && <p className="mt-1 text-foreground/90">{t("correctAnswer")} {result.correctAnswer}</p>}
                       <p className="mt-1 text-foreground/80">{result.explanation}</p>
                     </div>
                   </div>

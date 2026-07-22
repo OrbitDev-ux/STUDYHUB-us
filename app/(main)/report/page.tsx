@@ -1,13 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { ensureTodayFeedback } from "./actions";
+import { ensureTodayFeedback, refreshTodayFeedback } from "./actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Sparkles, TrendingUp } from "lucide-react";
 import { planLimits } from "@/lib/plan";
 import { StudyChart } from "@/components/report/study-chart";
 import { getUserPlan } from "@/lib/supabase/compat";
+import { ReportTools } from "@/components/report/report-tools";
+import { SubmitButton } from "@/components/shared/submit-button";
+import { RefreshCw } from "lucide-react";
 
 export async function generateMetadata() {
   const t = await getTranslations("report");
@@ -38,9 +41,12 @@ export default async function ReportPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+        </div>
+        <ReportTools history={history ?? []} />
       </div>
 
       {!todayFeedback ? (
@@ -66,6 +72,11 @@ export default async function ReportPage() {
               <p className="mb-1 font-medium text-primary">{t("recommendedNext")}</p>
               <p className="text-muted-foreground">{todayFeedback.recommended_next}</p>
             </div>
+            <form action={refreshTodayFeedback} className="print:hidden">
+              <SubmitButton type="submit" variant="outline" size="sm">
+                <RefreshCw className="h-4 w-4" /> {t("refreshFeedback")}
+              </SubmitButton>
+            </form>
           </CardContent>
         </Card>
       )}

@@ -57,6 +57,16 @@ export async function ensureTodayPlan() {
     .select("id")
     .single();
 
+  // 크론과 페이지 첫 진입이 겹쳐도 중복 생성 오류를 사용자에게 노출하지 않는다.
+  if (error?.code === "23505") {
+    const { data: concurrentPlan } = await supabase
+      .from("study_plans")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("date", today)
+      .single();
+    if (concurrentPlan) return concurrentPlan.id as string;
+  }
   if (error || !plan) throw new Error(error?.message ?? "플래너 생성 실패");
 
   // study_plan_items에는 부모 소유권 기반 INSERT 정책이 없을 수 있으므로, 서버가 방금
@@ -88,7 +98,20 @@ export async function togglePlanItem(itemId: string, completed: boolean) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { error } = await supabase.from("study_plan_items").update({ completed }).eq("id", itemId);
+  const { data, error } = await supabase
+    .rpc("toggle_plan_item", { p_item_id: itemId, p_completed: completed })
+    .maybeSingle();
+
+  // 마이그레이션 적용 전 환경에서도 체크 기능 자체는 유지한다.
+  if (error?.code === "PGRST202") {
+    const { error: fallbackError } = await supabase.from("study_plan_items").update({ completed }).eq("id", itemId);
+    if (fallbackError) throw new Error(`플래너 상태 변경 실패: ${fallbackError.message}`);
+    revalidatePath("/planner");
+    return { rewardGranted: false };
+  }
   if (error) throw new Error(`플래너 상태 변경 실패: ${error.message}`);
   revalidatePath("/planner");
+  revalidatePath("/dashboard");
+  if ((data as { reward_granted?: boolean } | null)?.reward_granted) revalidatePath("/", "layout");
+  return { rewardGranted: Boolean((data as { reward_granted?: boolean } | null)?.reward_granted) };
 }

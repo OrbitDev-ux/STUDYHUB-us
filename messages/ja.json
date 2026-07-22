@@ -43,6 +43,7 @@
   "notifications": {
     "title": "通知",
     "markAllRead": "すべて既読にする",
+    "clearRead": "既読を削除",
     "empty": "通知はありません"
   },
   "landing": {
@@ -186,6 +187,12 @@
     "goalRateSub": "本日基準",
     "goalCardTitle": "本日の目標達成率",
     "goalCaption": "{studied}分 / {target}分（{rate}%）",
+    "weeklyTitle": "直近7日間の学習",
+    "weeklyTotal": "週間合計",
+    "activeDays": "学習日数",
+    "dailyAverage": "学習日の平均",
+    "planProgressTitle": "今日の計画",
+    "planProgressCaption": "{completed}/{total}件完了",
     "noDiagnostic": "まだ診断評価の結果がありません。",
     "weakUnitsTitle": "弱点単元",
     "noWeakUnits": "まだ弱点単元はありません。",
@@ -198,6 +205,10 @@
     "rationaleTitle": "AIがこの宿題を選んだ理由",
     "completedProgress": "{completed} / {total} 完了",
     "wrongAnswer": "不正解：{answer}",
+    "correctAnswer": "正解：{answer}",
+    "answerPlaceholder": "答えを入力してください",
+    "submitAnswer": "提出",
+    "actionError": "回答を保存できませんでした。もう一度お試しください。",
     "categories": {
       "신규": "新規",
       "오답복습": "間違い復習",
@@ -210,6 +221,9 @@
     "summaryTitle": "今日の計画まとめ",
     "totalTime": "合計計画時間：{minutes}分",
     "priorityLabel": "優先度 {level}",
+    "progress": "今日の計画進捗",
+    "rewardEarned": "計画を完了して3 XPを獲得しました！",
+    "toggleError": "状態を保存できませんでした。もう一度お試しください。",
     "priority": {
       "high": "高",
       "medium": "中",
@@ -220,13 +234,25 @@
   },
   "timer": {
     "title": "勉強タイマー",
-    "subtitle": "25分集中、5分休憩で没頭しましょう。",
+    "subtitle": "{focus}分集中、{break}分休憩のリズムで取り組みましょう。",
     "focusLabel": "集中時間",
     "breakLabel": "休憩時間",
     "pause": "一時停止",
     "start": "開始",
+    "starting": "準備中",
     "stopAndSave": "終了して保存",
-    "sessionTotal": "今回のセッションの累計集中時間：{minutes}分"
+    "sessionTotal": "今回のセッションの累計集中時間：{minutes}分",
+    "todayMinutes": "今日の集中時間（分）",
+    "todaySessions": "今日のセッション",
+    "minimumSave": "30秒以上集中してから保存できます。",
+    "saved": "学習記録とXPを保存しました。",
+    "saveError": "学習記録を保存できませんでした。もう一度お試しください。",
+    "startError": "タイマーを開始できませんでした。もう一度お試しください。",
+    "recentSessions": "最近の学習セッション",
+    "noSessions": "保存された学習セッションはまだありません。",
+    "generalStudy": "一般学習",
+    "interrupted": "途中終了",
+    "focusValue": "集中{minutes}分"
   },
   "wrongNotes": {
     "title": "間違いノート",
@@ -239,7 +265,10 @@
     "correctAnswer": "正解：",
     "generateSimilar": "AIで類似問題を生成して再挑戦",
     "masteredMessage": "この概念を克服しました！",
-    "wrongAgain": "また不正解でした"
+    "wrongAgain": "また不正解でした",
+    "answerPlaceholder": "答えを入力してください",
+    "submitAnswer": "提出",
+    "actionError": "処理できませんでした。もう一度お試しください。"
   },
   "report": {
     "title": "AI毎日フィードバック",
@@ -249,7 +278,12 @@
     "recommendedNext": "明日のおすすめ",
     "recentHistory": "最近の学習履歴",
     "noHistory": "記録がありません。",
-    "studyMinutesLabel": "勉強時間"
+    "studyMinutesLabel": "勉強時間",
+    "refreshFeedback": "最新の活動で再分析",
+    "downloadCsv": "CSVをダウンロード",
+    "printReport": "印刷する",
+    "csvDate": "日付",
+    "csvGoalRate": "目標達成率（%）"
   },
   "rank": {
     "title": "ランキング＆バッジ",
@@ -284,7 +318,12 @@
     "badgeCount": "バッジ{count}個",
     "editProfile": "プロフィール編集",
     "bio": "自己紹介",
-    "bioPlaceholder": "一言自己紹介を書いてみましょう"
+    "bioPlaceholder": "一言自己紹介を書いてみましょう",
+    "changeAvatar": "プロフィール写真を変更",
+    "changeBanner": "バナー画像を変更",
+    "imageHint": "画像を押して変更 · JPG、PNG、WebP、GIF · 最大5MB",
+    "imageInvalid": "5MB以下のJPG、PNG、WebP、GIF画像を選択してください。",
+    "imageUploadError": "画像をアップロードできませんでした。ストレージ設定をご確認ください。"
   },
   "settings": {
     "title": "設定",

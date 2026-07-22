@@ -68,6 +68,12 @@ export default async function RankPage() {
             >
               <div className="flex items-center gap-3">
                 <span className="w-6 text-center font-semibold text-muted-foreground">{idx + 1}</span>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary text-xs font-semibold">
+                  {u.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={u.avatar_url} alt="" className="h-full w-full object-cover" />
+                  ) : u.nickname?.[0] ?? "?"}
+                </div>
                 <span className="font-medium">{u.nickname}</span>
                 {u.id === user.id && (
                   <Badge variant="secondary" className="text-[10px]">

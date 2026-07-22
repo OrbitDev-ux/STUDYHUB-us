@@ -43,6 +43,7 @@
   "notifications": {
     "title": "Notifications",
     "markAllRead": "Mark all read",
+    "clearRead": "Clear read",
     "empty": "No notifications yet"
   },
   "landing": {
@@ -186,6 +187,12 @@
     "goalRateSub": "Today",
     "goalCardTitle": "Today's Goal Achievement",
     "goalCaption": "{studied} min / {target} min ({rate}%)",
+    "weeklyTitle": "Last 7 days",
+    "weeklyTotal": "Weekly total",
+    "activeDays": "Active days",
+    "dailyAverage": "Active-day average",
+    "planProgressTitle": "Today's plan",
+    "planProgressCaption": "{completed}/{total} tasks complete",
     "noDiagnostic": "No diagnostic results yet.",
     "weakUnitsTitle": "Weak Units",
     "noWeakUnits": "No weak units yet.",
@@ -198,6 +205,10 @@
     "rationaleTitle": "Why AI chose this homework",
     "completedProgress": "{completed} / {total} done",
     "wrongAnswer": "Wrong: {answer}",
+    "correctAnswer": "Answer: {answer}",
+    "answerPlaceholder": "Enter your answer",
+    "submitAnswer": "Submit",
+    "actionError": "We couldn't save your answer. Please try again.",
     "categories": {
       "신규": "New",
       "오답복습": "Review",
@@ -210,6 +221,9 @@
     "summaryTitle": "Today's Plan Summary",
     "totalTime": "Total planned time: {minutes} min",
     "priorityLabel": "Priority {level}",
+    "progress": "Today's plan progress",
+    "rewardEarned": "Plan completed — you earned 3 XP!",
+    "toggleError": "We couldn't save that change. Please try again.",
     "priority": {
       "high": "High",
       "medium": "Medium",
@@ -220,13 +234,25 @@
   },
   "timer": {
     "title": "Study Timer",
-    "subtitle": "Focus for 25 minutes, break for 5 — get in the zone.",
+    "subtitle": "Focus for {focus} minutes and break for {break} — get in the zone.",
     "focusLabel": "Focus time",
     "breakLabel": "Break time",
     "pause": "Pause",
     "start": "Start",
+    "starting": "Starting",
     "stopAndSave": "Stop and save",
-    "sessionTotal": "This session's total focus time: {minutes} min"
+    "sessionTotal": "This session's total focus time: {minutes} min",
+    "todayMinutes": "Focused today (min)",
+    "todaySessions": "Sessions today",
+    "minimumSave": "Focus for at least 30 seconds before saving.",
+    "saved": "Your study session and XP were saved.",
+    "saveError": "We couldn't save your session. Please try again.",
+    "startError": "We couldn't start a timer session. Please try again.",
+    "recentSessions": "Recent study sessions",
+    "noSessions": "No saved study sessions yet.",
+    "generalStudy": "General study",
+    "interrupted": "Stopped early",
+    "focusValue": "{minutes} min focus"
   },
   "wrongNotes": {
     "title": "Wrong Notes",
@@ -239,7 +265,10 @@
     "correctAnswer": "Correct answer:",
     "generateSimilar": "Generate a similar question with AI and retry",
     "masteredMessage": "You've mastered this concept!",
-    "wrongAgain": "Wrong again"
+    "wrongAgain": "Wrong again",
+    "answerPlaceholder": "Enter your answer",
+    "submitAnswer": "Submit",
+    "actionError": "We couldn't complete that action. Please try again."
   },
   "report": {
     "title": "AI Daily Feedback",
@@ -249,7 +278,12 @@
     "recommendedNext": "Recommended for tomorrow",
     "recentHistory": "Recent Study History",
     "noHistory": "No history yet.",
-    "studyMinutesLabel": "Study time"
+    "studyMinutesLabel": "Study time",
+    "refreshFeedback": "Analyze latest activity",
+    "downloadCsv": "Download CSV",
+    "printReport": "Print report",
+    "csvDate": "Date",
+    "csvGoalRate": "Goal achievement (%)"
   },
   "rank": {
     "title": "Rank & Badges",
@@ -284,7 +318,12 @@
     "badgeCount": "{count} badges",
     "editProfile": "Edit Profile",
     "bio": "Bio",
-    "bioPlaceholder": "Add a short bio"
+    "bioPlaceholder": "Add a short bio",
+    "changeAvatar": "Change profile photo",
+    "changeBanner": "Change banner image",
+    "imageHint": "Click an image to change it · JPG, PNG, WebP, GIF · up to 5 MB",
+    "imageInvalid": "Choose a JPG, PNG, WebP, or GIF image under 5 MB.",
+    "imageUploadError": "We couldn't upload the image. Check your storage setup."
   },
   "settings": {
     "title": "Settings",
