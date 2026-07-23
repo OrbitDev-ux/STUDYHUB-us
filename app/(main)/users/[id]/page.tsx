@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Award, CalendarDays, Flame, Pencil, ShieldCheck, Swords, Trophy, Zap } from "lucide-react";
+import { Award, Ban, CalendarDays, Flame, Pencil, ShieldCheck, Swords, Trophy, Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { RatingBadge, RatingName, RatingProgress, RatingScale } from "@/components/battle/rating-identity";
 import { RatingChart } from "@/components/battle/rating-chart";
@@ -8,7 +8,7 @@ import { RatingHistoryList } from "@/components/battle/rating-history-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ratingTier } from "@/lib/battle/rating";
+import { normalizeRatingTiers, ratingTier } from "@/lib/battle/rating";
 import { getDetailedRatingHistory } from "@/lib/battle/rating-history";
 
 export const metadata = { title: "사용자 프로필" };
@@ -33,6 +33,7 @@ type PublicProfile = {
   rated_events: number;
   global_rank: number;
   badge_count: number;
+  is_banned?: boolean;
 };
 
 export default async function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -43,14 +44,28 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) notFound();
 
-  const [{ data: profileRows }, historyRows] = await Promise.all([
-    supabase.rpc("get_public_profile", { p_user_id: id }) as unknown as Promise<{ data: PublicProfile[] | null }>,
-    getDetailedRatingHistory(id),
-  ]);
+  const { data: profileRows } = await supabase.rpc("get_public_profile", { p_user_id: id }) as unknown as { data: PublicProfile[] | null };
   const profile = profileRows?.[0];
   if (!profile) notFound();
+  if (profile.is_banned) {
+    return <div className="mx-auto flex min-h-[60vh] max-w-2xl items-center">
+      <Card className="w-full border-destructive/50 bg-destructive/5">
+        <CardContent className="flex flex-col items-center px-6 py-16 text-center">
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive"><Ban className="h-8 w-8" /></span>
+          <p className="mt-6 text-xs font-semibold uppercase tracking-[0.24em] text-destructive">Account disabled</p>
+          <h1 className="mt-3 text-3xl font-bold">The user is banned.</h1>
+          <p className="mt-3 text-sm text-muted-foreground">This profile and its ranking information are unavailable.</p>
+          <Button asChild variant="outline" className="mt-8"><Link href="/rank"><Trophy className="h-4 w-4" />리더보드로 돌아가기</Link></Button>
+        </CardContent>
+      </Card>
+    </div>;
+  }
 
-  const tier = ratingTier(profile.rating);
+  const [historyRows, { data: ratingSettings }] = await Promise.all([
+    getDetailedRatingHistory(id),
+    supabase.from("app_settings").select("rating_tiers").eq("id", true).maybeSingle(),
+  ]);
+  const tier = ratingTier(profile.rating, normalizeRatingTiers(ratingSettings?.rating_tiers));
   const storedHistory = historyRows ?? [];
   const history = storedHistory.some((point) => point.source === "signup")
     ? storedHistory

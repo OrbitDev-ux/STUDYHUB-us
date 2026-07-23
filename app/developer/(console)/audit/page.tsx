@@ -15,12 +15,14 @@ import {
 import { requireDeveloper } from "@/lib/developer/auth";
 import { isMissingSchemaError } from "@/lib/developer/schema-status";
 import { isSuperAdminRole } from "@/lib/developer/roles";
-import { setSuperAdminAuditArchive, updateSuperAdminAuditLog } from "../../actions";
+import { bulkSuperAdminAuditLogs, deleteSuperAdminAuditLog, setSuperAdminAuditArchive, updateSuperAdminAuditLog } from "../../actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DEVELOPER_AUDIT_ACTIONS, DEVELOPER_AUDIT_CATALOG } from "@/lib/developer/audit-catalog";
+import { ConfirmSubmitButton } from "@/components/developer/confirm-submit-button";
+import { BulkAuditSelectAll } from "@/components/developer/bulk-audit-select-all";
 
 export const metadata = { title: "Developer Audit Log" };
 
@@ -50,6 +52,16 @@ type RevisionRow = {
   created_at: string;
 };
 
+type DeletedAuditRow = {
+  id: string;
+  original_audit_log_id: string;
+  deleted_by: string | null;
+  deletion_reason: string;
+  original_snapshot: Record<string, unknown>;
+  revision_snapshots: unknown[];
+  deleted_at: string;
+};
+
 const PAGE_SIZE = 40;
 const ACTIONS = ["all", ...DEVELOPER_AUDIT_ACTIONS];
 const CATALOG = new Map(DEVELOPER_AUDIT_CATALOG.map((entry) => [entry.action, entry]));
@@ -62,6 +74,12 @@ const ERRORS: Record<string, string> = {
   super_admin_migration_required: "최고 운영자 감사 로그 편집 DB 업데이트가 필요합니다.",
   edit_failed: "감사 로그를 수정하지 못했습니다.",
   archive_failed: "감사 로그의 보관 상태를 변경하지 못했습니다.",
+  invalid_deletion: "감사 로그 삭제 사유를 5~500자로 입력해주세요.",
+  deletion_migration_required: "감사 로그 삭제 증적 DB 업데이트가 필요합니다.",
+  deletion_failed: "감사 로그를 삭제하지 못했습니다.",
+  invalid_bulk: "선택한 로그, 일괄 작업과 5~500자의 사유를 확인해주세요.",
+  bulk_migration_required: "감사 로그 일괄 작업 DB 업데이트가 필요합니다.",
+  bulk_failed: "선택한 감사 로그의 일괄 작업을 완료하지 못했습니다.",
 };
 
 export default async function DeveloperAuditPage({
@@ -75,6 +93,7 @@ export default async function DeveloperAuditPage({
     page?: string;
     error?: string;
     updated?: string;
+    count?: string;
   }>;
 }) {
   const { admin, profile } = await requireDeveloper();
@@ -129,11 +148,20 @@ export default async function DeveloperAuditPage({
   for (const revision of revisions) {
     revisionsByAudit.set(revision.audit_log_id, [...(revisionsByAudit.get(revision.audit_log_id) ?? []), revision]);
   }
+  const deletedResult = isSuperAdmin && revisionSchemaReady
+    ? await admin.from("developer_deleted_audit_logs")
+      .select("id,original_audit_log_id,deleted_by,deletion_reason,original_snapshot,revision_snapshots,deleted_at")
+      .order("deleted_at", { ascending: false })
+      .limit(20)
+    : { data: [], error: null };
+  const deletionSchemaReady = !deletedResult.error || !isMissingSchemaError(deletedResult.error);
+  const deletedAudits = (deletionSchemaReady ? deletedResult.data ?? [] : []) as DeletedAuditRow[];
 
   const actorIds = [...new Set([
     ...audits.flatMap((row) => row.actor_id ? [row.actor_id] : []),
     ...audits.flatMap((row) => [row.edited_by, row.archived_by].filter((id): id is string => Boolean(id))),
     ...revisions.flatMap((row) => row.actor_id ? [row.actor_id] : []),
+    ...deletedAudits.flatMap((row) => row.deleted_by ? [row.deleted_by] : []),
   ])];
   const { data: actors } = actorIds.length
     ? await admin.from("profiles").select("id,nickname").in("id", actorIds)
@@ -154,8 +182,9 @@ export default async function DeveloperAuditPage({
   return <div className="flex flex-col gap-6">
     <Header isSuperAdmin={isSuperAdmin} />
     {params.error && <div className="flex items-start gap-2 rounded-xl border border-red-900 bg-red-950/40 p-3 text-sm text-red-300"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />{ERRORS[params.error] ?? "감사 로그 작업을 완료하지 못했습니다."}</div>}
-    {params.updated && <div className="flex items-start gap-2 rounded-xl border border-emerald-900 bg-emerald-950/40 p-3 text-sm text-emerald-300"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />감사 로그 변경을 적용하고 변경 전·후 원본을 개정 이력에 보존했습니다.</div>}
+    {params.updated && <div className="flex items-start gap-2 rounded-xl border border-emerald-900 bg-emerald-950/40 p-3 text-sm text-emerald-300"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />{params.updated.startsWith("bulk-") ? `선택한 ${Math.max(0, Number.parseInt(params.count ?? "0", 10) || 0)}개 로그에 ${params.updated.slice(5)} 작업을 적용했습니다. 각 변경·삭제 증적도 보존했습니다.` : "감사 로그 변경을 적용하고 변경 전·후 원본을 개정 이력에 보존했습니다."}</div>}
     {isSuperAdmin && !revisionSchemaReady && <div className="rounded-xl border border-amber-900 bg-amber-950/30 p-4 text-sm text-amber-200"><strong>최고 운영자 편집 기능 DB 업데이트 필요</strong><p className="mt-1 text-xs opacity-75">`0027_super_admin_permissions_audit_revisions.sql` 적용 전에는 감사 로그를 조회만 할 수 있습니다.</p></div>}
+    {isSuperAdmin && revisionSchemaReady && !deletionSchemaReady && <div className="rounded-xl border border-amber-900 bg-amber-950/30 p-4 text-sm text-amber-200"><strong>감사 로그 삭제 기능 DB 업데이트 필요</strong><p className="mt-1 text-xs opacity-75">`0028_super_admin_bans_deletions.sql` 적용 후 원본 삭제와 독립 삭제 증적 보존을 사용할 수 있습니다.</p></div>}
 
     <div className="grid gap-3 sm:grid-cols-3">
       <Metric label="검색 결과" value={result.count ?? 0} />
@@ -177,11 +206,18 @@ export default async function DeveloperAuditPage({
     <Card className="border-zinc-800 bg-zinc-900 text-zinc-100">
       <CardHeader><CardTitle className="text-base">Audit Events</CardTitle></CardHeader>
       <CardContent className="flex flex-col gap-2">
+        {isSuperAdmin && deletionSchemaReady && audits.length > 0 && <form id="bulk-audit-form" action={bulkSuperAdminAuditLogs} className="mb-3 grid gap-2 rounded-xl border border-violet-900/60 bg-violet-950/10 p-3 lg:grid-cols-[180px_1fr_auto_auto]">
+          <select name="operation" className={selectClass}><option value="archive">선택 로그 보관</option><option value="restore">선택 로그 복원</option><option value="delete">선택 로그 영구 삭제</option></select>
+          <Input name="reason" required minLength={5} maxLength={500} className={inputClass} placeholder="일괄 처리 사유 — 삭제 시 각 로그의 독립 증적이 보존됩니다" />
+          <BulkAuditSelectAll />
+          <ConfirmSubmitButton label="일괄 적용" message="체크한 감사 로그에 선택 작업을 일괄 적용합니다. 영구 삭제를 선택한 경우 원본은 삭제 증적에 보존됩니다. 계속할까요?" />
+        </form>}
         {!audits.length && <p className="py-10 text-center text-sm text-zinc-500">조건에 맞는 로그가 없습니다.</p>}
         {audits.map((audit) => {
           const catalog = CATALOG.get(audit.action);
           const auditRevisions = revisionsByAudit.get(audit.id) ?? [];
-          return <article key={audit.id} className={`rounded-xl border bg-zinc-950 p-4 ${audit.archived_at ? "border-amber-900/70 opacity-75" : "border-zinc-800"}`}>
+          return <article key={audit.id} className={`relative rounded-xl border bg-zinc-950 p-4 ${audit.archived_at ? "border-amber-900/70 opacity-75" : "border-zinc-800"}`}>
+            {isSuperAdmin && deletionSchemaReady && <label className="absolute right-3 top-12 flex items-center gap-1 text-[10px] text-zinc-500"><input form="bulk-audit-form" type="checkbox" name="audit_log_id" value={audit.id} />선택</label>}
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="flex flex-wrap items-center gap-2"><p className="font-mono text-sm font-semibold text-emerald-300">{audit.action}{catalog && <span className="ml-2 font-sans text-xs font-normal text-zinc-400">{catalog.label}</span>}</p>{audit.edited_at && <Badge variant="outline">Edited</Badge>}{audit.archived_at && <Badge variant="warning">Archived</Badge>}</div>
@@ -209,6 +245,11 @@ export default async function DeveloperAuditPage({
                 <Input name="reason" required minLength={5} maxLength={500} className={inputClass} placeholder={audit.archived_at ? "복원 사유" : "보관 사유"} />
                 <Button type="submit" size="sm" variant={audit.archived_at ? "outline" : "destructive"}>{audit.archived_at ? <RotateCcw className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}{audit.archived_at ? "로그 복원" : "로그 보관"}</Button>
               </form>
+              {deletionSchemaReady && <form action={deleteSuperAdminAuditLog} className="mt-4 grid gap-2 border-t border-red-900/40 pt-4 sm:grid-cols-[1fr_auto]">
+                <input type="hidden" name="audit_log_id" value={audit.id} />
+                <Input name="reason" required minLength={5} maxLength={500} className={inputClass} placeholder="영구 삭제 사유 — 독립 삭제 증적에는 원본이 보존됩니다" />
+                <ConfirmSubmitButton message={`${audit.action} 감사 로그를 원본 테이블에서 영구 삭제합니다. 삭제 원본과 사유는 별도 증적에 보존됩니다. 계속할까요?`} />
+              </form>}
             </details>}
           </article>;
         })}
@@ -219,11 +260,18 @@ export default async function DeveloperAuditPage({
         </div>
       </CardContent>
     </Card>
+    {isSuperAdmin && deletionSchemaReady && <Card className="border-red-900/60 bg-red-950/10 text-zinc-100">
+      <CardHeader><CardTitle className="text-base">Deleted Log Receipts</CardTitle><p className="text-xs text-zinc-500">최근 20건의 삭제 증적입니다. 원본 로그가 삭제되어도 당시 전체 스냅샷과 기존 개정 이력은 여기에 남습니다.</p></CardHeader>
+      <CardContent className="space-y-2">
+        {!deletedAudits.length && <p className="py-6 text-center text-xs text-zinc-500">삭제된 감사 로그가 없습니다.</p>}
+        {deletedAudits.map((receipt) => <details key={receipt.id} className="rounded-xl border border-red-900/40 bg-zinc-950 p-3"><summary className="cursor-pointer text-xs text-red-300">원본 {receipt.original_audit_log_id} · {new Date(receipt.deleted_at).toLocaleString("ko-KR")}</summary><p className="mt-2 text-xs text-zinc-400">삭제자: {receipt.deleted_by ? actorMap.get(receipt.deleted_by) ?? receipt.deleted_by : "system"}</p><p className="mt-1 text-xs text-zinc-400">사유: {receipt.deletion_reason}</p><div className="mt-3 grid gap-2 xl:grid-cols-2"><Snapshot label="Deleted original" value={receipt.original_snapshot} /><Snapshot label={`Revisions (${receipt.revision_snapshots.length})`} value={{ revisions: receipt.revision_snapshots }} /></div></details>)}
+      </CardContent>
+    </Card>}
   </div>;
 }
 
 function Header({ isSuperAdmin }: { isSuperAdmin: boolean }) {
-  return <div><div className="flex flex-wrap items-center gap-2"><h1 className="flex items-center gap-2 text-2xl font-bold"><ScrollText className="h-6 w-6 text-emerald-400" />Audit Log</h1>{isSuperAdmin && <Badge variant="warning"><ShieldCheck className="mr-1 h-3.5 w-3.5" />Super Admin Editable</Badge>}</div><p className="mt-1 text-sm text-zinc-400">{isSuperAdmin ? "최고 운영자는 원본 개정 이력을 보존하면서 로그를 수정·보관·복원할 수 있습니다." : "특별 로그인 이후의 관리자 변경 이력과 사유를 추적합니다."}</p></div>;
+  return <div><div className="flex flex-wrap items-center gap-2"><h1 className="flex items-center gap-2 text-2xl font-bold"><ScrollText className="h-6 w-6 text-emerald-400" />Audit Log</h1>{isSuperAdmin && <Badge variant="warning"><ShieldCheck className="mr-1 h-3.5 w-3.5" />Super Admin Editable</Badge>}</div><p className="mt-1 text-sm text-zinc-400">{isSuperAdmin ? "최고 운영자는 로그를 수정·보관·복원·삭제할 수 있으며, 삭제 원본도 독립 증적에 보존됩니다." : "특별 로그인 이후의 관리자 변경 이력과 사유를 추적합니다."}</p></div>;
 }
 
 function Metric({ label, value }: { label: string; value: string | number }) {

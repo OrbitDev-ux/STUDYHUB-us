@@ -1,12 +1,13 @@
 "use client";
 
 import { CartesianGrid, Line, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis, ComposedChart } from "recharts";
-import { RATING_TIERS, ratingTier } from "@/lib/battle/rating";
 import type { RatingPoint } from "@/lib/battle/rating-history-types";
+import { useRatingTier, useRatingTiers } from "@/components/battle/rating-tier-provider";
 
 export type { RatingPoint } from "@/lib/battle/rating-history-types";
 
 export function RatingChart({ history }: { history: RatingPoint[] }) {
+  const tiers = useRatingTiers();
   const data = history.map((point, index) => ({
     ...point,
     index,
@@ -16,19 +17,19 @@ export function RatingChart({ history }: { history: RatingPoint[] }) {
   const values = data.map((point) => point.rating);
   const min = Math.max(0, Math.floor((Math.min(1200, ...values) - 150) / 100) * 100);
   const max = Math.min(5000, Math.ceil((Math.max(1400, ...values) + 150) / 100) * 100);
-  const currentTier = ratingTier(values[values.length - 1] ?? 1200);
+  const currentTier = useRatingTier(values[values.length - 1] ?? 1200);
 
   if (data.length === 0) return <div className="flex h-72 items-center justify-center rounded-xl bg-secondary/50 text-sm text-muted-foreground">배틀을 완료하면 레이팅 변화가 여기에 기록됩니다.</div>;
 
   return <div className="h-[340px] w-full">
     <ResponsiveContainer width="100%" height="100%">
       <ComposedChart data={data} margin={{ top: 12, right: 18, bottom: 16, left: 0 }}>
-        {RATING_TIERS.map((tier) => <ReferenceArea key={tier.english} y1={tier.min} y2={tier.max + 1} fill={tier.graphFill} fillOpacity={0.62} ifOverflow="hidden" />)}
+        {tiers.map((tier) => <ReferenceArea key={`${tier.english}-${tier.min}`} y1={tier.min} y2={tier.max + 1} fill={tier.graphFill} fillOpacity={0.32} ifOverflow="hidden" />)}
         <CartesianGrid stroke="currentColor" className="text-border" strokeOpacity={0.7} />
         <XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={28} />
         <YAxis domain={[min, max]} tick={{ fontSize: 12 }} width={48} />
         <Tooltip content={<RatingTooltip />} />
-        <Line type="monotone" dataKey="rating" stroke={currentTier.color} strokeWidth={3} dot={{ r: 5, fill: "#fff", stroke: currentTier.color, strokeWidth: 3 }} activeDot={{ r: 7 }} isAnimationActive={false} />
+        <Line type="linear" dataKey="rating" stroke={currentTier.color} strokeWidth={3} dot={{ r: 5, fill: "#fff", stroke: currentTier.color, strokeWidth: 3 }} activeDot={{ r: 7 }} isAnimationActive={false} />
       </ComposedChart>
     </ResponsiveContainer>
   </div>;

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Camera, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
-import { ratingTier } from "@/lib/battle/rating";
+import { useRatingTier } from "@/components/battle/rating-tier-provider";
 
 const BUCKET = "profile-media";
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -31,7 +31,7 @@ export function ProfileMediaEditor({
   const [error, setError] = useState<string | null>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
   const bannerInput = useRef<HTMLInputElement>(null);
-  const tier = ratingTier(rating);
+  const tier = useRatingTier(rating);
 
   async function upload(kind: "avatar" | "banner", event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];

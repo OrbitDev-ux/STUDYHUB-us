@@ -6,6 +6,8 @@ import { planLimits } from "../lib/plan.ts";
 import { creditSessionDuration } from "../lib/timer/session.ts";
 import { isMaintenanceAllowedPath } from "../lib/maintenance-access.ts";
 import { isDeveloperRole, isSuperAdminRole, isUserRole } from "../lib/developer/roles.ts";
+import { judgeOutputsMatch, normalizeJudgeOutput } from "../lib/online-judge/output.ts";
+import { RATING_TIERS, normalizeRatingTiers, ratingTier } from "../lib/battle/rating.ts";
 
 test("답안 비교는 공백·대소문자·전각 문자를 정규화한다", () => {
   assert.equal(answersMatch("Apple", "  apple. "), true);
@@ -53,6 +55,7 @@ test("점검 모드에서도 개발자 콘솔 전체와 복구 경로는 접근 
   assert.equal(isMaintenanceAllowedPath("/developer-malicious"), false);
   assert.equal(isMaintenanceAllowedPath("/api/cron/daily-homework"), true);
   assert.equal(isMaintenanceAllowedPath("/login"), true);
+  assert.equal(isMaintenanceAllowedPath("/banned"), true);
   assert.equal(isMaintenanceAllowedPath("/dashboard"), false);
 });
 
@@ -66,5 +69,40 @@ test("운영 역할 계층은 Admin과 Super Admin을 구분한다", () => {
   assert.equal(isUserRole("admin"), true);
   assert.equal(isUserRole("super_admin"), true);
   assert.equal(isUserRole("owner"), false);
+});
+
+test("Output Judge는 줄 끝 공백과 개행 형식만 정규화해 판정한다", () => {
+  assert.equal(normalizeJudgeOutput("3  \r\n"), "3");
+  assert.equal(judgeOutputsMatch("1 2  \n3\n", "1 2\n3"), true);
+  assert.equal(judgeOutputsMatch("1  2\n3", "1 2\n3"), false);
+  assert.equal(judgeOutputsMatch("4", "3"), false);
+});
+
+test("확장 Rating 티어가 0부터 5000까지 빈 구간 없이 분류한다", () => {
+  assert.ok(RATING_TIERS.length >= 20);
+  assert.equal(RATING_TIERS[0].min, 0);
+  assert.equal(RATING_TIERS.at(-1).max, 5000);
+  for (let rating = 0; rating <= 5000; rating++) {
+    const matches = RATING_TIERS.filter((tier) => rating >= tier.min && rating <= tier.max);
+    assert.equal(matches.length, 1);
+    assert.equal(ratingTier(rating).english, matches[0].english);
+  }
+});
+
+test("관리자 Rating 계급 설정은 연속 범위만 적용하고 잘못된 값은 기본값으로 복구한다", () => {
+  const custom = normalizeRatingTiers([
+    { min: 0, max: 999, name: "Starter", color: "#334455" },
+    { min: 1000, max: 5000, name: "Champion", color: "#abcdef" },
+  ]);
+  assert.equal(custom.length, 2);
+  assert.equal(ratingTier(999, custom).name, "Starter");
+  assert.equal(ratingTier(1000, custom).name, "Champion");
+  assert.equal(ratingTier(5000, custom).color, "#abcdef");
+
+  const invalid = normalizeRatingTiers([
+    { min: 0, max: 999, name: "Starter", color: "#334455" },
+    { min: 1001, max: 5000, name: "Gap", color: "#abcdef" },
+  ]);
+  assert.equal(invalid.length, RATING_TIERS.length);
 });
 //mOFfzSuuePOUAHVv

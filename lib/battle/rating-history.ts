@@ -14,6 +14,16 @@ type MatchRow = {
   subject_id: string | null;
 };
 type ContestRow = { id: string; title: string };
+type CodingMatchRow = {
+  id: string;
+  player1_id: string;
+  player2_id: string;
+  player1_correct: boolean | null;
+  player2_correct: boolean | null;
+  player1_response_ms: number | null;
+  player2_response_ms: number | null;
+  problem_id: string;
+};
 type ContestEntryRow = {
   contest_id: string;
   score: number;
@@ -88,13 +98,21 @@ export async function getDetailedRatingHistory(userId: string, limit = 100): Pro
   const contestIds = rows
     .filter((row) => row.event_type === "contest" && row.event_id)
     .map((row) => row.event_id!);
+  const codingBattleIds = rows
+    .filter((row) => row.event_type === "coding_battle" && row.event_id)
+    .map((row) => row.event_id!);
 
-  const [matchResult, contestResult, notificationResult, initialContestEntryResult] = await Promise.all([
+  const [matchResult, codingMatchResult, contestResult, notificationResult, initialContestEntryResult] = await Promise.all([
     battleIds.length
       ? admin.from("battle_matches")
         .select("id,player1_id,player2_id,player1_score,player2_score,subject_id")
         .in("id", battleIds)
       : Promise.resolve({ data: [] as MatchRow[], error: null }),
+    codingBattleIds.length
+      ? admin.from("coding_battle_matches")
+        .select("id,player1_id,player2_id,player1_correct,player2_correct,player1_response_ms,player2_response_ms,problem_id")
+        .in("id", codingBattleIds)
+      : Promise.resolve({ data: [] as CodingMatchRow[], error: null }),
     contestIds.length
       ? admin.from("contests").select("id,title").in("id", contestIds)
       : Promise.resolve({ data: [] as ContestRow[], error: null }),
@@ -120,15 +138,18 @@ export async function getDetailedRatingHistory(userId: string, limit = 100): Pro
   }
 
   const matches = (matchResult.data ?? []) as MatchRow[];
-  const opponentIds = [...new Set(matches.map((match) => (
-    match.player1_id === userId ? match.player2_id : match.player1_id
-  )))];
+  const codingMatches = (codingMatchResult.data ?? []) as CodingMatchRow[];
+  const opponentIds = [...new Set([
+    ...matches.map((match) => match.player1_id === userId ? match.player2_id : match.player1_id),
+    ...codingMatches.map((match) => match.player1_id === userId ? match.player2_id : match.player1_id),
+  ])];
   const { data: opponentProfiles } = opponentIds.length
     ? await admin.from("profiles").select("id,nickname").in("id", opponentIds)
     : { data: [] };
 
   const opponentNames = new Map((opponentProfiles ?? []).map((profile) => [profile.id, profile.nickname]));
   const matchMap = new Map(matches.map((match) => [match.id, match]));
+  const codingMatchMap = new Map(codingMatches.map((match) => [match.id, match]));
   const contestMap = new Map(((contestResult.data ?? []) as ContestRow[]).map((contest) => [contest.id, contest]));
   const contestEntryMap = new Map(((contestEntryResult.data ?? []) as ContestEntryRow[]).map((entry) => [entry.contest_id, entry]));
   const notifications = (notificationResult.data ?? []) as NotificationRow[];
@@ -137,11 +158,41 @@ export async function getDetailedRatingHistory(userId: string, limit = 100): Pro
     const ratingBefore = row.rating - row.rating_change;
     const eventType = row.event_type ?? (
       row.source === "contest" ? "contest"
+        : row.source === "coding_battle" ? "coding_battle"
         : row.source === "battle" ? "battle"
           : row.source === "signup" || row.source === "initial" ? "signup"
             : row.source === "admin_adjustment" ? "admin"
               : "rating"
     );
+
+    if (eventType === "coding_battle" && row.event_id) {
+      const match = codingMatchMap.get(row.event_id);
+      if (match) {
+        const isPlayer1 = match.player1_id === userId;
+        const myCorrect = isPlayer1 ? match.player1_correct : match.player2_correct;
+        const opponentCorrect = isPlayer1 ? match.player2_correct : match.player1_correct;
+        const myResponse = isPlayer1 ? match.player1_response_ms : match.player2_response_ms;
+        const opponentResponse = isPlayer1 ? match.player2_response_ms : match.player1_response_ms;
+        const opponentId = isPlayer1 ? match.player2_id : match.player1_id;
+        const opponentName = opponentNames.get(opponentId) ?? "알 수 없는 상대";
+        const result = row.actual_rank === 1 ? "승리" : row.actual_rank === 2 ? "패배" : "무승부";
+        return {
+          ...row,
+          rating_before: ratingBefore,
+          event_type: "coding_battle",
+          event_title: row.event_title || "Output Judge Battle",
+          event_href: `/battle/code?match=${match.id}`,
+          opponent_name: opponentName,
+          opponent_id: opponentId,
+          event_score: myCorrect ? 100 : 0,
+          opponent_score: opponentCorrect ? 100 : 0,
+          response_ms: myResponse,
+          opponent_response_ms: opponentResponse,
+          result_label: result,
+          reason: row.reason || `Output Judge 배틀 ${result} vs ${opponentName}`,
+        };
+      }
+    }
 
     if (eventType === "battle" && row.event_id) {
       const match = matchMap.get(row.event_id);

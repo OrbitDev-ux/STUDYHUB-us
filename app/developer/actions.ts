@@ -39,8 +39,19 @@ export async function developerLogin(formData: FormData) {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error || !data.user) redirect("/developer/login?error=invalid_credentials");
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
-  if (!isDeveloperRole(profile?.role)) {
+  const modernProfile = await supabase.from("profiles")
+    .select("role,is_banned,banned_until")
+    .eq("id", data.user.id)
+    .single();
+  const profile = modernProfile.error && isMissingSchemaError(modernProfile.error)
+    ? (await supabase.from("profiles").select("role").eq("id", data.user.id).single()).data
+    : modernProfile.data;
+  const banState = profile as { is_banned?: boolean; banned_until?: string | null } | null;
+  const isBanned = Boolean(
+    banState?.is_banned
+    && (!banState.banned_until || new Date(banState.banned_until).getTime() > Date.now())
+  );
+  if (!isDeveloperRole(profile?.role) || isBanned) {
     await supabase.auth.signOut();
     redirect("/developer/login?error=access_denied");
   }
@@ -237,7 +248,8 @@ export async function createDeveloperContest(formData: FormData) {
   const isRated = formData.get("is_rated") === "on";
   const startsAt = new Date(`${startsAtRaw}:00+09:00`);
   if (title.length < 2 || title.length > 100 || description.length > 2000 || !isGradeLevel(gradeLevel)
-    || !SUBJECTS.includes(subjectId) || Number.isNaN(startsAt.getTime())) redirect("/developer/contests?error=invalid_contest");
+    || !SUBJECTS.includes(subjectId) || Number.isNaN(startsAt.getTime())
+    || startsAt.getTime() <= Date.now()) redirect("/developer/contests?error=invalid_contest");
 
   const requestedIds = formData.getAll("question_id").map(String).filter((id) => UUID.test(id)).slice(0, 16);
   let selectedIds: string[] = [];
@@ -310,11 +322,134 @@ export async function createDeveloperContest(formData: FormData) {
     redirect("/developer/contests?error=contest_create_failed");
   }
   await writeDeveloperAudit(user.id, "contest.create", "contest", createdId, {
-    publicationStatus, isRated, questionCount: keys.length,
+    contestMode: "quiz", publicationStatus, isRated, questionCount: keys.length,
   });
   revalidatePath("/developer/contests");
   revalidatePath("/contests");
   redirect(`/developer/contests?created=${createdId}${compatibilityMode ? "&compat=1" : ""}`);
+}
+
+export async function createDeveloperCodingContest(formData: FormData) {
+  const { admin, user } = await requireDeveloper();
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const gradeLevel = String(formData.get("grade_level") ?? "");
+  const startsAtRaw = String(formData.get("starts_at") ?? "");
+  const duration = Math.min(360, Math.max(5, Math.round(Number(formData.get("duration_minutes") ?? 60))));
+  const publicationStatus = formData.get("publish_now") === "on" ? "published" : "draft";
+  const isRated = formData.get("is_rated") === "on";
+  const startsAt = new Date(`${startsAtRaw}:00+09:00`);
+  const requestedIds = [...new Set(formData.getAll("judge_problem_id").map(String).filter((id) => UUID.test(id)))].slice(0, 16);
+  if (title.length < 2 || title.length > 100 || description.length > 2000
+    || !isGradeLevel(gradeLevel) || Number.isNaN(startsAt.getTime())
+    || startsAt.getTime() <= Date.now()
+    || requestedIds.length < 1) {
+    redirect("/developer/contests?error=invalid_coding_contest");
+  }
+  const { data: problems, error: problemError } = await admin.from("oj_problems")
+    .select("id,grade_level").in("id", requestedIds).eq("status", "published");
+  if (problemError && isMissingSchemaError(problemError)) {
+    redirect("/developer/contests?error=coding_contest_migration");
+  }
+  if (problemError || !problems || problems.length !== requestedIds.length
+    || problems.some((problem) => problem.grade_level && problem.grade_level !== gradeLevel)) {
+    redirect("/developer/contests?error=invalid_coding_problems");
+  }
+  const { data, error } = await admin.from("contests").insert({
+    title,
+    description,
+    grade_level: gradeLevel,
+    subject_id: "math",
+    question_keys: [],
+    starts_at: startsAt.toISOString(),
+    ends_at: new Date(startsAt.getTime() + duration * 60_000).toISOString(),
+    created_by: user.id,
+    publication_status: publicationStatus,
+    is_rated: isRated,
+    contest_mode: "output_judge",
+    judge_problem_ids: requestedIds,
+  }).select("id").single();
+  if (error || !data) {
+    console.error("[developer-contest] coding create failed:", error?.message);
+    if (isMissingSchemaError(error)) redirect("/developer/contests?error=coding_contest_migration");
+    redirect("/developer/contests?error=contest_create_failed");
+  }
+  await writeDeveloperAudit(user.id, "contest.create", "contest", data.id, {
+    contestMode: "output_judge",
+    publicationStatus,
+    isRated,
+    judgeProblemCount: requestedIds.length,
+    judgeProblemIds: requestedIds,
+  });
+  revalidatePath("/developer/contests");
+  revalidatePath("/contests");
+  redirect(`/developer/contests?created=${data.id}`);
+}
+
+export async function updateDeveloperContest(formData: FormData) {
+  const { admin, user } = await requireDeveloper();
+  const contestId = String(formData.get("contest_id") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const startsAtRaw = String(formData.get("starts_at") ?? "");
+  const duration = Math.min(360, Math.max(5, Math.round(Number(formData.get("duration_minutes") ?? 60))));
+  const startsAt = new Date(`${startsAtRaw}:00+09:00`);
+  const isRated = formData.get("is_rated") === "on";
+  if (!UUID.test(contestId) || title.length < 2 || title.length > 100
+    || description.length > 2000 || Number.isNaN(startsAt.getTime())
+    || startsAt.getTime() <= Date.now()) {
+    redirect("/developer/contests?error=invalid_contest");
+  }
+  const { data: existing } = await admin.from("contests")
+    .select("*")
+    .eq("id", contestId).maybeSingle();
+  if (!existing || new Date(existing.starts_at).getTime() <= Date.now()) {
+    redirect("/developer/contests?error=contest_edit_closed");
+  }
+  const updates: Record<string, unknown> = {
+    title,
+    description,
+    starts_at: startsAt.toISOString(),
+    ends_at: new Date(startsAt.getTime() + duration * 60_000).toISOString(),
+    is_rated: isRated,
+    updated_at: new Date().toISOString(),
+  };
+  if (formData.get("problem_selection") === "1") {
+    if (existing.contest_mode === "output_judge") {
+      const problemIds = [...new Set(formData.getAll("judge_problem_id").map(String).filter((id) => UUID.test(id)))].slice(0, 16);
+      if (problemIds.length < 1) redirect("/developer/contests?error=invalid_coding_problems");
+      const { data: problems } = await admin.from("oj_problems")
+        .select("id,grade_level").in("id", problemIds).eq("status", "published");
+      if (!problems || problems.length !== problemIds.length
+        || problems.some((problem) => problem.grade_level && problem.grade_level !== existing.grade_level)) {
+        redirect("/developer/contests?error=invalid_coding_problems");
+      }
+      updates.judge_problem_ids = problemIds;
+    } else {
+      const questionIds = [...new Set(formData.getAll("question_id").map(String).filter((id) => UUID.test(id)))].slice(0, 16);
+      if (questionIds.length < 5) redirect("/developer/contests?error=invalid_questions");
+      const { data: questions } = await admin.from("questions")
+        .select("id,grade_level,subject_id").in("id", questionIds).eq("status", "published");
+      if (!questions || questions.length !== questionIds.length
+        || questions.some((question) => question.grade_level !== existing.grade_level || question.subject_id !== existing.subject_id)) {
+        redirect("/developer/contests?error=invalid_questions");
+      }
+      updates.question_keys = questionIds.map((questionId) => `db:${questionId}`);
+    }
+  }
+  const { error } = await admin.from("contests").update(updates).eq("id", contestId);
+  if (error) {
+    console.error("[developer-contest] update failed:", error.message);
+    redirect("/developer/contests?error=contest_edit_failed");
+  }
+  await writeDeveloperAudit(user.id, "contest.update", "contest", contestId, {
+    before: existing,
+    after: updates,
+  });
+  revalidatePath("/developer/contests");
+  revalidatePath("/contests");
+  revalidatePath(`/contests/${contestId}`);
+  redirect("/developer/contests?updated=edit");
 }
 
 export async function setDeveloperContestStatus(contestId: string, status: "draft" | "published" | "cancelled") {
@@ -338,17 +473,27 @@ export async function setDeveloperContestStatus(contestId: string, status: "draf
 export async function finishDeveloperContest(contestId: string) {
   const { admin, user } = await requireDeveloper();
   if (!UUID.test(contestId)) redirect("/developer/contests?error=invalid_contest_id");
-  const { data: contest } = await admin.from("contests").select("starts_at").eq("id", contestId).single();
+  const [{ data: contest }, { data: registrations }] = await Promise.all([
+    admin.from("contests").select("starts_at").eq("id", contestId).single(),
+    admin.from("contest_entries").select("participation_mode").eq("contest_id", contestId),
+  ]);
   if (!contest || new Date(contest.starts_at).getTime() >= Date.now()) redirect("/developer/contests?error=contest_not_started");
   const { error } = await admin.from("contests").update({ ends_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", contestId);
   if (error) {
     console.error("[developer-contest] finish failed:", error.message);
     redirect("/developer/contests?error=contest_finish_failed");
   }
-  await writeDeveloperAudit(user.id, "contest.finish", "contest", contestId);
+  const ratedCount = (registrations ?? []).filter((entry) => entry.participation_mode !== "unrated").length;
+  const unratedCount = (registrations ?? []).filter((entry) => entry.participation_mode === "unrated").length;
+  await writeDeveloperAudit(user.id, "contest.finish", "contest", contestId, {
+    registeredCount: ratedCount + unratedCount,
+    ratedCount,
+    unratedCount,
+  });
   await admin.rpc("finalize_contest_ratings", { p_contest_id: contestId });
   revalidatePath("/developer/contests");
   revalidatePath(`/contests/${contestId}`);
+  revalidatePath(`/contests/${contestId}/standings`);
   redirect("/developer/contests?updated=finished");
 }
 
@@ -398,6 +543,111 @@ export async function updateDeveloperUser(formData: FormData) {
   await writeDeveloperAudit(user.id, "user.update", "user", targetId, { role, plan, roleChanged });
   revalidatePath("/developer/users");
   redirect("/developer/users?updated=user");
+}
+
+export async function setSuperAdminUserBan(formData: FormData) {
+  const { supabase, user } = await requireSuperAdmin();
+  const targetId = String(formData.get("user_id") ?? "");
+  const banned = String(formData.get("banned") ?? "") === "true";
+  const reason = String(formData.get("reason") ?? "").trim();
+  const untilRaw = String(formData.get("banned_until") ?? "").trim();
+  if (!UUID.test(targetId) || targetId === user.id || reason.length < 5 || reason.length > 500) {
+    redirect("/developer/users?error=invalid_ban");
+  }
+  let bannedUntil: string | null = null;
+  if (banned && untilRaw) {
+    const parsed = new Date(`${untilRaw}:00+09:00`);
+    if (Number.isNaN(parsed.getTime()) || parsed.getTime() <= Date.now()) {
+      redirect("/developer/users?error=invalid_ban_expiry");
+    }
+    bannedUntil = parsed.toISOString();
+  }
+
+  const { data, error } = await supabase.rpc("super_admin_set_user_ban", {
+    p_target_user_id: targetId,
+    p_banned: banned,
+    p_reason: reason,
+    p_banned_until: bannedUntil,
+  });
+  if (error) {
+    console.error("[super-admin-user] ban update failed:", error.message);
+    if (/current super admin|at least one/i.test(error.message)) {
+      redirect("/developer/users?error=protected_operator");
+    }
+    if (isMissingSchemaError(error)) redirect("/developer/users?error=moderation_migration_required");
+    redirect("/developer/users?error=ban_update_failed");
+  }
+  await writeDeveloperAudit(user.id, banned ? "user.ban" : "user.unban", "user", targetId, {
+    ...(data && typeof data === "object" ? data as Record<string, unknown> : {}),
+    reason,
+    bannedUntil,
+  });
+  revalidatePath("/developer/users");
+  revalidatePath("/rank");
+  revalidatePath("/battle");
+  revalidatePath(`/users/${targetId}`);
+  redirect(`/developer/users?updated=${banned ? "banned" : "unbanned"}`);
+}
+
+export async function deleteSuperAdminUser(formData: FormData) {
+  const { admin, user } = await requireSuperAdmin();
+  const targetId = String(formData.get("user_id") ?? "");
+  const confirmation = String(formData.get("confirmation") ?? "").trim();
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!UUID.test(targetId) || targetId === user.id || reason.length < 5 || reason.length > 500) {
+    redirect("/developer/users?error=invalid_user_deletion");
+  }
+
+  let targetResult = await admin.from("profiles")
+    .select("id,nickname,role,plan,grade_level,created_at,is_banned,banned_at,banned_until,ban_reason")
+    .eq("id", targetId)
+    .maybeSingle();
+  if (targetResult.error && isMissingSchemaError(targetResult.error)) {
+    targetResult = await admin.from("profiles")
+      .select("id,nickname,role,plan,grade_level,created_at")
+      .eq("id", targetId)
+      .maybeSingle();
+  }
+  const { data: target } = targetResult;
+  const { data: rating } = await admin.from("battle_ratings")
+    .select("rating,peak_rating,games,rated_events")
+    .eq("user_id", targetId)
+    .maybeSingle();
+  if (!target || confirmation !== target.nickname) redirect("/developer/users?error=deletion_confirmation");
+  if (target.role === "super_admin") redirect("/developer/users?error=protected_operator");
+
+  const deletionDetails = {
+    reason,
+    deletedProfile: target,
+    deletedRating: rating,
+  };
+  await writeDeveloperAudit(user.id, "user.delete.request", "user", targetId, deletionDetails);
+
+  const { data: mediaFiles, error: mediaListError } = await admin.storage
+    .from("profile-media")
+    .list(targetId, { limit: 100 });
+  if (!mediaListError && mediaFiles?.length) {
+    const { error: mediaDeleteError } = await admin.storage
+      .from("profile-media")
+      .remove(mediaFiles.map((file) => `${targetId}/${file.name}`));
+    if (mediaDeleteError) console.error("[super-admin-user] media cleanup failed:", mediaDeleteError.message);
+  }
+
+  const { error } = await admin.auth.admin.deleteUser(targetId);
+  if (error) {
+    console.error("[super-admin-user] auth deletion failed:", error.message);
+    await writeDeveloperAudit(user.id, "user.delete.failed", "user", targetId, {
+      reason,
+      error: error.message,
+    });
+    redirect("/developer/users?error=user_deletion_failed");
+  }
+  await writeDeveloperAudit(user.id, "user.delete", "user", targetId, deletionDetails);
+  revalidatePath("/developer/users");
+  revalidatePath("/developer/audit");
+  revalidatePath("/rank");
+  revalidatePath("/battle");
+  redirect("/developer/users?updated=deleted");
 }
 
 export async function adjustDeveloperRating(formData: FormData) {
@@ -462,6 +712,49 @@ export async function adjustDeveloperRating(formData: FormData) {
   revalidatePath("/developer/users");
   revalidatePath("/rank");
   redirect("/developer/users?updated=rating");
+}
+
+export async function saveDeveloperRatingTiers(formData: FormData) {
+  const { supabase, user } = await requireDeveloper();
+  let tiers: Array<{ min: number; max: number; name: string; color: string }>;
+  try {
+    const parsed = JSON.parse(String(formData.get("tiers") ?? "[]")) as unknown;
+    if (!Array.isArray(parsed) || parsed.length < 2 || parsed.length > 40) throw new Error("invalid count");
+    tiers = parsed.map((item) => {
+      if (!item || typeof item !== "object") throw new Error("invalid row");
+      const row = item as Record<string, unknown>;
+      return {
+        min: Number(row.min),
+        max: Number(row.max),
+        name: String(row.name ?? "").trim(),
+        color: String(row.color ?? "").toLowerCase(),
+      };
+    });
+  } catch {
+    redirect("/developer/rating-tiers?error=invalid");
+  }
+  let previousMax = -1;
+  for (const tier of tiers) {
+    if (!Number.isInteger(tier.min) || !Number.isInteger(tier.max)
+      || tier.min !== previousMax + 1 || tier.max < tier.min || tier.max > 5000
+      || tier.name.length < 2 || tier.name.length > 40
+      || !/^#[0-9a-f]{6}$/.test(tier.color)) {
+      redirect("/developer/rating-tiers?error=invalid");
+    }
+    previousMax = tier.max;
+  }
+  if (previousMax !== 5000) redirect("/developer/rating-tiers?error=invalid");
+  const { error } = await supabase.rpc("admin_set_rating_tiers", { p_tiers: tiers });
+  if (error) {
+    console.error("[rating-tiers] save failed:", error.message);
+    redirect("/developer/rating-tiers?error=save");
+  }
+  await writeDeveloperAudit(user.id, "rating.tiers.update", "system", undefined, {
+    tierCount: tiers.length,
+    ranges: tiers,
+  });
+  revalidatePath("/", "layout");
+  redirect("/developer/rating-tiers?updated=1");
 }
 
 export async function deleteDeveloperRatingHistory(formData: FormData) {
@@ -562,6 +855,49 @@ export async function setSuperAdminAuditArchive(formData: FormData) {
   }
   revalidatePath("/developer/audit");
   redirect(`/developer/audit?updated=${archived ? "archive" : "restore"}&scope=${archived ? "active" : "all"}`);
+}
+
+export async function deleteSuperAdminAuditLog(formData: FormData) {
+  const { supabase } = await requireSuperAdmin();
+  const auditLogId = String(formData.get("audit_log_id") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!UUID.test(auditLogId) || reason.length < 5 || reason.length > 500) {
+    redirect("/developer/audit?error=invalid_deletion");
+  }
+  const { error } = await supabase.rpc("super_admin_delete_audit_log", {
+    p_audit_log_id: auditLogId,
+    p_reason: reason,
+  });
+  if (error) {
+    console.error("[super-admin-audit] deletion failed:", error.message);
+    if (isMissingSchemaError(error)) redirect("/developer/audit?error=deletion_migration_required");
+    redirect("/developer/audit?error=deletion_failed");
+  }
+  revalidatePath("/developer/audit");
+  redirect("/developer/audit?updated=deleted");
+}
+
+export async function bulkSuperAdminAuditLogs(formData: FormData) {
+  const { supabase } = await requireSuperAdmin();
+  const ids = [...new Set(formData.getAll("audit_log_id").map(String).filter((id) => UUID.test(id)))].slice(0, 100);
+  const operation = String(formData.get("operation") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!ids.length || !["archive", "restore", "delete"].includes(operation)
+    || reason.length < 5 || reason.length > 500) {
+    redirect("/developer/audit?error=invalid_bulk");
+  }
+  const { data, error } = await supabase.rpc("super_admin_bulk_audit_logs", {
+    p_audit_log_ids: ids,
+    p_action: operation,
+    p_reason: reason,
+  });
+  if (error) {
+    console.error("[super-admin-audit] bulk operation failed:", error.message);
+    if (isMissingSchemaError(error)) redirect("/developer/audit?error=bulk_migration_required");
+    redirect("/developer/audit?error=bulk_failed");
+  }
+  revalidatePath("/developer/audit");
+  redirect(`/developer/audit?updated=bulk-${operation}&count=${Number(data) || ids.length}&scope=all`);
 }
 
 export async function sendDeveloperAnnouncement(formData: FormData) {

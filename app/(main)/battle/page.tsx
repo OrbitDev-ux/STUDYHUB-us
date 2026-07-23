@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Crown, Medal, Swords, Trophy } from "lucide-react";
+import { Code2, Crown, Medal, Swords, Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { RatingBadge, RatingName } from "@/components/battle/rating-identity";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +30,10 @@ export default async function BattleLeaderboardPage() {
   return <div className="flex flex-col gap-6">
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div><h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight"><Trophy className="h-6 w-6 text-warning" />ELO Leaderboard</h1><p className="mt-1 text-sm text-muted-foreground">문제풀이 배틀과 Rated 대회 결과를 반영한 상위 100명의 순위입니다.</p></div>
-      <Button asChild><Link href="/battle/play"><Swords className="h-4 w-4" />배틀 시작</Link></Button>
+      <div className="flex gap-2">
+        <Button asChild variant="outline"><Link href="/battle/code"><Code2 className="h-4 w-4" />코딩 배틀</Link></Button>
+        <Button asChild><Link href="/battle/play"><Swords className="h-4 w-4" />객관식 배틀</Link></Button>
+      </div>
     </div>
 
     {leaders.length >= 3 && <div className="grid gap-3 sm:grid-cols-3">

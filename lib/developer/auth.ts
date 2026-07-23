@@ -52,8 +52,19 @@ export async function requireDeveloper() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/developer/login");
 
-  const { data: profile } = await supabase.from("profiles").select("id, nickname, role").eq("id", user.id).single();
+  const modernProfile = await supabase.from("profiles")
+    .select("id, nickname, role, is_banned, banned_until")
+    .eq("id", user.id)
+    .single();
+  const profile = modernProfile.error && isMissingSchemaError(modernProfile.error)
+    ? (await supabase.from("profiles").select("id, nickname, role").eq("id", user.id).single()).data
+    : modernProfile.data;
   if (!isDeveloperRole(profile?.role)) redirect("/developer/login?error=access_denied");
+  const banState = profile as { is_banned?: boolean; banned_until?: string | null } | null;
+  if (banState?.is_banned
+    && (!banState.banned_until || new Date(banState.banned_until).getTime() > Date.now())) {
+    redirect("/banned");
+  }
   if (!await hasDeveloperSession(user.id)) redirect("/developer/login?error=special_login_required");
 
   return { supabase, admin: createAdminClient(), user, profile };

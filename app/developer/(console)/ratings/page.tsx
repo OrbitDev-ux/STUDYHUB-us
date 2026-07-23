@@ -50,7 +50,7 @@ type ProfileRow = {
 
 const PAGE_SIZE = 50;
 const UUID = /^[0-9a-f-]{36}$/i;
-const EVENT_TYPES = ["all", "battle", "contest", "admin", "other"] as const;
+const EVENT_TYPES = ["all", "battle", "coding_battle", "contest", "admin", "other"] as const;
 const MODERN_COLUMNS = "id,user_id,rating,rating_change,source,created_at,event_type,event_id,event_title,reason,actual_rank,expected_rank,performance_rating,base_delta,correction,provisional_factor";
 const LEGACY_COLUMNS = "id,user_id,rating,rating_change,source,created_at";
 
@@ -100,12 +100,13 @@ export default async function DeveloperRatingsPage({
         : query.eq("user_id", "00000000-0000-0000-0000-000000000000");
     }
     if (eventType === "battle") query = modern ? query.or("event_type.eq.battle,source.eq.battle") : query.eq("source", "battle");
+    if (eventType === "coding_battle") query = modern ? query.or("event_type.eq.coding_battle,source.eq.coding_battle") : query.eq("source", "coding_battle");
     if (eventType === "contest") query = modern ? query.or("event_type.eq.contest,source.eq.contest") : query.eq("source", "contest");
     if (eventType === "admin") query = query.eq("source", "admin_adjustment");
     if (eventType === "other") {
       query = modern
-        ? query.or("event_type.not.in.(battle,contest,signup),event_type.is.null").not("source", "in", "(battle,contest,signup,initial,backfill,admin_adjustment)")
-        : query.not("source", "in", "(battle,contest,signup,initial,backfill,admin_adjustment)");
+        ? query.or("event_type.not.in.(battle,coding_battle,contest,signup),event_type.is.null").not("source", "in", "(battle,coding_battle,contest,signup,initial,backfill,admin_adjustment)")
+        : query.not("source", "in", "(battle,coding_battle,contest,signup,initial,backfill,admin_adjustment)");
     }
     return query;
   };
@@ -165,6 +166,7 @@ export default async function DeveloperRatingsPage({
           <select name="type" defaultValue={eventType} className={selectClass}>
             <option value="all">모든 이벤트</option>
             <option value="battle">Battle</option>
+            <option value="coding_battle">Output Judge Battle</option>
             <option value="contest">Contest</option>
             <option value="admin">Admin Adjustment</option>
             <option value="other">기타</option>

@@ -10,10 +10,12 @@ import {
   Crown,
   Database,
   FileQuestion,
+  FlaskConical,
   KeyRound,
   LockKeyhole,
   Megaphone,
   MessageSquareWarning,
+  Palette,
   RefreshCcw,
   ScrollText,
   ShieldCheck,
@@ -34,13 +36,15 @@ export const metadata = { title: "Developer Console Operations Manual" };
 const SCREEN_GUIDE = [
   { screen: "Overview", href: "/developer", data: "사용자·문제·대회·배틀 수, DB 기능 상태, 최근 감사 로그, 콘솔 테마", purpose: "서비스 상태 파악, 점검 모드 제어, Dark·Light·System 화면 선택", impact: "Maintenance 활성화 시 일반 사용자 화면을 점검 페이지로 전환. 테마 선택은 현재 브라우저에 저장", recovery: "같은 화면에서 Maintenance 해제, 상단 선택기에서 System으로 복원" },
   { screen: "Questions", href: "/developer/questions", data: "학년, 과목, 단원, 난이도, 보기, 정답, 해설, 공개 상태", purpose: "문제 출제·검수·공개·보관", impact: "Published 문제는 연습과 대회 구성에 사용 가능", recovery: "Archived 또는 Draft로 전환" },
-  { screen: "Contests", href: "/developer/contests", data: "대회명, 대상 학년·과목, 문제, 시작·종료 시각, Rated 여부", purpose: "대회 생성·공개·종료·Rating 정산", impact: "Rated 종료는 참가자의 Rating과 순위를 변경", recovery: "종료 전에는 상태 변경 가능, 정산 후에는 수동 보정 및 감사 기록 필요" },
-  { screen: "Users", href: "/developer/users", data: "프로필, User·Admin·Super Admin 역할, 플랜, 현재·최고 Rating", purpose: "사용자 권한·플랜·Rating 관리", impact: "Admin은 콘솔 운영 권한, Super Admin은 역할·감사 로그까지 관리하는 최고 권한을 부여", recovery: "Super Admin이 근거와 사유를 남기고 원래 역할·값으로 재설정" },
+  { screen: "Online Judge", href: "/developer/judge", data: "코딩 문제 본문, URL slug, 사용자에게 공개할 고정 Input, 서버 전용 정답 Output", purpose: "고정 입력 기반 Output Answer 문제 출제·공개·보관", impact: "Published 문제에서 사용자는 고정 Input을 풀어 얻은 최종 출력 답안만 제출", recovery: "오판정·입출력 오류 시 즉시 Draft/Archived로 전환하고 정답 Output과 제출 이력 확인" },
+  { screen: "Contests", href: "/developer/contests", data: "Quiz/Output Judge 유형, 대상 학년, 문제, 시작·종료 시각, Rated 등록 허용 여부, 등록 인원", purpose: "두 유형의 대회 생성, 예정 대회 수정, 공개·Register 현황·종료·Rating 정산", impact: "예정 화면에는 서버 시각 기반 카운트다운이 표시되고, 코딩 대회는 고정 Input에 대한 Output만 채점", recovery: "시작 전 정보 수정·Draft/Cancelled 전환 가능. 정산 후에는 수동 보정 및 감사 기록 필요" },
+  { screen: "Rating Tiers", href: "/developer/rating-tiers", data: "0~5000 계급 수, 영문 이름, Minimum/Maximum, 프로필·닉네임·그래프 색상", purpose: "전역 Rating 계급 체계와 색상 관리", impact: "저장 즉시 Dashboard, Rating 그래프, 프로필, 순위, 포럼 닉네임 표시가 변경", recovery: "Audit Log의 rating.tiers.update ranges를 확인해 이전 구성을 다시 저장" },
+  { screen: "Users", href: "/developer/users", data: "프로필, 역할, 플랜, Rating, 밴 상태·기간·사유", purpose: "사용자 권한·플랜·Rating 관리와 Super Admin 제재·영구 삭제", impact: "밴 계정은 서비스와 공개 순위에서 제외. 영구 삭제는 Auth·학습·메시지·Rating 연결 데이터를 제거", recovery: "밴은 사유를 남겨 해제 가능. 영구 삭제는 애플리케이션에서 복구 불가" },
   { screen: "Rating Events", href: "/developer/ratings", data: "전체 사용자의 Rating 전후값, 변화량, 사유, 원본 배틀·대회, Codeforces 보정값", purpose: "Rating 정산 이력 조회와 잘못된 단일 이벤트 삭제·후속 History 재계산", impact: "삭제 즉시 대상 사용자의 현재·최고 Rating, rated 횟수, 순위, Dashboard 그래프와 상세 History가 변경", recovery: "감사 로그의 deletedEvent 전체 스냅샷을 근거로 Rating 수동 정정. 가입 시작점은 삭제 불가" },
   { screen: "Announcements", href: "/developer/notifications", data: "제목, 본문, 전체·학년·개별 수신 범위", purpose: "실시간 서비스 공지 발송", impact: "선택된 모든 사용자 알림함에 즉시 생성", recovery: "이미 발송된 알림은 일괄 회수되지 않으므로 정정 공지 발송" },
   { screen: "Forum", href: "/developer/forum", data: "게시글 원문, 작성자, 조회·댓글·좋아요, 중요 공지·고정 상태", purpose: "관리자 중요 공지 게시와 일반 게시글 운영", impact: "관리자 작성 글은 중요 공지로 자동 고정되고 전체 사용자 알림 발송. 삭제 시 연결 댓글·좋아요도 삭제", recovery: "관리자 중요 공지는 고정 해제 불가. 내용 오류 시 삭제 후 정정 공지 게시" },
   { screen: "Chat Reports", href: "/developer/reports", data: "신고 메시지 스냅샷, 신고 사유, 신고자·대상, 처리 상태", purpose: "채팅 신고 검토와 경고·기간/영구 제한", impact: "제한 사용자는 모든 1:1 메시지 전송이 차단", recovery: "현재 제한 사용자에서 해제 사유를 입력해 즉시 해제" },
-  { screen: "Audit Log", href: "/developer/audit", data: "실행자, 작업명, 대상, 세부값, 시각, 접속 문맥, 편집·보관 상태와 개정 이력", purpose: "운영 변경 추적과 사고 조사. Super Admin은 오류 로그를 수정·보관·복원", impact: "모든 편집은 변경 전·후 원본 스냅샷과 별도 audit.update/archive/restore 이벤트를 생성", recovery: "개정 이력의 이전 스냅샷을 근거로 재수정하거나 보관 로그를 복원" },
+  { screen: "Audit Log", href: "/developer/audit", data: "실행자, 작업명, 대상, 세부값, 편집·보관 상태, 개정 이력과 삭제 증적", purpose: "운영 변경 추적. Super Admin은 개별 또는 최대 100건을 선택해 보관·복원·삭제", impact: "영구 삭제 시 원본 테이블에서는 제거되지만 각 원본·기존 개정 이력·공통 사유가 독립 증적에 보존", recovery: "수정·보관은 재수정·복원 가능. 삭제 원본은 Deleted Log Receipts를 근거로 새 정정 로그 작성" },
 ];
 
 const FEATURE_MANUALS: Array<{
@@ -66,15 +70,37 @@ const FEATURE_MANUALS: Array<{
     avoid: "정답이나 해설이 불완전한 상태에서 바로 Published로 저장하지 마세요.",
   },
   {
+    id: "judge",
+    title: "온라인 저지 출제와 판정",
+    icon: FlaskConical,
+    href: "/developer/judge",
+    useWhen: "프로그래밍 문제와 공개·숨김 테스트케이스를 만들고 운영할 때",
+    before: ["모든 사용자에게 동일하게 제공할 고정 Input인지 확인", "기준 풀이 코드를 별도로 실행해 정답 Output을 두 번 검증", "정답 Output의 줄바꿈·공백·문자 인코딩을 확인", "Input과 Output이 각각 50,000자 제한 안에 있는지 확인"],
+    procedure: ["문제 slug와 입출력 형식을 명확하게 작성", "사용자에게 그대로 공개할 고정 Input 입력", "서버에서만 비교할 정답 Output 입력", "우선 Draft로 저장한 뒤 실제 사용자 화면에서 Input과 답안칸 확인", "정답·오답 Output을 각각 제출해 판정을 확인한 후 Published 전환"],
+    verify: ["사용자에게 고정 Input과 실행 결과 답안칸만 표시되고 정답 Output은 노출되지 않는지 확인", "생성 후 수정 화면에서 고정 Input·정답 Output이 정확히 갱신되는지 확인", "제출 요청에 Output 답안 외의 풀이 데이터가 포함되지 않는지 확인", "Accepted·Wrong Answer와 100점·0점 기록 확인", "코딩 배틀에서 두 참가자에게 같은 문제가 표시되고 1회만 제출되는지 확인", "Audit Log의 judge.problem.create/update/published 기록 확인"],
+    avoid: "정답 Output을 문제 본문·입력 설명·감사 로그에 기록하지 마세요.",
+  },
+  {
     id: "contests",
     title: "대회 생성과 종료",
     icon: Swords,
     href: "/developer/contests",
     useWhen: "정기 대회·특별 대회·학년별 평가전을 개최할 때",
-    before: ["시작 시각의 시간대가 Asia/Seoul 기준인지 확인", "Published 문제만 선택했는지 확인", "Rated 여부와 대상 학년을 두 명 이상이 교차 확인", "문제 수와 제한 시간이 난이도에 적절한지 확인"],
-    procedure: ["대회명에는 회차와 대상이 드러나도록 작성", "설명에 참가 조건·채점·동점 규칙을 안내", "문제와 진행 시간을 설정하고 우선 Draft 저장", "공지 발송 전 대회를 Published로 전환", "대회 종료 후 참가 현황을 확인하고 Finish로 Rating 정산"],
-    verify: ["일반 사용자 대회 목록에 노출되는지 확인", "시작 전 문제 풀이가 불가능한지 확인", "종료 후 리더보드·Rating History·알림 확인", "contest.finish 감사 로그와 참가자 수 확인"],
+    before: ["시작 시각의 시간대가 Asia/Seoul 기준인지 확인", "Quiz 또는 Output Judge 유형을 먼저 결정", "Published 문제만 선택했는지 확인", "Output Judge는 각 문제의 고정 Input과 정답 Output을 재검증", "Rated 등록 허용 여부와 대상 학년을 두 명 이상이 교차 확인", "문제 수와 제한 시간이 난이도에 적절한지 확인"],
+    procedure: ["대회명에는 회차와 대상이 드러나도록 작성", "설명에 Register 마감, Rated/Unrated, 채점·동점 규칙을 안내", "일반 대회 또는 Output Judge 대회 생성기를 선택", "문제와 진행 시간을 설정하고 우선 Draft 저장", "예정 대회의 수정 패널에서 제목·설명·시각·Rated 설정을 재확인", "공지 발송 전 대회를 Published로 전환", "테스트 계정으로 카운트다운과 Rated/Unrated Register 확인", "Output Judge라면 고정 Input에 정답·오답 Output을 각각 제출", "대회 종료 후 등록·참가 현황을 확인하고 Finish로 Rating 정산"],
+    verify: ["예정 화면의 Before the contest가 서버 시각과 일치하는지 확인", "일반 사용자 대회 목록에 유형과 Register 상태가 표시되는지 확인", "시작 전 미등록 사용자의 문제 풀이가 불가능한지 확인", "코딩 대회에 소스 코드 입력칸 없이 실행 결과 답안칸만 있는지 확인", "Rated 참가자만 Rating History·알림이 생성되는지 확인", "Unrated 참가자는 상세 스탠딩에 표시되지만 Rating 변화가 없는지 확인", "contest.create/update/finish 감사 로그와 Rated/Unrated 참가자 수 확인"],
     avoid: "Rated 설정을 잘못한 대회를 종료하면 전체 참가자 Rating에 영향을 주므로 종료 버튼을 급하게 누르지 마세요.",
+  },
+  {
+    id: "rating-tiers",
+    title: "Rating 계급·색상 설정",
+    icon: Palette,
+    href: "/developer/rating-tiers",
+    useWhen: "계급 수, 영문 Rank 이름, 구간 또는 전역 사용자 색상을 바꿀 때",
+    before: ["현재 계급 구성을 스크린샷 또는 Audit Log로 보존", "0~5000의 모든 Rating이 정확히 한 계급에 포함되는지 계산", "인접 계급 색상이 충분히 구분되고 Light/Dark 모드에서 읽히는지 확인", "기존 운영 정책·공지의 계급 이름과 충돌하지 않는지 확인"],
+    procedure: ["계급 추가 또는 제거로 필요한 개수를 구성", "각 행의 Minimum은 이전 Maximum+1로 맞춤", "첫 Minimum은 0, 마지막 Maximum은 5000으로 유지", "영문 이름과 6자리 HEX 색상을 입력", "하단 미리보기에서 범위·색상을 검수하고 전체 계급 저장"],
+    verify: ["현재 사용자와 0·경계값·5000 테스트 계정의 계급 확인", "Dashboard 그래프 밴드와 Rating History의 전후 계급 확인", "공개 프로필·전체 순위·포럼 닉네임 색상 확인", "rating.tiers.update 감사 로그에서 tierCount와 ranges 확인"],
+    avoid: "대회 진행 중에는 참가자가 보는 계급 기준이 바뀔 수 있으므로 긴급 사유가 아니면 변경하지 마세요.",
   },
   {
     id: "users",
@@ -83,9 +109,9 @@ const FEATURE_MANUALS: Array<{
     href: "/developer/users",
     useWhen: "플랜 반영, 운영자 지정, 명백한 Rating 정산 오류를 교정할 때",
     before: ["닉네임뿐 아니라 사용자 UUID와 공개 프로필을 함께 확인", "현재 값과 변경 예정 값을 별도로 기록", "Rating은 대회·배틀 원기록과 알림을 먼저 검토", "Admin·Super Admin 부여는 최고 운영자 승인과 최소 권한 원칙 확인"],
-    procedure: ["대상 사용자를 검색하고 프로필 링크로 본인 확인", "일반 관리자는 플랜만, Super Admin은 User·Admin·Super Admin 역할까지 변경", "역할 변경 사유에는 승인 근거, 변경 전후 역할, 적용 목적을 포함", "Rating 변경은 역할·플랜 변경과 분리해 구체적 정산 사유 입력", "저장 후 대상 사용자 알림과 권한 적용을 확인"],
-    verify: ["Users 목록과 공개 프로필의 값이 일치하는지 확인", "역할 변경 대상에게 운영 권한 변경 알림이 도착했는지 확인", "Admin의 콘솔 접근 및 Super Admin 전용 편집 노출 여부 확인", "Rating 그래프에 Admin Rating Adjustment와 사유가 표시되는지 확인", "Audit Log에서 user.role.update, user.update 또는 rating.adjust 확인"],
-    avoid: "현재 Super Admin 계정을 스스로 강등하거나 마지막 Super Admin을 제거할 수 없습니다. 순위 상승 요청이나 주관적 판단만으로 Rating을 수동 조정하지 마세요.",
+    procedure: ["대상 사용자를 검색하고 프로필 링크로 본인 확인", "일반 관리자는 플랜만, Super Admin은 역할·밴·영구 삭제까지 관리", "밴은 위반 근거와 기간을 입력하며 기간을 비우면 영구 밴", "역할·Rating 변경은 각각 별도의 구체적인 사유 입력", "영구 삭제는 닉네임을 확인란에 정확히 입력하고 백업·증거 보존 여부를 확인", "저장 후 대상 사용자 알림과 권한·접근 상태를 확인"],
+    verify: ["밴 계정이 /banned로 이동하는지 확인", "다른 계정에서 공개 프로필에 The user is banned. 문구가 표시되는지 확인", "Rating·XP·배틀·대회 리더보드에서 제외됐는지 확인", "밴 해제 후 서비스와 순위에 다시 반영되는지 확인", "영구 삭제 후 Users·Auth·공개 프로필에서 제거됐는지 확인", "Audit Log에서 user.ban/unban/delete 세부값 확인"],
+    avoid: "현재 계정이나 마지막 Super Admin은 밴·삭제할 수 없습니다. 계정 영구 삭제는 되돌릴 수 없으므로 단순 제재에는 밴을 사용하세요.",
   },
   {
     id: "rating-events",
@@ -159,6 +185,14 @@ const SCHEMA_LABELS: Record<string, string> = {
   adminForumAnnouncements: "관리자 중요 공지",
   chatSafety: "채팅 신고·제한",
   superAdminPermissions: "Super Admin·감사 로그 개정 이력",
+  userModeration: "사용자 밴·리더보드 제외",
+  auditDeletion: "감사 로그 삭제 증적",
+  onlineJudge: "고정 Input Output Judge",
+  codingBattles: "Rated 코딩 배틀",
+  contestRegistration: "대회 Rated/Unrated Register",
+  ratingTierSettings: "전역 Rating 계급 설정",
+  codingContests: "Output Judge 대회",
+  bulkAuditOperations: "감사 로그 선택 일괄 작업",
 };
 
 export default async function DeveloperGuidePage() {
@@ -217,9 +251,9 @@ export default async function DeveloperGuidePage() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="border-zinc-800 bg-zinc-900 text-zinc-100"><CardHeader><CardTitle className="text-base">User</CardTitle></CardHeader><CardContent className="text-xs leading-5 text-zinc-400">일반 학습자 역할입니다. 개발자 특별 로그인과 `/developer` 화면에 접근할 수 없습니다.</CardContent></Card>
         <Card className="border-emerald-900/70 bg-emerald-950/15 text-zinc-100"><CardHeader><CardTitle className="text-base text-emerald-300">Admin</CardTitle></CardHeader><CardContent className="text-xs leading-5 text-zinc-400">문제 출제·대회 운영·플랜·Rating·공지·포럼·채팅 신고·점검 모드를 관리하고 감사 로그를 조회합니다. 다른 사용자의 운영 역할이나 감사 로그 원문은 변경할 수 없습니다.</CardContent></Card>
-        <Card className="border-violet-900 bg-violet-950/20 text-zinc-100"><CardHeader><CardTitle className="flex items-center gap-2 text-base text-violet-300"><Crown className="h-4 w-4" />Super Admin</CardTitle></CardHeader><CardContent className="text-xs leading-5 text-zinc-400">Admin의 모든 기능에 더해 User·Admin·Super Admin 승격·강등, 감사 로그 수정·보관·복원과 개정 이력 열람 권한을 가집니다. 역할 변경과 로그 편집에는 구체적인 사유가 필수입니다.</CardContent></Card>
+        <Card className="border-violet-900 bg-violet-950/20 text-zinc-100"><CardHeader><CardTitle className="flex items-center gap-2 text-base text-violet-300"><Crown className="h-4 w-4" />Super Admin</CardTitle></CardHeader><CardContent className="text-xs leading-5 text-zinc-400">Admin의 모든 기능에 더해 역할 변경, 사용자 밴·해제·영구 삭제, 감사 로그 수정·보관·복원·삭제와 삭제 증적 열람 권한을 가집니다. 모든 고위험 작업에는 구체적인 사유가 필수입니다.</CardContent></Card>
       </div>
-      <Card className="border-amber-900 bg-amber-950/20 text-amber-100"><CardHeader><CardTitle className="text-base">최고 운영자 안전 규칙</CardTitle></CardHeader><CardContent><Checklist title="반드시 지킬 사항" numbered tone="amber" items={["Super Admin은 꼭 필요한 최소 인원에게만 부여합니다.", "현재 로그인한 Super Admin은 자기 자신을 강등할 수 없고 마지막 Super Admin도 제거할 수 없습니다.", "역할 변경 시 승인자·업무 목적·변경 전후 역할을 사유에 기록합니다.", "감사 로그를 수정해도 원본은 개정 이력에서 삭제되지 않으며 수정 작업 자체가 새 감사 이벤트로 남습니다.", "노출에서 제외할 로그는 영구 삭제하지 않고 보관하며, 복원이 필요한 경우 다시 사유를 남깁니다.", "권한 오부여가 의심되면 해당 계정 역할과 최근 developer.login·user.role.update 기록을 먼저 확인합니다."]} /></CardContent></Card>
+      <Card className="border-amber-900 bg-amber-950/20 text-amber-100"><CardHeader><CardTitle className="text-base">최고 운영자 안전 규칙</CardTitle></CardHeader><CardContent><Checklist title="반드시 지킬 사항" numbered tone="amber" items={["Super Admin은 꼭 필요한 최소 인원에게만 부여합니다.", "현재 계정과 마지막 활성 Super Admin은 강등·밴이 차단되며 Super Admin 역할 상태에서는 계정을 바로 삭제할 수 없습니다.", "Super Admin 삭제가 필요하면 다른 활성 Super Admin이 먼저 역할을 강등한 뒤 삭제합니다.", "기간제 제재가 충분하면 영구 밴이나 계정 삭제를 사용하지 않습니다.", "계정 삭제 전 사용자 UUID·닉네임·위반 근거·백업 필요성을 다시 확인합니다.", "감사 로그 삭제는 원본 테이블에서 실제 제거되지만 독립 삭제 증적의 원본 스냅샷은 유지됩니다.", "삭제 증적을 지우거나 작업을 은폐하려 하지 않으며 권한 오남용은 즉시 별도 사고로 조사합니다."]} /></CardContent></Card>
     </section>
 
     <section id="screens" className="scroll-mt-32 space-y-4">
@@ -253,9 +287,11 @@ export default async function DeveloperGuidePage() {
     <section id="workflows" className="scroll-mt-32 space-y-4">
       <SectionTitle icon={RefreshCcw} title="핵심 업무 흐름" description="여러 화면을 오가는 작업은 아래 순서를 유지해야 누락을 줄일 수 있습니다." />
       <div className="grid gap-4 lg:grid-cols-2">
-        <Workflow title="새 정기 대회 개최" icon={Swords} steps={["Questions: 필요한 학년·과목 문제를 Draft로 출제", "Questions: 정답·해설 검수 후 Published 전환", "Contests: 회차·대상·시간·Rated 여부 설정 후 Draft 생성", "일반 사용자 관점에서 일정과 참가 조건 확인", "Contests: Published 전환 후 Announcements로 대상 학년 공지", "대회 진행 중 오류와 참가 현황 관찰", "종료 후 Finish 실행, 리더보드·Rating History·알림 검증", "Audit Log에서 출제·공개·종료 기록 확인"]} />
+        <Workflow title="새 정기 대회 개최" icon={Swords} steps={["Quiz 또는 Output Judge 유형 결정", "필요한 문제를 Draft로 출제하고 정답·해설/정답 Output 검수 후 Published 전환", "Contests: 해당 유형 생성기에서 회차·대상·시간·Rated 등록 허용 여부 설정 후 Draft 생성", "예정 대회 수정 패널에서 내용·시각을 최종 검수", "일반 사용자 관점에서 Before the contest 카운트다운과 Rated/Unrated Register 확인", "Contests: Published 전환 후 Announcements로 대상 학년 공지", "대회 시작 전 Registered·Rated·Unrated 인원 확인", "대회 진행 중 문제 제출과 실시간 스탠딩 관찰", "종료 후 Finish 실행, 상세 스탠딩·Rated 참가자 Rating History·알림 검증", "Audit Log에서 contest.create/update/finish 기록 확인"]} />
+        <Workflow title="Output Judge 문제 공개" icon={FlaskConical} steps={["문제와 입출력 형식을 Draft로 작성", "모든 사용자에게 제공할 고정 Input 입력", "기준 코드로 정답 Output을 별도 계산하고 교차 검증", "수정 버튼으로 문제·고정 Input·정답 Output 저장을 다시 검증", "사용자 화면에는 고정 Input과 실행 결과 답안칸만 나타나는지 확인", "제출 요청에 Output 답안만 포함되는지 개발자 도구로 확인", "정답 Output은 Accepted 100점, 오답은 Wrong Answer 0점인지 확인", "Published 전환 후 실제 사용자 계정으로 일반 제출과 코딩 배틀을 각각 검증", "Audit Log에서 judge.problem.create/update/published 확인"]} />
         <Workflow title="Rating 정산 오류 교정" icon={Activity} steps={["사용자 UUID와 문제가 된 배틀/대회 이벤트 확인", "Rating Events에서 변경 전후·사유·일시·원본 ID 확인", "대회 리더보드 또는 배틀 점수와 정산값 비교", "이벤트 자체가 무효면 Rating Events에서 근거를 작성해 삭제·재계산", "이벤트는 유효하고 목표값만 틀렸다면 Users에서 목표 Rating 수동 조정", "사용자 알림과 Dashboard 그래프·상세 History 확인", "전체 순위와 프로필 Rating 반영 확인", "Audit Log에서 rating.history.delete 또는 rating.adjust 세부값 보존 확인"]} />
         <Workflow title="채팅 신고 처리" icon={ShieldCheck} steps={["Chat Reports에서 Pending 선택", "메시지 원문·신고 유형·상세 사유·사용자 확인", "즉각적 위험이면 우선 검토 시작 후 필요한 보호 조치 적용", "증거와 반복성을 기준으로 기각·경고·기간/영구 제한 결정", "판단 근거와 사용자가 이해할 수 있는 사유 작성", "신고자 결과 알림과 대상 조치 알림 확인", "제한 사용자의 전송 차단 여부 확인", "Audit Log에서 review_start와 resolve 확인"]} />
+        <Workflow title="사용자 밴·영구 삭제" icon={UsersRound} steps={["Users에서 UUID·닉네임·역할과 위반 근거 확인", "임시 조치가 충분하면 종료 시각을 지정해 기간제 밴", "영구 밴은 해제 시점 없이 구체적인 사유 입력", "대상 계정의 /banned 접근과 공개 프로필 비활성 문구 확인", "Rating·XP·배틀·대회 리더보드 제외 확인", "계정 삭제가 반드시 필요할 때만 백업 여부 확인 후 닉네임 재입력", "Users·Auth·공개 프로필 제거 확인", "Audit Log의 user.ban/unban/delete와 삭제 전 스냅샷 확인"]} />
         <Workflow title="긴급 점검과 복구" icon={Wrench} steps={["증상·최초 발생 시각·영향 범위 기록", "추가 데이터 손상 가능성이 있으면 Overview에서 Maintenance 활성화", "개발자 콘솔은 점검 중에도 계속 사용 가능", "최근 Audit Log, 배포, DB 마이그레이션 순서 확인", "원인 수정 후 관리자·테스트 계정으로 핵심 기능 검증", "Announcements로 복구 시각과 영향 공지", "Maintenance 해제 후 일반 계정 접근 확인", "장애 원인·조치·재발 방지 내용을 감사/운영 기록에 남김"]} />
       </div>
     </section>
@@ -281,6 +317,7 @@ export default async function DeveloperGuidePage() {
           ["edited_at / edited_by", "편집 정보", "Super Admin이 로그를 마지막으로 수정한 시각과 운영자 UUID입니다."],
           ["archived_at / archived_by", "보관 정보", "활성 목록에서 보관된 시각과 운영자 UUID입니다. 보관 로그 필터에서 계속 조회할 수 있습니다."],
           ["revisions", "개정 이력", "수정·보관·복원마다 사유와 변경 전·후 전체 JSON 스냅샷을 append-only 방식으로 보존합니다."],
+          ["Deleted Log Receipts", "삭제 증적", "영구 삭제된 감사 로그의 전체 원본, 기존 개정 이력, 삭제자·사유·시각을 원본 로그와 분리해 보존합니다."],
         ].map(([field, label, text]) => <Card key={field} className="border-zinc-800 bg-zinc-900 text-zinc-100"><CardContent className="p-4"><p className="font-mono text-xs text-emerald-300">{field}</p><h3 className="mt-2 text-sm font-semibold">{label}</h3><p className="mt-1 text-xs leading-5 text-zinc-500">{text}</p></CardContent></Card>)}
       </div>
 
@@ -296,7 +333,7 @@ export default async function DeveloperGuidePage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="border-zinc-800 bg-zinc-900 text-zinc-100"><CardHeader><CardTitle className="text-base">감사 로그 조사 순서</CardTitle></CardHeader><CardContent><Checklist title="이상 작업 조사" numbered tone="default" items={["문제가 발생한 정확한 시간 범위를 먼저 정합니다.", "action 필터로 Rating·대회·권한 등 관련 작업만 좁힙니다.", "target 유형 또는 UUID로 동일 대상의 전후 로그를 찾습니다.", "실행자 닉네임과 actor_id, request.ip, User-Agent를 비교합니다.", "Edited 또는 Archived 표시가 있으면 개정 이력의 사유와 변경 전·후 스냅샷을 확인합니다.", "details의 사유·결과값과 실제 DB·사용자 화면을 대조합니다.", "복구가 필요하면 Super Admin이 원본 스냅샷을 근거로 재수정·복원하고 새 사유를 남깁니다.", "정정 후 새 Audit Log와 사용자 알림까지 확인합니다."]} /></CardContent></Card>
-        <Card className="border-amber-900 bg-amber-950/20 text-amber-100"><CardHeader><CardTitle className="text-base">감사 로그 해석 시 주의사항</CardTitle></CardHeader><CardContent className="space-y-3 text-xs leading-5 text-amber-100/70"><p>로그가 존재한다는 사실만으로 작업 결과가 현재도 유지된다고 단정할 수 없습니다. 이후의 정정 로그를 함께 확인하세요.</p><p>`target_id`가 없는 공지·점검 작업은 details의 수신 범위와 enabled 값을 확인합니다.</p><p>일부 이전 버전 로그는 현재보다 세부 필드가 적을 수 있습니다. 해당 시점의 스키마 버전과 함께 해석하세요.</p><p>감사 로그에는 비밀번호와 인증 토큰을 저장하지 않습니다. 발견될 경우 보안 사고로 분류하고 즉시 키 교체를 검토하세요.</p><p>Super Admin 편집은 사실관계 오류 정정과 안전한 보관에만 사용합니다. 원본 스냅샷과 편집 작업 로그는 그대로 남으므로 변경 사유까지 함께 조사하세요.</p><Button asChild variant="outline" size="sm"><Link href="/developer/audit">Audit Log 열기<ArrowRight className="h-3.5 w-3.5" /></Link></Button></CardContent></Card>
+        <Card className="border-amber-900 bg-amber-950/20 text-amber-100"><CardHeader><CardTitle className="text-base">감사 로그 해석 시 주의사항</CardTitle></CardHeader><CardContent className="space-y-3 text-xs leading-5 text-amber-100/70"><p>로그가 존재한다는 사실만으로 작업 결과가 현재도 유지된다고 단정할 수 없습니다. 이후의 정정 로그를 함께 확인하세요.</p><p>`target_id`가 없는 공지·점검 작업은 details의 수신 범위와 enabled 값을 확인합니다.</p><p>일부 이전 버전 로그는 현재보다 세부 필드가 적을 수 있습니다. 해당 시점의 스키마 버전과 함께 해석하세요.</p><p>감사 로그에는 비밀번호와 인증 토큰을 저장하지 않습니다. 발견될 경우 보안 사고로 분류하고 즉시 키 교체를 검토하세요.</p><p>영구 삭제는 일반 목록에서 원본을 제거합니다. 조사 시 `audit.delete`와 Deleted Log Receipts를 함께 확인해 삭제된 원본과 사유를 추적하세요.</p><Button asChild variant="outline" size="sm"><Link href="/developer/audit">Audit Log 열기<ArrowRight className="h-3.5 w-3.5" /></Link></Button></CardContent></Card>
       </div>
     </section>
 
@@ -309,7 +346,7 @@ export default async function DeveloperGuidePage() {
     <section id="database" className="scroll-mt-32 space-y-4">
       <SectionTitle icon={Database} title="DB 마이그레이션·복구·오류 대응" description="새 마이그레이션은 파일 번호 순서대로 적용하고 각 단계의 기능 상태를 확인합니다." />
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="border-zinc-800 bg-zinc-900 text-zinc-100"><CardHeader><CardTitle className="text-base">마이그레이션 적용 절차</CardTitle></CardHeader><CardContent><Checklist title="Supabase SQL Editor" numbered tone="default" items={["운영 DB와 프로젝트 이름을 확인", "아직 적용되지 않은 가장 낮은 번호부터 SQL 파일을 하나씩 실행", "오류가 발생하면 다음 파일을 실행하지 않고 오류 전문과 번호 기록", "완료 후 Overview와 이 화면의 DB 기능 배지를 새로고침", "관련 화면에서 읽기와 테스트 데이터 쓰기를 각각 한 번 검증", "Audit Log 및 사용자 알림이 예상대로 생성되는지 확인"]} /><p className="mt-4 rounded-lg bg-zinc-950 p-3 text-xs text-zinc-500">현재 개발자 콘솔 전체 기능은 `0021` → `0022` → `0023` → `0024` → `0025` → `0026` → `0027` 순서가 필요합니다. `0027` 적용 시 Super Admin이 없으면 가장 오래된 Admin 한 명이 최초 Super Admin으로 자동 승격됩니다.</p></CardContent></Card>
+        <Card className="border-zinc-800 bg-zinc-900 text-zinc-100"><CardHeader><CardTitle className="text-base">마이그레이션 적용 절차</CardTitle></CardHeader><CardContent><Checklist title="Supabase SQL Editor" numbered tone="default" items={["운영 DB와 프로젝트 이름을 확인", "아직 적용되지 않은 가장 낮은 번호부터 SQL 파일을 하나씩 실행", "오류가 발생하면 다음 파일을 실행하지 않고 오류 전문과 번호 기록", "완료 후 Overview와 이 화면의 DB 기능 배지를 새로고침", "관련 화면에서 읽기와 테스트 데이터 쓰기를 각각 한 번 검증", "Audit Log 및 사용자 알림이 예상대로 생성되는지 확인"]} /><p className="mt-4 rounded-lg bg-zinc-950 p-3 text-xs text-zinc-500">현재 개발자 콘솔 전체 기능은 `0021`부터 `0033`까지 번호 순서대로 적용해야 합니다. `0027`은 최초 Super Admin, `0028`은 밴·영구 삭제·랭킹 제외, `0029~0030`은 고정 Input Output Judge, `0031`은 Rated 코딩 배틀, `0032`는 대회 Register와 개인별 Rated/Unrated 정산, `0033`은 동적 Rating 계급·Output Judge 대회·감사 로그 선택 일괄 작업을 활성화합니다.</p></CardContent></Card>
         <Card className="border-zinc-800 bg-zinc-900 text-zinc-100"><CardHeader><CardTitle className="text-base">자주 발생하는 오류</CardTitle></CardHeader><CardContent className="space-y-3">{[
           ["Could not find function ... schema cache", "해당 RPC 마이그레이션 적용 여부를 확인하고 SQL의 `notify pgrst, 'reload schema'`까지 실행됐는지 확인합니다."],
           ["column/table does not exist", "마이그레이션 번호가 건너뛰어졌는지 확인합니다. 이전 번호부터 순서대로 적용합니다."],

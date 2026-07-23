@@ -27,17 +27,53 @@ export function BattleArena({ gradeLevel, rating, initialMatchId = null }: { gra
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [error, setError] = useState("");
   const [remaining, setRemaining] = useState(180);
+  const [isLoadingBattle, setIsLoadingBattle] = useState(Boolean(initialMatchId));
+  const [submittingChoice, setSubmittingChoice] = useState<string | null>(null);
+  const [isRefreshingQuestion, setIsRefreshingQuestion] = useState(false);
   const [isPending, startTransition] = useTransition();
   const questionStartedAt = useRef(Date.now());
+  const requestedMatchId = useRef<string | null>(initialMatchId);
 
   const refresh = useCallback(async (id: string) => {
-    const result = await getBattleState(id);
-    if (result.error) setError(result.error);
-    if (result.state) setBattle(result.state);
+    try {
+      const result = await getBattleState(id);
+      // A response from a room that the user has already left must not replace
+      // the currently displayed room.
+      if (requestedMatchId.current !== id) return false;
+      if (result.error) {
+        setError(result.error);
+        return false;
+      }
+      if (result.state) {
+        setMatchId(id);
+        setBattle(result.state);
+        setError("");
+        return true;
+      }
+      setError("배틀 정보를 불러오지 못했습니다.");
+      return false;
+    } catch {
+      if (requestedMatchId.current === id) setError("배틀 정보를 불러오는 중 오류가 발생했습니다.");
+      return false;
+    }
   }, []);
 
   useEffect(() => {
-    if (initialMatchId) void refresh(initialMatchId);
+    if (!initialMatchId) return;
+
+    // Navigating from /battle/play to /battle/play?match=... can preserve this
+    // client component. Keep the URL room id, rendered battle, and submission
+    // target synchronized so choices never submit to a stale/null room.
+    requestedMatchId.current = initialMatchId;
+    setMatchId(initialMatchId);
+    setBattle((current) => current?.id === initialMatchId ? current : null);
+    setFeedback(null);
+    setError("");
+    setSubmittingChoice(null);
+    setIsLoadingBattle(true);
+    void refresh(initialMatchId).finally(() => {
+      if (requestedMatchId.current === initialMatchId) setIsLoadingBattle(false);
+    });
   }, [initialMatchId, refresh]);
 
   useEffect(() => {
@@ -68,29 +104,59 @@ export function BattleArena({ gradeLevel, rating, initialMatchId = null }: { gra
     startTransition(async () => {
       const result = await joinBattle(subject);
       if (result.error || !result.matchId) { setError(result.error ?? "매칭에 실패했습니다."); return; }
+      requestedMatchId.current = result.matchId;
       setMatchId(result.matchId);
       await refresh(result.matchId);
     });
   }
 
-  function answer(choice: string) {
-    if (!matchId || !currentQuestion || feedback || isPending) return;
-    startTransition(async () => {
-      const result = await submitBattleAnswer(matchId, currentQuestion.key, choice, Date.now() - questionStartedAt.current);
-      if (result.error || result.correct === undefined) { setError(result.error ?? "제출에 실패했습니다."); return; }
+  async function answer(choice: string) {
+    const activeMatchId = battle?.id ?? matchId;
+    if (!activeMatchId || !currentQuestion || battle?.status !== "active" || feedback || submittingChoice !== null) return;
+
+    setError("");
+    setSubmittingChoice(choice);
+    try {
+      const result = await submitBattleAnswer(activeMatchId, currentQuestion.key, choice, Date.now() - questionStartedAt.current);
+      if (requestedMatchId.current !== activeMatchId) return;
+      if (result.error || result.correct === undefined) {
+        setError(result.error ?? "제출에 실패했습니다.");
+        // The server can have committed the answer even if the response was
+        // interrupted. Re-read the room to avoid leaving a stale clickable
+        // question on screen or permitting a duplicate submission.
+        await refresh(activeMatchId);
+        return;
+      }
       setFeedback({ correct: result.correct, answer: result.answer!, explanation: result.explanation! });
-    });
+    } catch {
+      if (requestedMatchId.current === activeMatchId) setError("답안을 제출하는 중 오류가 발생했습니다.");
+    } finally {
+      if (requestedMatchId.current === activeMatchId) setSubmittingChoice(null);
+    }
   }
 
-  function nextQuestion() {
-    if (!matchId) return;
-    setFeedback(null);
-    startTransition(async () => refresh(matchId));
+  async function nextQuestion() {
+    const activeMatchId = battle?.id ?? matchId;
+    if (!activeMatchId || isRefreshingQuestion) return;
+    setIsRefreshingQuestion(true);
+    const refreshed = await refresh(activeMatchId);
+    if (refreshed && requestedMatchId.current === activeMatchId) setFeedback(null);
+    if (requestedMatchId.current === activeMatchId) setIsRefreshingQuestion(false);
   }
 
   function reset() {
+    requestedMatchId.current = null;
     setMatchId(null); setBattle(null); setFeedback(null); setError(""); setRemaining(180);
+    setIsLoadingBattle(false); setSubmittingChoice(null); setIsRefreshingQuestion(false);
+    if (initialMatchId) router.replace("/battle/play");
   }
+
+  if (isLoadingBattle && !battle) return (
+    <Card><CardContent className="flex flex-col items-center gap-4 py-14 text-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div><h2 className="font-bold">대결방에 입장하고 있어요</h2><p className="mt-1 text-sm text-muted-foreground">참가자와 문제 정보를 확인하는 중입니다.</p></div>
+    </CardContent></Card>
+  );
 
   if (!battle) return (
     <Card>
@@ -108,7 +174,7 @@ export function BattleArena({ gradeLevel, rating, initialMatchId = null }: { gra
           <span className="flex items-center gap-1"><Shield className="h-4 w-4 text-primary" /> 내 ELO <strong>{rating}</strong></span>
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Button size="lg" onClick={startMatch} disabled={isPending} className="gap-2">
+        <Button type="button" size="lg" onClick={startMatch} disabled={isPending} className="gap-2">
           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} 같은 학년 상대 찾기
         </Button>
       </CardContent>
@@ -119,11 +185,11 @@ export function BattleArena({ gradeLevel, rating, initialMatchId = null }: { gra
     <Card><CardContent className="flex flex-col items-center gap-5 py-14 text-center">
       <div className="relative"><Swords className="h-12 w-12 text-primary" /><span className="absolute -right-2 -top-2 h-4 w-4 animate-ping rounded-full bg-primary" /></div>
       <div><h2 className="text-xl font-bold">상대를 찾고 있어요</h2><p className="mt-2 text-sm text-muted-foreground">{gradeLevel} · {SUBJECTS.find((item) => item.id === subject)?.label} 대기열</p></div>
-      <Button variant="outline" onClick={() => startTransition(async () => { await cancelBattle(battle.id); reset(); })}>매칭 취소</Button>
+      <Button type="button" variant="outline" onClick={() => startTransition(async () => { await cancelBattle(battle.id); reset(); })}>매칭 취소</Button>
     </CardContent></Card>
   );
 
-  if (battle.status === "cancelled") return <Card><CardContent className="flex flex-col items-center gap-4 py-12"><p>취소된 배틀입니다.</p><Button onClick={reset}>새 배틀</Button></CardContent></Card>;
+  if (battle.status === "cancelled") return <Card><CardContent className="flex flex-col items-center gap-4 py-12"><p>취소된 배틀입니다.</p><Button type="button" onClick={reset}>새 배틀</Button></CardContent></Card>;
 
   if (battle.status === "completed") {
     const delta = (battle.myRatingAfter ?? battle.myRatingBefore) - battle.myRatingBefore;
@@ -143,7 +209,7 @@ export function BattleArena({ gradeLevel, rating, initialMatchId = null }: { gra
           <div><p className="text-muted-foreground">Correction</p><strong>{battle.ratingBreakdown.provisionalFactor.toFixed(2)}× · {battle.ratingBreakdown.correction >= 0 ? "+" : ""}{battle.ratingBreakdown.correction}</strong></div>
         </div>}
       </div>
-      <Button onClick={reset} className="gap-2"><Swords className="h-4 w-4" /> 다시 배틀하기</Button>
+      <Button type="button" onClick={reset} className="gap-2"><Swords className="h-4 w-4" /> 다시 배틀하기</Button>
     </CardContent></Card>;
   }
 
@@ -162,14 +228,19 @@ export function BattleArena({ gradeLevel, rating, initialMatchId = null }: { gra
     </CardHeader>
     <CardContent className="flex flex-col gap-3">
       {currentQuestion.choices.map((choice, index) => (
-        <Button key={`${choice}-${index}`} variant="outline" disabled={Boolean(feedback) || isPending} onClick={() => answer(choice)} className="h-auto min-h-12 justify-start whitespace-normal py-3 text-left">
-          <span className="mr-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs">{index + 1}</span>{choice}
+        <Button key={`${choice}-${index}`} type="button" variant="outline" disabled={Boolean(feedback) || submittingChoice !== null} onClick={() => void answer(choice)} className="h-auto min-h-12 justify-start whitespace-normal py-3 text-left">
+          {submittingChoice === choice
+            ? <Loader2 className="mr-3 h-5 w-5 shrink-0 animate-spin" />
+            : <span className="mr-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs">{index + 1}</span>}
+          {choice}
         </Button>
       ))}
       {feedback && <div className={`mt-2 rounded-xl border p-4 ${feedback.correct ? "border-success/40 bg-success/5" : "border-destructive/40 bg-destructive/5"}`}>
         <p className="flex items-center gap-2 font-semibold">{feedback.correct ? <CheckCircle2 className="h-5 w-5 text-success" /> : <XCircle className="h-5 w-5 text-destructive" />}{feedback.correct ? "정답!" : `정답은 ${feedback.answer}`}</p>
         <p className="mt-2 text-sm text-muted-foreground">{feedback.explanation}</p>
-        <Button onClick={nextQuestion} className="mt-4 w-full">{progress >= 4 ? "결과 확인" : "다음 문제"}</Button>
+        <Button type="button" onClick={() => void nextQuestion()} disabled={isRefreshingQuestion} className="mt-4 w-full">
+          {isRefreshingQuestion && <Loader2 className="h-4 w-4 animate-spin" />}{progress >= 4 ? "결과 확인" : "다음 문제"}
+        </Button>
       </div>}
       {error && <p className="text-sm text-destructive">{error}</p>}
     </CardContent>

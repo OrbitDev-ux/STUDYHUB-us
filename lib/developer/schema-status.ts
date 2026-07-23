@@ -14,6 +14,14 @@ export type DeveloperSchemaStatus = {
   adminForumAnnouncements: boolean;
   chatSafety: boolean;
   superAdminPermissions: boolean;
+  userModeration: boolean;
+  auditDeletion: boolean;
+  onlineJudge: boolean;
+  codingBattles: boolean;
+  contestRegistration: boolean;
+  ratingTierSettings: boolean;
+  codingContests: boolean;
+  bulkAuditOperations: boolean;
 };
 
 export function isMissingSchemaError(error: { code?: string; message?: string } | null | undefined) {
@@ -35,6 +43,14 @@ export async function getDeveloperSchemaStatus(admin: SupabaseClient): Promise<D
     adminForumAnnouncements,
     chatSafety,
     superAdminPermissions,
+    userModeration,
+    auditDeletion,
+    onlineJudge,
+    codingBattles,
+    contestRegistration,
+    ratingTierSettings,
+    codingContests,
+    bulkAuditOperations,
   ] = await Promise.all([
     admin.from("questions").select("id,grade_level,status").limit(1),
     admin.from("contests").select("id,publication_status").limit(1),
@@ -57,6 +73,18 @@ export async function getDeveloperSchemaStatus(admin: SupabaseClient): Promise<D
     }),
     admin.from("message_reports").select("id,status").limit(1),
     admin.from("developer_audit_log_revisions").select("id,operation").limit(1),
+    admin.from("profiles").select("id,is_banned,banned_until,ban_reason").limit(1),
+    admin.from("developer_deleted_audit_logs").select("id,original_audit_log_id").limit(1),
+    admin.from("oj_submissions").select("id,submitted_output,submission_mode").limit(1),
+    admin.from("coding_battle_matches").select("id,status,problem_id").limit(1),
+    admin.from("contest_entries").select("id,participation_mode,registered_at").limit(1),
+    admin.from("app_settings").select("rating_tiers").limit(1),
+    admin.from("contests").select("id,contest_mode,judge_problem_ids").limit(1),
+    admin.rpc("super_admin_bulk_audit_logs", {
+      p_audit_log_ids: [],
+      p_action: "archive",
+      p_reason: "schema capability probe",
+    }),
   ]);
   return {
     questionMetadata: !questionMetadata.error,
@@ -70,5 +98,13 @@ export async function getDeveloperSchemaStatus(admin: SupabaseClient): Promise<D
     adminForumAnnouncements: !adminForumAnnouncements.error || !isMissingSchemaError(adminForumAnnouncements.error),
     chatSafety: !chatSafety.error,
     superAdminPermissions: !superAdminPermissions.error,
+    userModeration: !userModeration.error,
+    auditDeletion: !auditDeletion.error,
+    onlineJudge: !onlineJudge.error,
+    codingBattles: !codingBattles.error,
+    contestRegistration: !contestRegistration.error,
+    ratingTierSettings: !ratingTierSettings.error,
+    codingContests: !codingContests.error,
+    bulkAuditOperations: !bulkAuditOperations.error || !isMissingSchemaError(bulkAuditOperations.error),
   };
 }

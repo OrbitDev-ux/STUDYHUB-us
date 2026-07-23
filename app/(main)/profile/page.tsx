@@ -10,7 +10,7 @@ import { updateProfile } from "./actions";
 import { Flame, Zap, Coins, Clock } from "lucide-react";
 import { ProfileMediaEditor } from "@/components/profile/profile-media-editor";
 import { RatingBadge, RatingName } from "@/components/battle/rating-identity";
-import { ratingTier } from "@/lib/battle/rating";
+import { normalizeRatingTiers, ratingTier } from "@/lib/battle/rating";
 
 export async function generateMetadata() {
   const t = await getTranslations("nav");
@@ -29,17 +29,18 @@ export default async function ProfilePage() {
   const ts = await getTranslations("subjects");
   const tp = await getTranslations("plan");
 
-  const [{ data: profile }, { data: stats }, { data: badgeCount }, { data: totalSessions }, { data: battleRating }] = await Promise.all([
+  const [{ data: profile }, { data: stats }, { data: badgeCount }, { data: totalSessions }, { data: battleRating }, { data: ratingSettings }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase.from("user_subject_stats").select("*").eq("user_id", user.id),
     supabase.from("user_badges").select("id", { count: "exact" }).eq("user_id", user.id),
     supabase.from("study_sessions").select("focus_minutes").eq("user_id", user.id),
     supabase.from("battle_ratings").select("rating, games, wins, peak_rating").eq("user_id", user.id).maybeSingle(),
+    supabase.from("app_settings").select("rating_tiers").eq("id", true).maybeSingle(),
   ]);
 
   const totalMinutes = (totalSessions ?? []).reduce((s, x) => s + (x.focus_minutes ?? 0), 0);
   const currentRating = battleRating?.rating ?? 1200;
-  const tier = ratingTier(currentRating);
+  const tier = ratingTier(currentRating, normalizeRatingTiers(ratingSettings?.rating_tiers));
 
   return (
     <div className="flex flex-col gap-6">

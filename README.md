@@ -49,7 +49,7 @@ npm install
 
 ### 2. Supabase 프로젝트 생성
 1. [supabase.com](https://supabase.com)에서 새 프로젝트 생성
-2. SQL Editor에서 `supabase/migrations/0001_init.sql`부터 `0027_super_admin_permissions_audit_revisions.sql`까지 번호 순서대로 실행
+2. SQL Editor에서 `supabase/migrations/0001_init.sql`부터 `0033_dynamic_ratings_coding_contests_bulk_audit.sql`까지 번호 순서대로 실행
    (기본 스키마/RLS → 레벨·XP·배지·코인 → 점검 모드 → 숙제/플랜 → Discord → 스키마 복구 → 로그인/가입 rate limiting → 프로필 이미지 Storage → 플래너 보상 및 세션 판정 강화)
    `0010`은 일부 운영 DB에서 중간 마이그레이션이 누락된 경우를 복구하는 멱등
    마이그레이션이므로, 이미 최신 상태인 DB에서도 안전하게 실행할 수 있습니다. `0014`는
@@ -71,6 +71,15 @@ npm install
    `0027`은 Super Admin 역할, 안전한 운영자 승격·강등, 감사 로그 수정·보관·복원과
    변경 전후 원본을 보존하는 append-only 개정 이력을 추가합니다. 기존 Super Admin이
    없다면 가장 먼저 생성된 Admin 한 명을 최초 Super Admin으로 자동 승격합니다.
+   `0028`은 Super Admin 사용자 밴·해제·영구 삭제, 밴 계정의 서비스 접근 및 전체
+   리더보드 제외, 공개 프로필 비활성 표시와 원본 증적을 보존하는 감사 로그 삭제를 추가합니다.
+   `0029`는 온라인 저지 문제·테스트케이스·사용자 제출·판정 이력과 RLS 기반을 추가합니다.
+   `0030`은 온라인 저지를 고정 Input 기반 Output Answer 방식으로 전환합니다.
+   `0031`은 고정 Input 문제를 사용하는 실시간 1:1 코딩 배틀과 Codeforces식 Rating 정산을 추가합니다.
+   `0032`는 대회 시작 전 Register와 참가자별 Rated/Unrated 선택·정산을 추가합니다.
+   `0033`은 관리자 편집형 0~5000 Rating 계급·색상, 예정 대회 수정, 고정 Input Output Judge
+   대회, 서버 시각 기반 시작 전 카운트다운과 Super Admin 감사 로그 선택 일괄 작업을 추가합니다.
+   별도의 코드 작성칸 없이 서버에는 사용자의 최종 출력 답안만 저장됩니다.
 3. Authentication > Providers에서 Google, Discord OAuth 활성화 (선택)
 4. Project Settings > API에서 URL / anon key / service_role key 확인
 5. (선택) 관리자 계정 지정: 첫 관리자를 만드는 UI는 없습니다. 가입 후 SQL Editor에서 직접

@@ -3,7 +3,7 @@
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function ConfirmSubmitButton({ message }: { message: string }) {
+export function ConfirmSubmitButton({ message, label = "삭제" }: { message: string; label?: string }) {
   return <Button
     type="submit"
     size="sm"
@@ -13,6 +13,6 @@ export function ConfirmSubmitButton({ message }: { message: string }) {
     }}
   >
     <Trash2 className="h-3.5 w-3.5" />
-    삭제
+    {label}
   </Button>;
 }

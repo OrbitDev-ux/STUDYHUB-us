@@ -4,6 +4,7 @@ import { SideNav } from "@/components/shared/side-nav";
 import { MobileNav } from "@/components/shared/mobile-nav";
 import { TopBar } from "@/components/shared/top-bar";
 import { RealtimePresenceProvider } from "@/components/shared/realtime-presence-provider";
+import { RatingTierProvider } from "@/components/battle/rating-tier-provider";
 
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -12,7 +13,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: profile }, { data: notifications }, { data: battleRating }, { count: unreadMessages }] = await Promise.all([
+  const [{ data: profile }, { data: notifications }, { data: battleRating }, { count: unreadMessages }, { data: appSettings }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase
       .from("notifications")
@@ -22,6 +23,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
       .limit(20),
     supabase.from("battle_ratings").select("rating").eq("user_id", user.id).maybeSingle(),
     supabase.from("direct_messages").select("id", { count: "exact", head: true }).neq("sender_id", user.id).is("read_at", null),
+    supabase.from("app_settings").select("rating_tiers").eq("id", true).maybeSingle(),
   ]);
 
   if (profile && !profile.onboarding_completed) {
@@ -29,6 +31,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   }
 
   return (
+    <RatingTierProvider value={appSettings?.rating_tiers}>
     <RealtimePresenceProvider userId={user.id}>
     <div className="flex min-h-screen bg-background">
       <SideNav profile={profile} battleRating={battleRating?.rating ?? 1200} />
@@ -41,5 +44,6 @@ export default async function MainLayout({ children }: { children: React.ReactNo
       <MobileNav />
     </div>
     </RealtimePresenceProvider>
+    </RatingTierProvider>
   );
 }

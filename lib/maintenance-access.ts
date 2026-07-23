@@ -1,5 +1,6 @@
 const MAINTENANCE_ALLOWED_PREFIXES = [
   "/maintenance",
+  "/banned",
   "/login",
   "/forgot-password",
   "/reset-password",

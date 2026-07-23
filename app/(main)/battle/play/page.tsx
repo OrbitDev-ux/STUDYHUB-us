@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   BellRing,
   Check,
+  Code2,
   Crown,
   Search,
   Shield,
@@ -130,7 +131,7 @@ export default async function BattlePlayPage({
   const winRate = games ? Math.round(((rating?.wins ?? 0) / games) * 100) : 0;
 
   return <div className="flex flex-col gap-6">
-    <div className="flex flex-wrap items-end justify-between gap-4"><div><div className="flex items-center gap-3"><h1 className="flex items-center gap-2 text-2xl font-bold"><Swords className="h-6 w-6 text-primary" />문제풀이 배틀</h1><RatingBadge rating={myRating} /></div><p className="mt-1 text-sm text-muted-foreground">자동 매칭을 사용하거나 원하는 사용자에게 직접 대결을 요청할 수 있습니다.</p></div><Button asChild variant="outline"><Link href="/battle"><Trophy className="h-4 w-4" />ELO 랭킹</Link></Button></div>
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><div className="flex items-center gap-3"><h1 className="flex items-center gap-2 text-2xl font-bold"><Swords className="h-6 w-6 text-primary" />문제풀이 배틀</h1><RatingBadge rating={myRating} /></div><p className="mt-1 text-sm text-muted-foreground">자동 매칭을 사용하거나 원하는 사용자에게 직접 대결을 요청할 수 있습니다.</p></div><div className="flex gap-2"><Button asChild variant="outline"><Link href="/battle/code"><Code2 className="h-4 w-4" />코딩 배틀</Link></Button><Button asChild variant="outline"><Link href="/battle"><Trophy className="h-4 w-4" />ELO 랭킹</Link></Button></div></div>
 
     {params.challenge_error && <div className="flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />{CHALLENGE_ERRORS[params.challenge_error] ?? "대결 요청을 처리하지 못했습니다."}</div>}
     {params.challenge_requested && <div className="flex items-start gap-2 rounded-xl border border-success/40 bg-success/5 p-3 text-sm text-success"><BellRing className="mt-0.5 h-4 w-4 shrink-0" />상대에게 대결 요청과 실시간 알림을 보냈습니다.</div>}
@@ -204,7 +205,7 @@ export default async function BattlePlayPage({
       </CardContent>
     </Card>}
 
-    <BattleArena gradeLevel={profile?.grade_level ?? "학년 미설정"} rating={myRating} initialMatchId={initialMatchId} />
+    <BattleArena key={initialMatchId ?? "matchmaking"} gradeLevel={profile?.grade_level ?? "학년 미설정"} rating={myRating} initialMatchId={initialMatchId} />
   </div>;
 }
 

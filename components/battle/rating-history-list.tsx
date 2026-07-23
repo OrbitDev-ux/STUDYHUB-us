@@ -1,9 +1,10 @@
-import { CalendarClock, ShieldCheck, Swords, Trophy } from "lucide-react";
+import { CalendarClock, Code2, ShieldCheck, Swords, Trophy } from "lucide-react";
 import Link from "next/link";
 import type { RatingPoint } from "@/lib/battle/rating-history-types";
 
 const ICONS = {
   battle: Swords,
+  coding_battle: Code2,
   contest: Trophy,
   admin: ShieldCheck,
   signup: CalendarClock,

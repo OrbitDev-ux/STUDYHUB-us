@@ -19,6 +19,8 @@ export interface RatingPoint {
   provisional_factor?: number | null;
   event_score?: number | null;
   opponent_score?: number | null;
+  response_ms?: number | null;
+  opponent_response_ms?: number | null;
   solved?: number | null;
   penalty_seconds?: number | null;
   result_label?: string | null;

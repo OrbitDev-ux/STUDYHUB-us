@@ -11,7 +11,7 @@ import { getUserPlan } from "@/lib/supabase/compat";
 import { RatingBadge, RatingName } from "@/components/battle/rating-identity";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ratingTier } from "@/lib/battle/rating";
+import { normalizeRatingTiers, ratingTier } from "@/lib/battle/rating";
 
 export async function generateMetadata() {
   const t = await getTranslations("rank");
@@ -52,7 +52,7 @@ export default async function RankPage({ searchParams }: { searchParams: Promise
   const grade = GRADES.includes(requested.grade ?? "") ? requested.grade! : "";
   const page = Math.max(1, Math.min(10000, Number.parseInt(requested.page ?? "1", 10) || 1));
 
-  const [{ data: topUsers }, { data: ratingLeaders }, { data: allBadges }, { data: myBadges }, currentPlan] = await Promise.all([
+  const [{ data: topUsers }, { data: ratingLeaders }, { data: allBadges }, { data: myBadges }, currentPlan, { data: ratingSettings }] = await Promise.all([
     supabase.rpc("get_leaderboard", { limit_count: 20 }) as unknown as Promise<{
       data: LeaderboardRow[] | null;
     }>,
@@ -64,7 +64,9 @@ export default async function RankPage({ searchParams }: { searchParams: Promise
     supabase.from("badges").select("*"),
     supabase.from("user_badges").select("badge_id").eq("user_id", user.id),
     getUserPlan(supabase, user.id),
+    supabase.from("app_settings").select("rating_tiers").eq("id", true).maybeSingle(),
   ]);
+  const ratingTiers = normalizeRatingTiers(ratingSettings?.rating_tiers);
 
   const earnedIds = new Set((myBadges ?? []).map((b) => b.badge_id));
   const totalCount = Number(ratingLeaders?.[0]?.total_count ?? 0);
@@ -105,7 +107,7 @@ export default async function RankPage({ searchParams }: { searchParams: Promise
           </div>
           {(ratingLeaders ?? []).length === 0 && <p className="py-12 text-center text-sm text-muted-foreground">조건에 맞는 사용자가 없습니다.</p>}
           {(ratingLeaders ?? []).map((row) => {
-            const tier = ratingTier(row.rating);
+            const tier = ratingTier(row.rating, ratingTiers);
             return (
               <div
                 key={row.id}
@@ -167,7 +169,7 @@ export default async function RankPage({ searchParams }: { searchParams: Promise
         </CardHeader>
         <CardContent className="flex flex-col gap-1">
           {(topUsers ?? []).map((u, idx) => {
-            const tier = ratingTier(u.rating);
+            const tier = ratingTier(u.rating, ratingTiers);
             return (
               <div
                 key={u.id}

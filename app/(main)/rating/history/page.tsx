@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowDownRight, ArrowLeft, ArrowUpRight, CalendarClock, Crown, Gauge, Medal, ShieldCheck, Swords, Target, Trophy } from "lucide-react";
+import { ArrowDownRight, ArrowLeft, ArrowUpRight, CalendarClock, Code2, Crown, Gauge, Medal, ShieldCheck, Swords, Target, Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getDetailedRatingHistory } from "@/lib/battle/rating-history";
 import type { RatingPoint } from "@/lib/battle/rating-history-types";
-import { RATING_TIERS, ratingTier } from "@/lib/battle/rating";
+import { normalizeRatingTiers, ratingTier, type RatingTier } from "@/lib/battle/rating";
 import { RatingBadge, RatingName, RatingProgress, RatingScale } from "@/components/battle/rating-identity";
 import { RatingChart } from "@/components/battle/rating-chart";
 import { Button } from "@/components/ui/button";
@@ -15,12 +15,14 @@ export const metadata = { title: "Rating 상세 현황" };
 const FILTERS = [
   { value: "all", label: "전체" },
   { value: "battle", label: "배틀" },
+  { value: "coding_battle", label: "코딩 배틀" },
   { value: "contest", label: "대회" },
   { value: "admin", label: "운영자 조정" },
 ];
 
 const EVENT_ICONS = {
   battle: Swords,
+  coding_battle: Code2,
   contest: Trophy,
   admin: ShieldCheck,
   signup: CalendarClock,
@@ -34,25 +36,27 @@ export default async function RatingHistoryDetailPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  const [{ data: profile }, { data: rating }, storedHistory, params] = await Promise.all([
+  const [{ data: profile }, { data: rating }, storedHistory, params, { data: ratingSettings }] = await Promise.all([
     supabase.from("profiles").select("nickname,avatar_url,grade_level").eq("id", user.id).single(),
     supabase.from("battle_ratings").select("rating,peak_rating,games,wins,losses,draws,rated_events").eq("user_id", user.id).maybeSingle(),
     getDetailedRatingHistory(user.id, 300),
     searchParams,
+    supabase.from("app_settings").select("rating_tiers").eq("id", true).maybeSingle(),
   ]);
+  const ratingTiers = normalizeRatingTiers(ratingSettings?.rating_tiers);
   const history: RatingPoint[] = storedHistory.some((point) => point.source === "signup")
     ? storedHistory
     : [{ rating: 1200, rating_change: 0, source: "signup", event_type: "signup", event_title: "Account Created", reason: "가입 시 기본 Rating", created_at: user.created_at }, ...storedHistory];
   const filter = FILTERS.some((item) => item.value === params.type) ? params.type! : "all";
   const filtered = history.filter((point) => filter === "all" || point.event_type === filter);
   const currentRating = rating?.rating ?? history.at(-1)?.rating ?? 1200;
-  const tier = ratingTier(currentRating);
+  const tier = ratingTier(currentRating, ratingTiers);
   const ratedEvents = history.filter((point) => point.rating_change !== 0);
   const gained = ratedEvents.reduce((sum, point) => sum + Math.max(0, point.rating_change), 0);
   const lost = ratedEvents.reduce((sum, point) => sum + Math.abs(Math.min(0, point.rating_change)), 0);
   const biggestGain = Math.max(0, ...ratedEvents.map((point) => point.rating_change));
   const biggestLoss = Math.min(0, ...ratedEvents.map((point) => point.rating_change));
-  const promotions = ratedEvents.filter((point) => tierIndex(point.rating) > tierIndex(point.rating_before ?? point.rating - point.rating_change)).length;
+  const promotions = ratedEvents.filter((point) => tierIndex(point.rating, ratingTiers) > tierIndex(point.rating_before ?? point.rating - point.rating_change, ratingTiers)).length;
 
   return <div className="flex flex-col gap-6">
     <div className="flex flex-wrap items-end justify-between gap-4">
@@ -81,17 +85,17 @@ export default async function RatingHistoryDetailPage({
 
     <div className="flex flex-col gap-4">
       {!filtered.length && <Card><CardContent className="py-14 text-center text-sm text-muted-foreground">해당 유형의 Rating 이벤트가 없습니다.</CardContent></Card>}
-      {filtered.slice().reverse().map((point, index) => <RatingEventCard key={`${point.created_at}-${index}`} point={point} />)}
+      {filtered.slice().reverse().map((point, index) => <RatingEventCard key={`${point.created_at}-${index}`} point={point} tiers={ratingTiers} />)}
     </div>
   </div>;
 }
 
-function RatingEventCard({ point }: { point: RatingPoint }) {
+function RatingEventCard({ point, tiers }: { point: RatingPoint; tiers: RatingTier[] }) {
   const before = point.rating_before ?? point.rating - point.rating_change;
-  const beforeTier = ratingTier(before);
-  const afterTier = ratingTier(point.rating);
-  const beforeIndex = tierIndex(before);
-  const afterIndex = tierIndex(point.rating);
+  const beforeTier = ratingTier(before, tiers);
+  const afterTier = ratingTier(point.rating, tiers);
+  const beforeIndex = tierIndex(before, tiers);
+  const afterIndex = tierIndex(point.rating, tiers);
   const tierChange = afterIndex > beforeIndex ? "승급" : afterIndex < beforeIndex ? "강등" : null;
   const Icon = EVENT_ICONS[point.event_type as keyof typeof EVENT_ICONS] ?? CalendarClock;
 
@@ -105,6 +109,8 @@ function RatingEventCard({ point }: { point: RatingPoint }) {
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {point.event_score !== null && point.event_score !== undefined && <Detail label={point.event_type === "contest" ? "대회 점수" : "내 점수"} value={`${point.event_score}점`} />}
             {point.opponent_score !== null && point.opponent_score !== undefined && <Detail label="상대 점수" value={`${point.opponent_score}점`} />}
+            {point.response_ms !== null && point.response_ms !== undefined && <Detail label="내 제출 시간" value={`${(point.response_ms / 1000).toFixed(2)}초`} />}
+            {point.opponent_response_ms !== null && point.opponent_response_ms !== undefined && <Detail label="상대 제출 시간" value={`${(point.opponent_response_ms / 1000).toFixed(2)}초`} />}
             {point.solved !== null && point.solved !== undefined && <Detail label="정답 수" value={`${point.solved}문제`} />}
             {point.penalty_seconds !== null && point.penalty_seconds !== undefined && (
               <Detail
@@ -139,9 +145,9 @@ function Metric({ icon: Icon, label, value, color, positive, negative }: { icon:
   return <Card><CardContent className="p-4"><Icon className={`h-4 w-4 ${positive ? "text-success" : negative ? "text-destructive" : "text-primary"}`} style={color ? { color } : undefined} /><p className={`mt-3 text-xl font-bold ${positive ? "text-success" : negative ? "text-destructive" : ""}`}>{value}</p><p className="text-[11px] text-muted-foreground">{label}</p></CardContent></Card>;
 }
 
-function tierIndex(rating: number) {
-  const name = ratingTier(rating).english;
-  return RATING_TIERS.findIndex((tier) => tier.english === name);
+function tierIndex(rating: number, tiers: RatingTier[]) {
+  const name = ratingTier(rating, tiers).english;
+  return tiers.findIndex((tier) => tier.english === name);
 }
 
 function formatRank(rank: number) {

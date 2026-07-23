@@ -8,13 +8,13 @@ import { cn } from "@/lib/utils/cn";
 import { Flame } from "lucide-react";
 import type { Profile } from "@/types";
 import { RatingName } from "@/components/battle/rating-identity";
-import { ratingTier } from "@/lib/battle/rating";
+import { useRatingTier } from "@/components/battle/rating-tier-provider";
 
 export function SideNav({ profile, battleRating }: { profile: Profile | null; battleRating: number }) {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const tc = useTranslations("common");
-  const tier = ratingTier(battleRating);
+  const tier = useRatingTier(battleRating);
 
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-border px-4 py-6 md:flex">
