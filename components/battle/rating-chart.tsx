@@ -2,19 +2,16 @@
 
 import { CartesianGrid, Line, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis, ComposedChart } from "recharts";
 import { RATING_TIERS, ratingTier } from "@/lib/battle/rating";
+import type { RatingPoint } from "@/lib/battle/rating-history-types";
 
-export interface RatingPoint {
-  rating: number;
-  rating_change: number;
-  created_at: string;
-  source: string;
-}
+export type { RatingPoint } from "@/lib/battle/rating-history-types";
 
 export function RatingChart({ history }: { history: RatingPoint[] }) {
   const data = history.map((point, index) => ({
     ...point,
     index,
     date: new Intl.DateTimeFormat("ko-KR", { month: "short", day: "numeric", year: "2-digit" }).format(new Date(point.created_at)),
+    fullDate: new Intl.DateTimeFormat("ko-KR", { dateStyle: "long", timeStyle: "short" }).format(new Date(point.created_at)),
   }));
   const values = data.map((point) => point.rating);
   const min = Math.max(0, Math.floor((Math.min(1200, ...values) - 150) / 100) * 100);
@@ -37,8 +34,17 @@ export function RatingChart({ history }: { history: RatingPoint[] }) {
   </div>;
 }
 
-function RatingTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: RatingPoint & { date: string } }> }) {
+function RatingTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: RatingPoint & { date: string; fullDate: string } }> }) {
   if (!active || !payload?.[0]) return null;
   const point = payload[0].payload;
-  return <div className="rounded-lg border border-border bg-background/95 p-3 text-xs shadow-lg"><p className="text-muted-foreground">{point.date}</p><p className="mt-1 text-base font-bold">{point.rating} <span className={point.rating_change >= 0 ? "text-success" : "text-destructive"}>{point.rating_change >= 0 ? "+" : ""}{point.rating_change}</span></p></div>;
+  const before = point.rating_before ?? point.rating - point.rating_change;
+  return <div className="max-w-[280px] rounded-xl border border-border bg-background/95 p-3 text-xs shadow-xl backdrop-blur">
+    <p className="font-semibold text-foreground">{point.event_title || "Rating Update"}</p>
+    <p className="mt-1 text-muted-foreground">{point.fullDate}</p>
+    <p className="mt-2 leading-5 text-muted-foreground">{point.reason || "Rating 결과 반영"}</p>
+    <div className="mt-2 flex items-end justify-between gap-5 border-t border-border pt-2">
+      <span className="text-muted-foreground">{before} → <strong className="text-foreground">{point.rating}</strong></span>
+      <span className={`text-base font-bold ${point.rating_change >= 0 ? "text-success" : "text-destructive"}`}>{point.rating_change >= 0 ? "+" : ""}{point.rating_change}</span>
+    </div>
+  </div>;
 }

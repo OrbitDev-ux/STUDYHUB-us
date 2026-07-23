@@ -62,14 +62,16 @@ export async function fetchDiagnosticQuestions(subject: SubjectId) {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("grade_level")
+    .select("grade_level,onboarding_completed")
     .eq("id", user.id)
     .single();
   if (profileError) throw new Error(`프로필 조회 실패: ${profileError.message}`);
+  if (profile.onboarding_completed) redirect("/dashboard");
+  if (!profile.grade_level) redirect("/onboarding");
 
   // 과목마다 20~30문제 사이에서 무작위로 문항 수를 정한다.
   const questionCount = 20 + Math.floor(Math.random() * 11);
-  const questions = await generateDiagnosticQuestions(subject, profile?.grade_level ?? "중2", questionCount);
+  const questions = await generateDiagnosticQuestions(subject, profile.grade_level, questionCount);
   if (!Array.isArray(questions) || questions.length === 0) {
     throw new Error("진단평가 문항을 생성하지 못했습니다.");
   }
@@ -94,12 +96,14 @@ export async function submitDiagnosticResult({ subject, answered }: SubmitPayloa
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("grade_level")
+    .select("grade_level,onboarding_completed")
     .eq("id", user.id)
     .single();
   if (profileError) throw new Error(`프로필 조회 실패: ${profileError.message}`);
+  if (profile.onboarding_completed) redirect("/dashboard");
+  if (!profile.grade_level) redirect("/onboarding");
 
-  const analysis = await analyzeDiagnosticResult(subject, profile?.grade_level ?? "중2", answered);
+  const analysis = await analyzeDiagnosticResult(subject, profile.grade_level, answered);
 
   const { error: diagnosticError } = await supabase.from("diagnostic_results").insert({
     user_id: user.id,

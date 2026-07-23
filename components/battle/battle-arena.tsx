@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { cancelBattle, getBattleState, joinBattle, submitBattleAnswer, type BattleState } from "@/app/(main)/battle/actions";
 import type { SubjectId } from "@/types";
 import { RatingBadge, RatingName } from "@/components/battle/rating-identity";
+import { createClient } from "@/lib/supabase/client";
 
 const SUBJECTS: { id: SubjectId; label: string; emoji: string }[] = [
   { id: "math", label: "수학", emoji: "🔢" }, { id: "english", label: "영어", emoji: "🔤" },
@@ -18,10 +19,10 @@ const SUBJECTS: { id: SubjectId; label: string; emoji: string }[] = [
 
 type Feedback = { correct: boolean; answer: string; explanation: string };
 
-export function BattleArena({ gradeLevel, rating }: { gradeLevel: string; rating: number }) {
+export function BattleArena({ gradeLevel, rating, initialMatchId = null }: { gradeLevel: string; rating: number; initialMatchId?: string | null }) {
   const router = useRouter();
   const [subject, setSubject] = useState<SubjectId>("math");
-  const [matchId, setMatchId] = useState<string | null>(null);
+  const [matchId, setMatchId] = useState<string | null>(initialMatchId);
   const [battle, setBattle] = useState<BattleState | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [error, setError] = useState("");
@@ -36,9 +37,17 @@ export function BattleArena({ gradeLevel, rating }: { gradeLevel: string; rating
   }, []);
 
   useEffect(() => {
+    if (initialMatchId) void refresh(initialMatchId);
+  }, [initialMatchId, refresh]);
+
+  useEffect(() => {
     if (!matchId || feedback || battle?.status === "completed" || battle?.status === "cancelled") return;
-    const timer = window.setInterval(() => void refresh(matchId), 1500);
-    return () => window.clearInterval(timer);
+    const supabase = createClient();
+    const channel = supabase.channel(`battle:${matchId}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "battle_matches", filter: `id=eq.${matchId}` }, () => void refresh(matchId))
+      .subscribe();
+    const fallback = window.setInterval(() => void refresh(matchId), 15000);
+    return () => { window.clearInterval(fallback); void supabase.removeChannel(channel); };
   }, [matchId, feedback, battle?.status, refresh]);
 
   useEffect(() => {
@@ -122,8 +131,18 @@ export function BattleArena({ gradeLevel, rating }: { gradeLevel: string; rating
       <div className={`flex h-20 w-20 items-center justify-center rounded-full ${battle.winner === "me" ? "bg-warning/20" : "bg-secondary"}`}>
         {battle.winner === "me" ? <Trophy className="h-10 w-10 text-warning" /> : <Swords className="h-10 w-10 text-muted-foreground" />}
       </div>
-      <div><h2 className="text-2xl font-bold">{battle.winner === "me" ? "승리!" : battle.winner === "draw" ? "무승부" : "아쉽게 패배"}</h2><p className="mt-1 text-muted-foreground">나 {battle.myScore} : {battle.opponentScore} <RatingName nickname={battle.opponent?.nickname ?? "상대"} rating={battle.opponentRatingBefore ?? 1200} /></p></div>
-      <div className="rounded-xl border border-border px-8 py-4"><p className="text-xs text-muted-foreground">ELO 레이팅</p><p className="mt-1 text-2xl font-bold">{battle.myRatingAfter} <span className={`text-sm ${delta >= 0 ? "text-success" : "text-destructive"}`}>{delta >= 0 ? "+" : ""}{delta}</span></p><div className="mt-2"><RatingBadge rating={battle.myRatingAfter ?? battle.myRatingBefore} /></div></div>
+      <div><h2 className="text-2xl font-bold">{battle.winner === "me" ? "승리!" : battle.winner === "draw" ? "무승부" : "아쉽게 패배"}</h2><p className="mt-1 text-muted-foreground">나 {battle.myScore} : {battle.opponentScore} <RatingName nickname={battle.opponent?.nickname ?? "상대"} rating={battle.opponentRatingBefore ?? 1200} userId={battle.opponent?.id} /></p></div>
+      <div className="w-full max-w-lg rounded-xl border border-border px-6 py-4">
+        <p className="text-xs text-muted-foreground">Codeforces Rating</p>
+        <p className="mt-1 text-2xl font-bold">{battle.myRatingAfter} <span className={`text-sm ${delta >= 0 ? "text-success" : "text-destructive"}`}>{delta >= 0 ? "+" : ""}{delta}</span></p>
+        <div className="mt-2"><RatingBadge rating={battle.myRatingAfter ?? battle.myRatingBefore} /></div>
+        {battle.ratingBreakdown && <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border pt-4 text-left text-xs sm:grid-cols-4">
+          <div><p className="text-muted-foreground">Expected Rank</p><strong>{battle.ratingBreakdown.expectedRank.toFixed(2)}</strong></div>
+          <div><p className="text-muted-foreground">Actual Rank</p><strong>{battle.ratingBreakdown.actualRank.toFixed(1)}</strong></div>
+          <div><p className="text-muted-foreground">Performance</p><strong>{battle.ratingBreakdown.performanceRating}</strong></div>
+          <div><p className="text-muted-foreground">Correction</p><strong>{battle.ratingBreakdown.provisionalFactor.toFixed(2)}× · {battle.ratingBreakdown.correction >= 0 ? "+" : ""}{battle.ratingBreakdown.correction}</strong></div>
+        </div>}
+      </div>
       <Button onClick={reset} className="gap-2"><Swords className="h-4 w-4" /> 다시 배틀하기</Button>
     </CardContent></Card>;
   }
@@ -134,7 +153,7 @@ export function BattleArena({ gradeLevel, rating }: { gradeLevel: string; rating
   return <Card>
     <CardHeader className="gap-4">
       <div className="flex items-center justify-between gap-2 text-sm">
-        <div><strong>나 {battle.myScore}</strong><span className="mx-2 text-muted-foreground">vs</span><strong>{battle.opponentScore} </strong><RatingName nickname={battle.opponent?.nickname ?? "상대"} rating={battle.opponentRatingBefore ?? 1200} /></div>
+        <div><strong>나 {battle.myScore}</strong><span className="mx-2 text-muted-foreground">vs</span><strong>{battle.opponentScore} </strong><RatingName nickname={battle.opponent?.nickname ?? "상대"} rating={battle.opponentRatingBefore ?? 1200} userId={battle.opponent?.id} /></div>
         <Badge variant={remaining <= 30 ? "warning" : "secondary"}><Clock3 className="mr-1 h-3 w-3" />{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}</Badge>
       </div>
       <Progress value={(progress / 5) * 100} />

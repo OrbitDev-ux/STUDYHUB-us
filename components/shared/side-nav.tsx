@@ -8,11 +8,13 @@ import { cn } from "@/lib/utils/cn";
 import { Flame } from "lucide-react";
 import type { Profile } from "@/types";
 import { RatingName } from "@/components/battle/rating-identity";
+import { ratingTier } from "@/lib/battle/rating";
 
 export function SideNav({ profile, battleRating }: { profile: Profile | null; battleRating: number }) {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const tc = useTranslations("common");
+  const tier = ratingTier(battleRating);
 
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-border px-4 py-6 md:flex">
@@ -21,8 +23,17 @@ export function SideNav({ profile, battleRating }: { profile: Profile | null; ba
       </Link>
 
       {profile && (
-        <div className="mb-6 flex items-center gap-3 rounded-xl bg-secondary px-3 py-2.5 text-sm">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background font-semibold">
+        <div
+          className="mb-6 flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm"
+          style={{
+            borderColor: `${tier.color}55`,
+            background: `linear-gradient(135deg, ${tier.color}18, hsl(var(--secondary)))`,
+          }}
+        >
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background font-semibold"
+            style={{ boxShadow: `0 0 0 2px ${tier.color}, 0 0 16px ${tier.color}35` }}
+          >
             {profile.avatar_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -30,6 +41,9 @@ export function SideNav({ profile, battleRating }: { profile: Profile | null; ba
           </div>
           <div className="min-w-0">
             <p className="truncate"><RatingName nickname={profile.nickname} rating={battleRating} /></p>
+            <p className="truncate text-[11px] font-semibold" style={{ color: tier.color }}>
+              {tier.name} · Rating {battleRating}
+            </p>
             <p className="flex items-center gap-1 text-xs text-muted-foreground">
               <Flame className="h-3 w-3 text-warning" />
               {tc("streak")} {tc("daysSuffix", { days: profile.streak_days })}

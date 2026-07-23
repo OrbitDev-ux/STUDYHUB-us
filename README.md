@@ -49,7 +49,7 @@ npm install
 
 ### 2. Supabase 프로젝트 생성
 1. [supabase.com](https://supabase.com)에서 새 프로젝트 생성
-2. SQL Editor에서 `supabase/migrations/0001_init.sql`부터 `0017_rating_from_signup.sql`까지 번호 순서대로 실행
+2. SQL Editor에서 `supabase/migrations/0001_init.sql`부터 `0027_super_admin_permissions_audit_revisions.sql`까지 번호 순서대로 실행
    (기본 스키마/RLS → 레벨·XP·배지·코인 → 점검 모드 → 숙제/플랜 → Discord → 스키마 복구 → 로그인/가입 rate limiting → 프로필 이미지 Storage → 플래너 보상 및 세션 판정 강화)
    `0010`은 일부 운영 DB에서 중간 마이그레이션이 누락된 경우를 복구하는 멱등
    마이그레이션이므로, 이미 최신 상태인 DB에서도 안전하게 실행할 수 있습니다. `0014`는
@@ -57,6 +57,20 @@ npm install
    `0015`는 1:1 문제풀이 매칭, 서버 채점, 배틀 기록과 ELO 레이팅을 추가합니다.
    `0016`은 레이팅 이력, 대회 순위표, 포럼, 댓글, 좋아요, 사용자 차단과 1:1 메시지를 추가합니다.
    `0017`은 모든 계정에 가입 즉시 1200 ELO를 만들고 가입일을 그래프 시작점으로 기록하며, 대회·사용자 검색에 레이팅을 연결합니다.
+   `0018`은 배틀·대회·메시지·레이팅 테이블을 Supabase Realtime publication에 연결합니다.
+   `0019`는 Codeforces 방식의 배틀·대회 Rating 정산과 신규 사용자 보정을 추가합니다.
+   `0020`은 전체 Rating 순위와 개인정보를 제한한 공개 프로필 조회 함수를 추가합니다.
+   `0021`은 개발자 콘솔용 문제 상태, 대회 공개 상태, 감사 로그와 출제 문제 보호 정책을 추가합니다.
+   `0022`는 배틀·대회·운영자 조정 등 모든 Rating 변경에 사유가 포함된 실시간 알림을 추가합니다.
+   `0023`은 Rating 이벤트명·배틀 상대를 영구 보존하고 관리자 감사 로그 검색 인덱스를 추가합니다.
+   `0024`는 1:1 메시지 신고, 관리자 처리 상태, 채팅 제한과 도배 방지를 추가합니다.
+   `0025`는 개발자용 전체 Rating 이벤트 조회와 안전한 삭제·후속 History 재계산,
+   사용자 알림 및 실시간 그래프 동기화를 추가합니다.
+   `0026`은 지정 사용자 배틀 요청·수락·거절 알림과 관리자 포럼 중요 공지
+   자동 고정·전체 알림을 추가합니다.
+   `0027`은 Super Admin 역할, 안전한 운영자 승격·강등, 감사 로그 수정·보관·복원과
+   변경 전후 원본을 보존하는 append-only 개정 이력을 추가합니다. 기존 Super Admin이
+   없다면 가장 먼저 생성된 Admin 한 명을 최초 Super Admin으로 자동 승격합니다.
 3. Authentication > Providers에서 Google, Discord OAuth 활성화 (선택)
 4. Project Settings > API에서 URL / anon key / service_role key 확인
 5. (선택) 관리자 계정 지정: 첫 관리자를 만드는 UI는 없습니다. 가입 후 SQL Editor에서 직접
@@ -88,6 +102,8 @@ cp .env.example .env.local
 - `ANTHROPIC_API_KEY` — [console.anthropic.com](https://console.anthropic.com)에서 발급
 - `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` — Discord 연동 기능을 쓸 경우
 - `CRON_SECRET` — 임의의 랜덤 문자열 (크론 라우트 인증용)
+- `DEVELOPER_ACCESS_CODE` — 선택 사항. 설정하면 `/developer/login`에서 관리자 계정 외에 추가 접근 코드를 요구
+- `DEVELOPER_SESSION_SECRET` — 개발자 전용 8시간 세션 서명값. 미설정 시 `SUPABASE_SERVICE_ROLE_KEY`로 안전하게 대체
 
 ### 4. 개발 서버 실행
 ```bash
@@ -132,10 +148,11 @@ docker compose up --build
 11. **학년별 문제은행** → 초1~고3, 수학/영어/사회/과학 768문항 즉시 연습 및 풀이 기록 (`/practice`)
 12. **계정 및 보안** → 비밀번호 변경, 다른 기기 로그아웃, 전체 학습 데이터 내보내기 (`/settings`)
 13. **학습 스트릭** → 타이머·문제·숙제·플래너 활동을 최근 1년 GitHub형 잔디로 시각화 (`/streak`)
-14. **문제풀이 배틀** → 가입 즉시 1200점, Codeforces식 등급 색상·가입일부터의 그래프, 1:1 매칭과 K=32 ELO 정산 (`/battle`)
+14. **문제풀이 배틀** → 가입 즉시 1200점, Codeforces식 영문 등급·색상·가입일부터의 그래프, 예상 순위·퍼포먼스 기반 Rating 정산 (`/battle`)
 15. **학습 대회** → 관리자 대회 개설, 서버 채점, 점수·페널티 기반 실시간 순위표 (`/contests`)
 16. **커뮤니티 포럼** → 카테고리별 게시글, 댓글, 좋아요와 공지 (`/forum`)
-17. **1:1 메시지** → 닉네임 검색, 읽음 표시, 사용자 차단을 지원하는 내부 대화 (`/messages`)
+17. **1:1 메시지** → Supabase Realtime 메시지, 온라인 상태, 읽음·미확인 표시, 사용자 차단을 지원하는 내부 대화 (`/messages`)
+18. **개발자 콘솔** → 전용 서명 세션 로그인, 문제 출제, 대회 개최, 사용자·Rating·점검 모드 관리, Super Admin 권한 계층과 변경 이력이 보존되는 감사 로그 편집 (`/developer/login`)
 
 ## 데이터베이스 설계
 

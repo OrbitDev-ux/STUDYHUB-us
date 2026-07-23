@@ -10,12 +10,15 @@ import { signOut } from "@/app/(auth)/actions";
 import { getLevelProgress } from "@/lib/gamification/level";
 import type { Profile } from "@/types";
 import { RatingBadge } from "@/components/battle/rating-identity";
+import { MessageInboxButton } from "./message-inbox-button";
+import { useRealtimePresence } from "./realtime-presence-provider";
 
-export function TopBar({ profile, notifications, battleRating }: { profile: Profile | null; notifications: NotificationRow[]; battleRating: number }) {
+export function TopBar({ profile, notifications, battleRating, userId, unreadMessages }: { profile: Profile | null; notifications: NotificationRow[]; battleRating: number; userId: string; unreadMessages: number }) {
   const { theme, setTheme } = useTheme();
   const t = useTranslations("topbar");
   const tc = useTranslations("common");
   const progress = getLevelProgress(profile?.xp ?? 0);
+  const { connected } = useRealtimePresence();
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur md:px-8">
@@ -28,6 +31,7 @@ export function TopBar({ profile, notifications, battleRating }: { profile: Prof
       </div>
 
       <div className="flex items-center gap-2">
+        <span className={`hidden h-2 w-2 rounded-full sm:block ${connected ? "bg-success" : "bg-muted-foreground"}`} title={connected ? "Supabase Realtime connected" : "Realtime reconnecting"} />
         <div className="hidden lg:block"><RatingBadge rating={battleRating} compact /></div>
         <div
           className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold"
@@ -44,7 +48,8 @@ export function TopBar({ profile, notifications, battleRating }: { profile: Prof
         <div className="hidden items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold sm:flex">
           <Coins className="h-3.5 w-3.5 text-warning" /> {profile?.coins ?? 0}
         </div>
-        <NotificationBell initialNotifications={notifications} />
+        <NotificationBell initialNotifications={notifications} userId={userId} />
+        <MessageInboxButton userId={userId} initialUnread={unreadMessages} />
         <LanguageSwitcher />
         <Button
           variant="ghost"

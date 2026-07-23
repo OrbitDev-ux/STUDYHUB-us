@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { RatingName } from "@/components/battle/rating-identity";
+import { createClient } from "@/lib/supabase/client";
 
 export function ContestArena({ initial }: { initial: ContestState }) {
   const [state, setState] = useState(initial);
@@ -15,7 +16,15 @@ export function ContestArena({ initial }: { initial: ContestState }) {
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
   const refresh = useCallback(async () => { const result = await getContestState(initial.id); if (result.state) setState(result.state); if (result.error) setError(result.error); }, [initial.id]);
-  useEffect(() => { if (feedback) return; const timer = window.setInterval(() => void refresh(), 3000); return () => window.clearInterval(timer); }, [refresh, feedback]);
+  useEffect(() => {
+    if (feedback) return;
+    const supabase = createClient();
+    const channel = supabase.channel(`contest:${initial.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "contest_entries", filter: `contest_id=eq.${initial.id}` }, () => void refresh())
+      .subscribe();
+    const fallback = window.setInterval(() => void refresh(), 15000);
+    return () => { window.clearInterval(fallback); void supabase.removeChannel(channel); };
+  }, [initial.id, refresh, feedback]);
   const question = useMemo(() => state.questions.find((item) => !state.answeredKeys.includes(item.key)) ?? null, [state]);
   const remaining = Math.max(0, Math.ceil((new Date(state.endsAt).getTime() - Date.now()) / 1000));
 
@@ -39,6 +48,6 @@ export function ContestArena({ initial }: { initial: ContestState }) {
         {isPending && <Loader2 className="mx-auto h-5 w-5 animate-spin" />}{feedback && <div className={`rounded-xl border p-4 ${feedback.correct ? "border-success/40 bg-success/5" : "border-destructive/40 bg-destructive/5"}`}><p className="flex items-center gap-2 font-semibold">{feedback.correct ? <CheckCircle2 className="h-5 w-5 text-success" /> : <XCircle className="h-5 w-5 text-destructive" />}{feedback.correct ? "정답! +100점" : `오답 · 정답은 ${feedback.answer}`}</p><p className="mt-2 text-sm text-muted-foreground">{feedback.explanation}</p><Button onClick={next} className="mt-4 w-full">다음 문제</Button></div>}{error && <p className="text-sm text-destructive">{error}</p>}
       </CardContent></Card>}
     </div>
-    <Card><CardHeader><CardTitle className="flex items-center justify-between text-base"><span>실시간 순위표</span>{state.phase === "active" && <Badge variant="success">LIVE</Badge>}</CardTitle></CardHeader><CardContent className="flex flex-col gap-1"><div className="mb-2 grid grid-cols-[32px_1fr_55px_55px] gap-2 text-xs text-muted-foreground"><span>#</span><span>참가자</span><span>점수</span><span>페널티</span></div>{state.standings.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">아직 참가자가 없어요.</p>}{state.standings.map((row, index) => <div key={row.user_id} className="grid grid-cols-[32px_1fr_55px_55px] gap-2 rounded-lg px-1 py-2 text-sm"><strong>{index + 1}</strong><RatingName nickname={row.nickname} rating={row.rating} className="truncate" /><strong>{row.score}</strong><span className="text-xs text-muted-foreground">{Math.floor(row.penalty_seconds / 60)}분</span></div>)}</CardContent></Card>
+    <Card><CardHeader><CardTitle className="flex items-center justify-between text-base"><span>{state.phase === "finished" ? "Final Leaderboard" : "실시간 순위표"}</span>{state.phase === "active" ? <Badge variant="success">LIVE</Badge> : state.phase === "finished" ? <Badge variant="secondary">RATED</Badge> : null}</CardTitle></CardHeader><CardContent className="flex flex-col gap-1"><div className={`mb-2 grid ${state.phase === "finished" ? "grid-cols-[32px_1fr_50px_56px]" : "grid-cols-[32px_1fr_55px_55px]"} gap-2 text-xs text-muted-foreground`}><span>#</span><span>참가자</span><span>점수</span><span>{state.phase === "finished" ? "Rating" : "페널티"}</span></div>{state.standings.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">아직 참가자가 없어요.</p>}{state.standings.map((row, index) => <div key={row.user_id} className={`grid ${state.phase === "finished" ? "grid-cols-[32px_1fr_50px_56px]" : "grid-cols-[32px_1fr_55px_55px]"} gap-2 rounded-lg px-1 py-2 text-sm`}><strong>{row.final_rank ?? index + 1}</strong><RatingName nickname={row.nickname} rating={row.rating} userId={row.user_id} className="truncate" /><strong>{row.score}</strong>{state.phase === "finished" ? <span className={`text-xs font-semibold ${(row.rating_change ?? 0) >= 0 ? "text-success" : "text-destructive"}`}>{(row.rating_change ?? 0) >= 0 ? "+" : ""}{row.rating_change ?? 0}</span> : <span className="text-xs text-muted-foreground">{Math.floor(row.penalty_seconds / 60)}분</span>}</div>)}</CardContent></Card>
   </div>;
 }

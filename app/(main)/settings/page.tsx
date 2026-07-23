@@ -12,6 +12,8 @@ import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 import { planLimits } from "@/lib/plan";
 import { getUserPlan } from "@/lib/supabase/compat";
 import { AccountSecurity } from "@/components/settings/account-security";
+import { SupabaseStatus } from "@/components/settings/supabase-status";
+import { isDeveloperRole } from "@/lib/developer/roles";
 
 export async function generateMetadata() {
   const t = await getTranslations("settings");
@@ -37,8 +39,9 @@ export default async function SettingsPage() {
     getUserPlan(supabase, user.id),
   ]);
 
-  const isAdmin = profile?.role === "admin";
+  const isAdmin = isDeveloperRole(profile?.role);
   const maxQuestions = planLimits(currentPlan).homeworkQuestionMax;
+  const { error: socialSchemaError } = await supabase.from("battle_rating_history").select("id").limit(1);
 
   const { data: appSettings } = isAdmin
     ? await supabase.from("app_settings").select("*").eq("id", true).single()
@@ -55,6 +58,16 @@ export default async function SettingsPage() {
           {t("myPlan")}: {tp(currentPlan)}
         </Badge>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Supabase Integration</CardTitle>
+          <CardDescription>인증, 데이터베이스 스키마와 실시간 연결 상태입니다.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SupabaseStatus schemaReady={!socialSchemaError} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

@@ -26,9 +26,10 @@ export default async function OnboardingPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("nickname")
+    .select("nickname,onboarding_completed")
     .eq("id", user.id)
     .single();
+  if (profile?.onboarding_completed) redirect("/dashboard");
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">

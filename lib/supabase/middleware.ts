@@ -1,20 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isMaintenanceAllowedPath } from "@/lib/maintenance-access";
+import { isDeveloperRole } from "@/lib/developer/roles";
 
 type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
 
-const PROTECTED_PREFIXES = ["/dashboard", "/homework", "/planner", "/timer", "/wrong-notes", "/report", "/rank", "/profile", "/settings", "/onboarding"];
-
-// 점검 모드가 켜져 있어도 반드시 접근 가능해야 하는 경로.
-// /login과 /api/auth/callback이 막히면 관리자조차 로그인해서 점검 모드를 끌 수 없게 된다.
-const MAINTENANCE_ALLOWED = [
-  "/maintenance",
-  "/login",
-  "/forgot-password",
-  "/reset-password",
-  "/api/auth/callback",
-  "/api/discord/callback",
-];
+const PROTECTED_PREFIXES = ["/dashboard", "/homework", "/planner", "/timer", "/wrong-notes", "/report", "/rank", "/profile", "/users", "/settings", "/onboarding"];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -44,9 +35,8 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  // 크론은 사용자 요청이 아니라 CRON_SECRET으로 별도 인증되므로 점검 모드와 무관하게 항상 통과.
-  const isCron = path.startsWith("/api/cron");
-  const isMaintenanceAllowed = isCron || MAINTENANCE_ALLOWED.some((p) => path === p || path.startsWith(`${p}/`));
+  // 크론과 개발자 콘솔은 각각 별도 비밀키/특별 로그인으로 보호되므로 점검 중에도 통과.
+  const isMaintenanceAllowed = isMaintenanceAllowedPath(path);
 
   if (!isMaintenanceAllowed) {
     const { data: appSettings, error: appSettingsError } = await supabase
@@ -65,7 +55,7 @@ export async function updateSession(request: NextRequest) {
       let isAdmin = false;
       if (user) {
         const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-        isAdmin = profile?.role === "admin";
+        isAdmin = isDeveloperRole(profile?.role);
       }
 
       if (!isAdmin) {

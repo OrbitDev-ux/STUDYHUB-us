@@ -9,6 +9,7 @@ import { DISCORD_OAUTH_STATE_COOKIE } from "@/lib/discord/oauth";
 import { notifyMaintenanceModeChange } from "@/lib/discord/webhook";
 import { planLimits, isPlan } from "@/lib/plan";
 import { getUserPlan, isMissingColumnError } from "@/lib/supabase/compat";
+import { isDeveloperRole } from "@/lib/developer/roles";
 
 export interface AccountActionState {
   status: "idle" | "success" | "error";
@@ -131,7 +132,7 @@ export async function findUserByEmail(
   const { supabase, user } = await requireUser();
 
   const { data: caller } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (caller?.role !== "admin") throw new Error("관리자만 사용할 수 있습니다.");
+  if (!isDeveloperRole(caller?.role)) throw new Error("관리자만 사용할 수 있습니다.");
 
   const trimmed = email.trim().toLowerCase();
   if (!trimmed) return null;

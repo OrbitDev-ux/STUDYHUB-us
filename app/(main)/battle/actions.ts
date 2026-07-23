@@ -1,6 +1,8 @@
 "use server";
 
 import { randomInt } from "crypto";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { generatePracticeSet, getPracticeQuestion, isGradeLevel } from "@/lib/practice/question-bank";
 import type { SubjectId } from "@/types";
@@ -27,7 +29,15 @@ export interface BattleState {
   myRatingBefore: number;
   myRatingAfter: number | null;
   opponentRatingBefore: number | null;
-  opponent: { nickname: string; avatarUrl: string | null } | null;
+  ratingBreakdown: {
+    expectedRank: number;
+    actualRank: number;
+    performanceRating: number;
+    baseDelta: number;
+    correction: number;
+    provisionalFactor: number;
+  } | null;
+  opponent: { id: string; nickname: string; avatarUrl: string | null } | null;
   winner: "me" | "opponent" | "draw" | null;
   expiresAt: string | null;
 }
@@ -105,7 +115,17 @@ export async function getBattleState(matchId: string): Promise<{ state?: BattleS
     myRatingBefore: (isPlayer1 ? match.player1_rating_before : match.player2_rating_before) ?? 1200,
     myRatingAfter: isPlayer1 ? match.player1_rating_after : match.player2_rating_after,
     opponentRatingBefore: isPlayer1 ? match.player2_rating_before : match.player1_rating_before,
-    opponent: opponentProfile.data ? { nickname: opponentProfile.data.nickname, avatarUrl: opponentProfile.data.avatar_url } : null,
+    ratingBreakdown: match.status === "completed" ? {
+      expectedRank: Number(isPlayer1 ? match.player1_expected_rank : match.player2_expected_rank) || 1.5,
+      actualRank: Number(isPlayer1 ? match.player1_actual_rank : match.player2_actual_rank) || 1.5,
+      performanceRating: Number(isPlayer1 ? match.player1_performance_rating : match.player2_performance_rating)
+        || (isPlayer1 ? match.player1_rating_after : match.player2_rating_after)
+        || 1200,
+      baseDelta: Number(isPlayer1 ? match.player1_base_delta : match.player2_base_delta) || 0,
+      correction: Number(isPlayer1 ? match.player1_correction : match.player2_correction) || 0,
+      provisionalFactor: Number(isPlayer1 ? match.player1_provisional_factor : match.player2_provisional_factor) || 1,
+    } : null,
+    opponent: opponentProfile.data ? { id: opponentId!, nickname: opponentProfile.data.nickname, avatarUrl: opponentProfile.data.avatar_url } : null,
     winner, expiresAt: match.expires_at,
   } };
 }
@@ -146,4 +166,68 @@ export async function cancelBattle(matchId: string) {
   if (!user) return { error: "로그인이 필요합니다." };
   const { error } = await supabase.rpc("cancel_waiting_battle", { p_match_id: matchId });
   return error ? { error: error.message } : { ok: true };
+}
+
+export async function requestDirectBattle(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const targetUserId = String(formData.get("target_user_id") ?? "");
+  const subjectId = String(formData.get("subject_id") ?? "") as SubjectId;
+  if (!/^[0-9a-f-]{36}$/i.test(targetUserId) || targetUserId === user.id || !isSubject(subjectId)) {
+    redirect("/battle/play?challenge_error=invalid");
+  }
+  const { data: profile } = await supabase.from("profiles").select("grade_level").eq("id", user.id).single();
+  if (!isGradeLevel(profile?.grade_level ?? "")) redirect("/battle/play?challenge_error=grade");
+
+  const { error } = await supabase.rpc("create_battle_challenge", {
+    p_target_user_id: targetUserId,
+    p_grade_level: profile!.grade_level,
+    p_subject_id: subjectId,
+    p_question_keys: chooseQuestionKeys(profile!.grade_level, subjectId),
+  });
+  if (error) {
+    console.error("[direct-battle] request failed:", error.message);
+    if (/already exists|unique/i.test(error.message)) redirect("/battle/play?challenge_error=duplicate");
+    if (/schema cache|could not find|does not exist/i.test(error.message)) redirect("/battle/play?challenge_error=migration");
+    redirect("/battle/play?challenge_error=request_failed");
+  }
+  revalidatePath("/battle/play");
+  redirect("/battle/play?challenge_requested=1");
+}
+
+export async function respondDirectBattle(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const challengeId = String(formData.get("challenge_id") ?? "");
+  const action = String(formData.get("action") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(challengeId) || !["accept", "decline", "cancel"].includes(action)) {
+    redirect("/battle/play?challenge_error=invalid");
+  }
+
+  if (action === "accept") {
+    const { data: matchId, error } = await supabase.rpc("accept_battle_challenge", {
+      p_challenge_id: challengeId,
+    });
+    if (error || typeof matchId !== "string") {
+      console.error("[direct-battle] accept failed:", error?.message);
+      if (/active battle/i.test(error?.message ?? "")) redirect("/battle/play?challenge_error=active");
+      if (/expired|no longer pending/i.test(error?.message ?? "")) redirect("/battle/play?challenge_error=expired");
+      redirect("/battle/play?challenge_error=response_failed");
+    }
+    revalidatePath("/battle/play");
+    redirect(`/battle/play?match=${matchId}`);
+  }
+
+  const { error } = await supabase.rpc("respond_battle_challenge", {
+    p_challenge_id: challengeId,
+    p_action: action,
+  });
+  if (error) {
+    console.error("[direct-battle] response failed:", error.message);
+    redirect("/battle/play?challenge_error=response_failed");
+  }
+  revalidatePath("/battle/play");
+  redirect(`/battle/play?challenge_updated=${action}`);
 }

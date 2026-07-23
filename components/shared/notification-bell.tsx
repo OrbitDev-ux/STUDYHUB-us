@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Bell, BookOpen, Medal, Sparkles, CalendarClock } from "lucide-react";
+import { Bell, BookOpen, Medal, Sparkles, CalendarClock, TrendingUp, Megaphone, ShieldAlert, Swords } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { ko, enUS, zhCN, ja } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 import { clearReadNotifications, markAllNotificationsRead, markNotificationRead } from "@/app/(main)/notifications/actions";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 const DATE_FNS_LOCALES = { ko, en: enUS, zh: zhCN, ja } as const;
 
@@ -17,6 +18,11 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
   feedback: Sparkles,
   badge: Medal,
   plan: CalendarClock,
+  rating: TrendingUp,
+  announcement: Megaphone,
+  forum_announcement: Megaphone,
+  battle_challenge: Swords,
+  moderation: ShieldAlert,
 };
 
 const TYPE_LINKS: Record<string, string> = {
@@ -24,6 +30,11 @@ const TYPE_LINKS: Record<string, string> = {
   feedback: "/report",
   badge: "/rank",
   plan: "/planner",
+  rating: "/battle",
+  announcement: "/",
+  forum_announcement: "/forum",
+  battle_challenge: "/battle/play",
+  moderation: "/forum",
 };
 
 export interface NotificationRow {
@@ -35,7 +46,7 @@ export interface NotificationRow {
   created_at: string;
 }
 
-export function NotificationBell({ initialNotifications }: { initialNotifications: NotificationRow[] }) {
+export function NotificationBell({ initialNotifications, userId }: { initialNotifications: NotificationRow[]; userId: string }) {
   const t = useTranslations("notifications");
   const router = useRouter();
   const locale = useLocale();
@@ -47,6 +58,34 @@ export function NotificationBell({ initialNotifications }: { initialNotification
   const panelRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    const supabase = createClient();
+    const refresh = async () => {
+      const { data } = await supabase.from("notifications")
+        .select("id, type, title, body, read, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (data) setNotifications(data as NotificationRow[]);
+    };
+    const channel = supabase.channel(`notifications:${userId}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "notifications",
+        filter: `user_id=eq.${userId}`,
+      }, (payload) => {
+        const notification = payload.new as NotificationRow;
+        setNotifications((current) => [
+          notification,
+          ...current.filter((item) => item.id !== notification.id),
+        ].slice(0, 50));
+      })
+      .subscribe();
+    const fallback = window.setInterval(() => void refresh(), 15000);
+    return () => { window.clearInterval(fallback); void supabase.removeChannel(channel); };
+  }, [userId]);
 
   useEffect(() => {
     if (!open) return;

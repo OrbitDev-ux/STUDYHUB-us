@@ -10,6 +10,7 @@ import { updateProfile } from "./actions";
 import { Flame, Zap, Coins, Clock } from "lucide-react";
 import { ProfileMediaEditor } from "@/components/profile/profile-media-editor";
 import { RatingBadge, RatingName } from "@/components/battle/rating-identity";
+import { ratingTier } from "@/lib/battle/rating";
 
 export async function generateMetadata() {
   const t = await getTranslations("nav");
@@ -37,32 +38,37 @@ export default async function ProfilePage() {
   ]);
 
   const totalMinutes = (totalSessions ?? []).reduce((s, x) => s + (x.focus_minutes ?? 0), 0);
+  const currentRating = battleRating?.rating ?? 1200;
+  const tier = ratingTier(currentRating);
 
   return (
     <div className="flex flex-col gap-6">
-      <ProfileMediaEditor
-        userId={user.id}
-        nickname={profile?.nickname ?? ""}
-        avatarUrl={profile?.avatar_url ?? null}
-        bannerUrl={profile?.banner_url ?? null}
-      />
-
-      <div className="flex items-end justify-between px-2">
-        <div className="flex flex-1 items-end justify-between pb-1">
-          <div>
-            <h1 className="text-xl"><RatingName nickname={profile?.nickname ?? ""} rating={battleRating?.rating ?? 1200} className="text-xl" /></h1>
-            <p className="text-sm text-muted-foreground">{profile?.grade_level}</p>
+      <Card className="overflow-hidden" style={{ borderColor: tier.color, boxShadow: `0 12px 40px ${tier.color}18` }}>
+        <CardContent className="p-0">
+          <ProfileMediaEditor
+            userId={user.id}
+            nickname={profile?.nickname ?? ""}
+            avatarUrl={profile?.avatar_url ?? null}
+            bannerUrl={profile?.banner_url ?? null}
+            rating={currentRating}
+          />
+          <div className="flex items-end justify-between gap-3 px-4 pb-5 pt-3">
+            <div>
+              <h1 className="text-xl"><RatingName nickname={profile?.nickname ?? ""} rating={currentRating} className="text-xl" /></h1>
+              <p className="mt-1 text-sm text-muted-foreground">{profile?.grade_level} · <span style={{ color: tier.color }} className="font-semibold">{tier.name}</span></p>
+            </div>
+            <div className="flex flex-wrap justify-end gap-2"><RatingBadge rating={currentRating} /><Badge variant="secondary">{tp(profile?.plan ?? "free")}</Badge></div>
           </div>
-          <Badge variant="secondary">{tp(profile?.plan ?? "free")}</Badge>
-        </div>
-      </div>
+          <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${tier.color}, ${tier.graphFill})` }} />
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
         <StatChip icon={Zap} label="XP" value={profile?.xp ?? 0} />
         <StatChip icon={Coins} label={tc("coins")} value={profile?.coins ?? 0} />
         <StatChip icon={Flame} label={tc("streak")} value={tc("daysSuffix", { days: profile?.streak_days ?? 0 })} />
         <StatChip icon={Clock} label={t("totalStudyTime")} value={tc("hours", { n: Math.round(totalMinutes / 60) })} />
-        <Card><CardContent className="flex flex-col items-center gap-1 p-4 text-center"><RatingBadge rating={battleRating?.rating ?? 1200} compact /><p className="text-lg font-bold">{battleRating?.rating ?? 1200}</p><p className="text-xs text-muted-foreground">ELO · 최고 {battleRating?.peak_rating ?? 1200}</p></CardContent></Card>
+        <Card style={{ borderColor: tier.color, background: `linear-gradient(135deg, ${tier.color}10, transparent)` }}><CardContent className="flex flex-col items-center gap-1 p-4 text-center"><RatingBadge rating={currentRating} compact /><p className="text-lg font-bold" style={{ color: tier.color }}>{currentRating}</p><p className="text-xs text-muted-foreground">ELO · 최고 {battleRating?.peak_rating ?? 1200}</p></CardContent></Card>
       </div>
 
       <Card>

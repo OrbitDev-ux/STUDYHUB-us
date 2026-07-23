@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { SideNav } from "@/components/shared/side-nav";
 import { MobileNav } from "@/components/shared/mobile-nav";
 import { TopBar } from "@/components/shared/top-bar";
+import { RealtimePresenceProvider } from "@/components/shared/realtime-presence-provider";
 
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -11,7 +12,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: profile }, { data: notifications }, { data: battleRating }] = await Promise.all([
+  const [{ data: profile }, { data: notifications }, { data: battleRating }, { count: unreadMessages }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase
       .from("notifications")
@@ -20,6 +21,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
       .order("created_at", { ascending: false })
       .limit(20),
     supabase.from("battle_ratings").select("rating").eq("user_id", user.id).maybeSingle(),
+    supabase.from("direct_messages").select("id", { count: "exact", head: true }).neq("sender_id", user.id).is("read_at", null),
   ]);
 
   if (profile && !profile.onboarding_completed) {
@@ -27,15 +29,17 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   }
 
   return (
+    <RealtimePresenceProvider userId={user.id}>
     <div className="flex min-h-screen bg-background">
       <SideNav profile={profile} battleRating={battleRating?.rating ?? 1200} />
       <div className="flex flex-1 flex-col">
-        <TopBar profile={profile} notifications={notifications ?? []} battleRating={battleRating?.rating ?? 1200} />
+        <TopBar profile={profile} notifications={notifications ?? []} battleRating={battleRating?.rating ?? 1200} userId={user.id} unreadMessages={unreadMessages ?? 0} />
         <main className="flex-1 pb-24 md:pb-8">
           <div className="container max-w-5xl py-6">{children}</div>
         </main>
       </div>
       <MobileNav />
     </div>
+    </RealtimePresenceProvider>
   );
 }

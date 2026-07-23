@@ -25,6 +25,9 @@ export default async function SignupPage({
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <SignupForm error={params.error} />
+        <p className="rounded-xl bg-secondary/60 px-3 py-2 text-center text-xs leading-5 text-muted-foreground">
+          계정 가입과 이메일 인증이 완료된 뒤 학년 정보를 설정하고 진단평가를 시작합니다.
+        </p>
 
         <p className="text-center text-sm text-muted-foreground">
           {t("haveAccount")}{" "}

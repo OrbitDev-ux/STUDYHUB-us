@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Camera, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
+import { ratingTier } from "@/lib/battle/rating";
 
 const BUCKET = "profile-media";
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -15,11 +16,13 @@ export function ProfileMediaEditor({
   nickname,
   avatarUrl,
   bannerUrl,
+  rating,
 }: {
   userId: string;
   nickname: string;
   avatarUrl: string | null;
   bannerUrl: string | null;
+  rating: number;
 }) {
   const t = useTranslations("profile");
   const [avatar, setAvatar] = useState(avatarUrl);
@@ -28,6 +31,7 @@ export function ProfileMediaEditor({
   const [error, setError] = useState<string | null>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
   const bannerInput = useRef<HTMLInputElement>(null);
+  const tier = ratingTier(rating);
 
   async function upload(kind: "avatar" | "banner", event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -75,9 +79,14 @@ export function ProfileMediaEditor({
   return (
     <div>
       <div
-        className="group relative h-32 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-primary/70 to-accent"
-        style={banner ? { backgroundImage: `url(${banner})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+        className="group relative h-32 w-full overflow-hidden rounded-2xl"
+        style={banner
+          ? { backgroundImage: `linear-gradient(90deg, ${tier.color}44, transparent), url(${banner})`, backgroundSize: "cover", backgroundPosition: "center" }
+          : { background: `linear-gradient(135deg, ${tier.color}cc, ${tier.graphFill}66)` }}
       >
+        <span className="absolute left-3 top-3 rounded-full border border-white/20 px-3 py-1 text-xs font-bold text-white shadow-lg backdrop-blur" style={{ backgroundColor: `${tier.color}cc` }}>
+          {tier.name} · {rating}
+        </span>
         <button
           type="button"
           onClick={() => bannerInput.current?.click()}
@@ -98,6 +107,7 @@ export function ProfileMediaEditor({
             "group relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-background bg-secondary text-3xl font-bold",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           )}
+          style={{ boxShadow: `0 0 0 3px ${tier.color}` }}
           aria-label={t("changeAvatar")}
         >
           {avatar ? (

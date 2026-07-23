@@ -3,12 +3,18 @@
 import { randomInt } from "crypto";
 import { redirect } from "next/navigation";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
-import { generatePracticeSet, getPracticeQuestion, isGradeLevel } from "@/lib/practice/question-bank";
+import { generatePracticeSet, isGradeLevel } from "@/lib/practice/question-bank";
+import { resolvePracticeQuestion, resolvePracticeQuestions } from "@/lib/practice/question-resolver";
 import type { SubjectId } from "@/types";
+import { isDeveloperRole } from "@/lib/developer/roles";
 
 const SUBJECTS: SubjectId[] = ["math", "english", "social", "science"];
 
-export type ContestStanding = { user_id: string; nickname: string; avatar_url: string | null; rating: number; score: number; solved: number; penalty_seconds: number; finished_at: string | null };
+export type ContestStanding = {
+  user_id: string; nickname: string; avatar_url: string | null; rating: number;
+  score: number; solved: number; penalty_seconds: number; finished_at: string | null;
+  final_rank: number | null; rating_before: number | null; rating_after: number | null; rating_change: number | null;
+};
 export type ContestState = {
   id: string; title: string; description: string; gradeLevel: string; subjectId: SubjectId;
   startsAt: string; endsAt: string; phase: "scheduled" | "active" | "finished";
@@ -21,7 +27,7 @@ export async function createContest(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "admin") throw new Error("관리자만 대회를 만들 수 있습니다.");
+  if (!isDeveloperRole(profile?.role)) throw new Error("관리자만 대회를 만들 수 있습니다.");
 
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -56,14 +62,18 @@ export async function getContestState(contestId: string): Promise<{ state?: Cont
   if (!contest) return { error: "대회를 찾을 수 없습니다." };
   const now = Date.now();
   const phase = now < new Date(contest.starts_at).getTime() ? "scheduled" : now > new Date(contest.ends_at).getTime() ? "finished" : "active";
+  if (phase === "finished" && !contest.ratings_finalized_at) {
+    await supabase.rpc("finalize_contest_ratings", { p_contest_id: contestId });
+  }
   const [{ data: answers }, { data: entry }, { data: standings }] = await Promise.all([
     supabase.from("contest_answers").select("question_key").eq("contest_id", contestId).eq("user_id", user.id),
     supabase.from("contest_entries").select("score, solved").eq("contest_id", contestId).eq("user_id", user.id).maybeSingle(),
     supabase.rpc("get_contest_leaderboard", { p_contest_id: contestId, p_limit: 100 }) as unknown as Promise<{ data: ContestStanding[] | null }>,
   ]);
   const keys = Array.isArray(contest.question_keys) ? contest.question_keys as string[] : [];
-  const questions = phase === "scheduled" ? [] : keys.map(getPracticeQuestion).filter(Boolean).map((question) => ({
-    key: question!.key, unitName: question!.unitName, difficulty: question!.difficulty, content: question!.content, choices: question!.choices,
+  const resolvedQuestions = phase === "scheduled" ? [] : await resolvePracticeQuestions(keys);
+  const questions = resolvedQuestions.map((question) => ({
+    key: question.key, unitName: question.unitName, difficulty: question.difficulty, content: question.content, choices: question.choices,
   }));
   return { state: {
     id: contest.id, title: contest.title, description: contest.description, gradeLevel: contest.grade_level,
@@ -77,7 +87,7 @@ export async function submitContestAnswer(contestId: string, questionKey: string
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "로그인이 필요합니다." };
-  const question = getPracticeQuestion(questionKey);
+  const question = await resolvePracticeQuestion(questionKey);
   if (!question || !userAnswer || userAnswer.length > 500) return { error: "올바르지 않은 답안입니다." };
   const { data: contest } = await supabase.from("contests").select("question_keys, starts_at, ends_at").eq("id", contestId).single();
   const keys = Array.isArray(contest?.question_keys) ? contest.question_keys as string[] : [];

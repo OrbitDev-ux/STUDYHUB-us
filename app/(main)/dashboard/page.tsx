@@ -4,11 +4,14 @@ import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Flame, Clock, NotebookPen, Target, TrendingUp, BarChart3, CalendarCheck2, LibraryBig, Swords } from "lucide-react";
+import { Flame, Clock, NotebookPen, Target, TrendingUp, BarChart3, CalendarCheck2, LibraryBig, ListTree, Swords } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { todayKST } from "@/lib/utils/date";
 import { RatingBadge } from "@/components/battle/rating-identity";
+import { RatingProgress, RatingScale } from "@/components/battle/rating-identity";
+import { RatingChart, type RatingPoint } from "@/components/battle/rating-chart";
+import { getDetailedRatingHistory } from "@/lib/battle/rating-history";
 
 export async function generateMetadata() {
   const t = await getTranslations("nav");
@@ -29,7 +32,7 @@ export default async function DashboardPage() {
   const today = todayKST();
 
   const weekStart = todayKST(new Date(Date.now() - 6 * 86400000));
-  const [{ data: profile }, { data: stats }, { data: todaySessions }, { data: homework }, { data: recentDiagnostics }, { data: weekSessions }, { data: todayPlan }, { data: practiceAttempts }, { data: battleRating }] =
+  const [{ data: profile }, { data: stats }, { data: todaySessions }, { data: homework }, { data: recentDiagnostics }, { data: weekSessions }, { data: todayPlan }, { data: practiceAttempts }, { data: battleRating }, ratingHistory] =
     await Promise.all([
       supabase.from("profiles").select("*").eq("id", user.id).single(),
       supabase.from("user_subject_stats").select("*").eq("user_id", user.id),
@@ -59,6 +62,7 @@ export default async function DashboardPage() {
         .maybeSingle(),
       supabase.from("practice_attempts").select("is_correct").eq("user_id", user.id),
       supabase.from("battle_ratings").select("rating, wins, games").eq("user_id", user.id).maybeSingle(),
+      getDetailedRatingHistory(user.id),
     ]);
 
   const todayMinutes = (todaySessions ?? []).reduce((sum, s) => sum + (s.focus_minutes ?? 0), 0);
@@ -93,6 +97,11 @@ export default async function DashboardPage() {
   const planRate = planItems.length ? Math.round((completedPlanItems / planItems.length) * 100) : 0;
   const practiceCorrect = (practiceAttempts ?? []).filter((item) => item.is_correct).length;
   const practiceRate = practiceAttempts?.length ? Math.round(practiceCorrect / practiceAttempts.length * 100) : 0;
+  const storedRatingHistory = (ratingHistory ?? []) as RatingPoint[];
+  const chartHistory: RatingPoint[] = storedRatingHistory.some((point) => point.source === "signup")
+    ? storedRatingHistory
+    : [{ rating: 1200, rating_change: 0, source: "signup", event_type: "signup", event_title: "Account Created", reason: "가입 시 기본 Rating", created_at: user.created_at }, ...storedRatingHistory];
+  const currentRating = battleRating?.rating ?? 1200;
 
   return (
     <div className="flex flex-col gap-6">
@@ -109,6 +118,19 @@ export default async function DashboardPage() {
         <StatCard icon={LibraryBig} label="문제은행" value={`${practiceRate}%`} sub={`${practiceAttempts?.length ?? 0}문제 풀이`} />
         <StatCard icon={Swords} label="배틀 ELO" value={<span className="flex flex-wrap items-center gap-2"><span>{battleRating?.rating ?? 1200}</span><RatingBadge rating={battleRating?.rating ?? 1200} compact /></span>} sub={`${battleRating?.wins ?? 0}승 · ${battleRating?.games ?? 0}전`} />
       </div>
+
+      <Card>
+        <CardHeader className="flex-row flex-wrap items-start justify-between gap-4">
+          <div><CardTitle className="flex items-center gap-2 text-base"><TrendingUp className="h-4 w-4 text-primary" />Rating History</CardTitle><p className="mt-1 text-sm text-muted-foreground">가입 시점부터 배틀·대회·운영자 조정에 따른 Rating 변화를 표시합니다. 그래프의 점을 누르면 이벤트와 사유를 확인할 수 있습니다.</p></div>
+          <div className="flex items-center gap-2"><div className="inline-flex rounded-lg border border-border bg-secondary/50 p-1 text-xs"><span className="rounded-md bg-background px-3 py-1.5 font-semibold shadow-sm">그래프</span><Link href="/rating/history" className="flex items-center gap-1 rounded-md px-3 py-1.5 text-muted-foreground transition hover:bg-background hover:text-foreground"><ListTree className="h-3.5 w-3.5" />자세히 보기</Link></div><RatingBadge rating={currentRating} /></div>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <RatingChart history={chartHistory} />
+          <RatingProgress rating={currentRating} />
+          <RatingScale />
+          <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-4"><Button asChild variant="secondary" size="sm"><Link href="/rating/history"><ListTree className="h-4 w-4" />Rating 상세 현황</Link></Button><Button asChild variant="outline" size="sm"><Link href="/battle">ELO 전체 랭킹</Link></Button><Button asChild size="sm"><Link href="/battle/play"><Swords className="h-4 w-4" />배틀 시작</Link></Button></div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -211,7 +233,7 @@ export default async function DashboardPage() {
           <Link href="/practice">학년별 문제은행</Link>
         </Button>
         <Button asChild variant="outline" className="flex-1">
-          <Link href="/battle">배틀 시작</Link>
+          <Link href="/battle/play">배틀 시작</Link>
         </Button>
         <Button asChild className="flex-1">
           <Link href="/homework">{t("goHomework")}</Link>

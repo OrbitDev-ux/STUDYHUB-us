@@ -65,3 +65,40 @@
   }
   .scrollbar-none::-webkit-scrollbar { display: none; }
 }
+
+/* Developer console uses an isolated preference so it can differ from the
+   learner-facing site without changing the global theme. */
+.developer-console[data-resolved-theme="light"] {
+  background-color: #f4f4f5 !important;
+  color: #18181b !important;
+}
+.developer-console[data-resolved-theme="light"] [class*="bg-zinc-950"] {
+  background-color: #fafafa !important;
+}
+.developer-console[data-resolved-theme="light"] [class*="bg-zinc-900"] {
+  background-color: #ffffff !important;
+}
+.developer-console[data-resolved-theme="light"] [class*="bg-zinc-800"] {
+  background-color: #f4f4f5 !important;
+}
+.developer-console[data-resolved-theme="light"] [class*="border-zinc-8"],
+.developer-console[data-resolved-theme="light"] [class*="border-zinc-7"] {
+  border-color: #d4d4d8 !important;
+}
+.developer-console[data-resolved-theme="light"] [class*="text-zinc-100"],
+.developer-console[data-resolved-theme="light"] [class*="text-zinc-200"],
+.developer-console[data-resolved-theme="light"] [class*="text-zinc-300"] {
+  color: #27272a !important;
+}
+.developer-console[data-resolved-theme="light"] [class*="text-zinc-400"] {
+  color: #52525b !important;
+}
+.developer-console[data-resolved-theme="light"] [class*="text-zinc-500"],
+.developer-console[data-resolved-theme="light"] [class*="text-zinc-600"] {
+  color: #71717a !important;
+}
+.developer-console[data-resolved-theme="light"] input,
+.developer-console[data-resolved-theme="light"] textarea,
+.developer-console[data-resolved-theme="light"] select {
+  color: #18181b;
+}
