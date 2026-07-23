@@ -10,6 +10,11 @@ import { notifyMaintenanceModeChange } from "@/lib/discord/webhook";
 import { planLimits, isPlan } from "@/lib/plan";
 import { getUserPlan, isMissingColumnError } from "@/lib/supabase/compat";
 
+export interface AccountActionState {
+  status: "idle" | "success" | "error";
+  message: string;
+}
+
 /** 로그인 사용자를 요구하는 서버 액션들의 공통 진입부 — 없으면 로그인 페이지로 보낸다. */
 async function requireUser() {
   const supabase = await createClient();
@@ -55,6 +60,33 @@ export async function updateSettings(formData: FormData) {
   }
 
   revalidatePath("/settings");
+}
+
+/** 로그인된 사용자가 설정 화면에서 비밀번호를 변경한다. */
+export async function changePassword(
+  _previous: AccountActionState,
+  formData: FormData
+): Promise<AccountActionState> {
+  const { supabase } = await requireUser();
+  const password = String(formData.get("password") ?? "");
+  const confirmation = String(formData.get("password_confirmation") ?? "");
+  if (password.length < 8 || password.length > 72) {
+    return { status: "error", message: "비밀번호는 8~72자로 입력해주세요." };
+  }
+  if (password !== confirmation) {
+    return { status: "error", message: "비밀번호 확인이 일치하지 않습니다." };
+  }
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { status: "error", message: `비밀번호 변경 실패: ${error.message}` };
+  return { status: "success", message: "비밀번호가 안전하게 변경되었습니다." };
+}
+
+/** 현재 브라우저를 제외한 다른 기기의 refresh token을 무효화한다. */
+export async function signOutOtherSessions(): Promise<AccountActionState> {
+  const { supabase } = await requireUser();
+  const { error } = await supabase.auth.signOut({ scope: "others" });
+  if (error) return { status: "error", message: `다른 기기 로그아웃 실패: ${error.message}` };
+  return { status: "success", message: "다른 기기의 로그인 세션을 모두 종료했습니다." };
 }
 
 /** Discord OAuth 연동 시작 (Supabase의 identity linking이 아닌, 별도 Discord 봇 연동용 OAuth) */

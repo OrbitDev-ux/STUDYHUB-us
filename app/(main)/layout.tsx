@@ -11,7 +11,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: profile }, { data: notifications }] = await Promise.all([
+  const [{ data: profile }, { data: notifications }, { data: battleRating }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase
       .from("notifications")
@@ -19,6 +19,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(20),
+    supabase.from("battle_ratings").select("rating").eq("user_id", user.id).maybeSingle(),
   ]);
 
   if (profile && !profile.onboarding_completed) {
@@ -27,9 +28,9 @@ export default async function MainLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="flex min-h-screen bg-background">
-      <SideNav profile={profile} />
+      <SideNav profile={profile} battleRating={battleRating?.rating ?? 1200} />
       <div className="flex flex-1 flex-col">
-        <TopBar profile={profile} notifications={notifications ?? []} />
+        <TopBar profile={profile} notifications={notifications ?? []} battleRating={battleRating?.rating ?? 1200} />
         <main className="flex-1 pb-24 md:pb-8">
           <div className="container max-w-5xl py-6">{children}</div>
         </main>

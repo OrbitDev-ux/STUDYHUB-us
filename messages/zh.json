@@ -28,12 +28,18 @@
   },
   "nav": {
     "dashboard": "仪表盘",
+    "streak": "学习连续记录",
+    "practice": "分年级题库",
+    "battle": "答题对战",
+    "contests": "学习竞赛",
     "homework": "今日作业",
     "planner": "学习计划",
     "timer": "计时器",
     "wrongNotes": "错题本",
     "report": "AI报告",
     "rank": "排行/徽章",
+    "forum": "社区论坛",
+    "messages": "消息",
     "profile": "个人资料"
   },
   "topbar": {
@@ -144,6 +150,9 @@
     "examDate": "考试日期（可选）",
     "submit": "下一步：开始AI诊断评估",
     "grades": {
+      "초1": "小学1年级",
+      "초2": "小学2年级",
+      "초3": "小学3年级",
       "초4": "小学4年级",
       "초5": "小学5年级",
       "초6": "小学6年级",

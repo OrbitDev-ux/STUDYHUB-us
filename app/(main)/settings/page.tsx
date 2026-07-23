@@ -11,6 +11,7 @@ import { AdminPlanManager } from "@/components/settings/admin-plan-manager";
 import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 import { planLimits } from "@/lib/plan";
 import { getUserPlan } from "@/lib/supabase/compat";
+import { AccountSecurity } from "@/components/settings/account-security";
 
 export async function generateMetadata() {
   const t = await getTranslations("settings");
@@ -118,6 +119,16 @@ export default async function SettingsPage() {
               {tc("save")}
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">계정 및 보안</CardTitle>
+          <CardDescription>비밀번호, 로그인 기기, 내 학습 데이터를 안전하게 관리합니다.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AccountSecurity email={user.email ?? ""} />
         </CardContent>
       </Card>
 

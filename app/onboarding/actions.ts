@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { generateDiagnosticQuestions, analyzeDiagnosticResult } from "@/lib/ai/diagnostic";
 import type { SubjectId } from "@/types";
 
-const GRADE_LEVELS = ["초4", "초5", "초6", "중1", "중2", "중3", "고1", "고2", "고3"];
+const GRADE_LEVELS = ["초1", "초2", "초3", "초4", "초5", "초6", "중1", "중2", "중3", "고1", "고2", "고3"];
 
 export async function saveOnboardingInfo(formData: FormData) {
   const supabase = await createClient();

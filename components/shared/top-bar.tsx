@@ -9,8 +9,9 @@ import { NotificationBell, type NotificationRow } from "./notification-bell";
 import { signOut } from "@/app/(auth)/actions";
 import { getLevelProgress } from "@/lib/gamification/level";
 import type { Profile } from "@/types";
+import { RatingBadge } from "@/components/battle/rating-identity";
 
-export function TopBar({ profile, notifications }: { profile: Profile | null; notifications: NotificationRow[] }) {
+export function TopBar({ profile, notifications, battleRating }: { profile: Profile | null; notifications: NotificationRow[]; battleRating: number }) {
   const { theme, setTheme } = useTheme();
   const t = useTranslations("topbar");
   const tc = useTranslations("common");
@@ -27,6 +28,7 @@ export function TopBar({ profile, notifications }: { profile: Profile | null; no
       </div>
 
       <div className="flex items-center gap-2">
+        <div className="hidden lg:block"><RatingBadge rating={battleRating} compact /></div>
         <div
           className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold"
           title={t("levelTooltip", {

@@ -4,10 +4,11 @@ import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Flame, Clock, NotebookPen, Target, TrendingUp, BarChart3, CalendarCheck2 } from "lucide-react";
+import { Flame, Clock, NotebookPen, Target, TrendingUp, BarChart3, CalendarCheck2, LibraryBig, Swords } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { todayKST } from "@/lib/utils/date";
+import { RatingBadge } from "@/components/battle/rating-identity";
 
 export async function generateMetadata() {
   const t = await getTranslations("nav");
@@ -28,7 +29,7 @@ export default async function DashboardPage() {
   const today = todayKST();
 
   const weekStart = todayKST(new Date(Date.now() - 6 * 86400000));
-  const [{ data: profile }, { data: stats }, { data: todaySessions }, { data: homework }, { data: recentDiagnostics }, { data: weekSessions }, { data: todayPlan }] =
+  const [{ data: profile }, { data: stats }, { data: todaySessions }, { data: homework }, { data: recentDiagnostics }, { data: weekSessions }, { data: todayPlan }, { data: practiceAttempts }, { data: battleRating }] =
     await Promise.all([
       supabase.from("profiles").select("*").eq("id", user.id).single(),
       supabase.from("user_subject_stats").select("*").eq("user_id", user.id),
@@ -56,6 +57,8 @@ export default async function DashboardPage() {
         .eq("user_id", user.id)
         .eq("date", today)
         .maybeSingle(),
+      supabase.from("practice_attempts").select("is_correct").eq("user_id", user.id),
+      supabase.from("battle_ratings").select("rating, wins, games").eq("user_id", user.id).maybeSingle(),
     ]);
 
   const todayMinutes = (todaySessions ?? []).reduce((sum, s) => sum + (s.focus_minutes ?? 0), 0);
@@ -88,6 +91,8 @@ export default async function DashboardPage() {
   const planItems = todayPlan?.study_plan_items ?? [];
   const completedPlanItems = planItems.filter((item: { completed: boolean }) => item.completed).length;
   const planRate = planItems.length ? Math.round((completedPlanItems / planItems.length) * 100) : 0;
+  const practiceCorrect = (practiceAttempts ?? []).filter((item) => item.is_correct).length;
+  const practiceRate = practiceAttempts?.length ? Math.round(practiceCorrect / practiceAttempts.length * 100) : 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -96,11 +101,13 @@ export default async function DashboardPage() {
         <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
         <StatCard icon={Clock} label={t("todayMinutesLabel")} value={tc("minutes", { n: todayMinutes })} sub={t("todayMinutesSub", { target: targetMinutes })} />
         <StatCard icon={Flame} label={t("streakLabel")} value={tc("daysSuffix", { days: profile?.streak_days ?? 0 })} sub={t("streakSub")} />
         <StatCard icon={NotebookPen} label={t("homeworkRateLabel")} value={`${homeworkRate}%`} sub={t("homeworkRateSub", { answered: answered.length, total: homeworkItems.length })} />
         <StatCard icon={Target} label={t("goalRateLabel")} value={`${goalRate}%`} sub={t("goalRateSub")} />
+        <StatCard icon={LibraryBig} label="문제은행" value={`${practiceRate}%`} sub={`${practiceAttempts?.length ?? 0}문제 풀이`} />
+        <StatCard icon={Swords} label="배틀 ELO" value={<span className="flex flex-wrap items-center gap-2"><span>{battleRating?.rating ?? 1200}</span><RatingBadge rating={battleRating?.rating ?? 1200} compact /></span>} sub={`${battleRating?.wins ?? 0}승 · ${battleRating?.games ?? 0}전`} />
       </div>
 
       <Card>
@@ -197,6 +204,15 @@ export default async function DashboardPage() {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
+        <Button asChild variant="outline" className="flex-1">
+          <Link href="/streak">학습 잔디 보기</Link>
+        </Button>
+        <Button asChild variant="secondary" className="flex-1">
+          <Link href="/practice">학년별 문제은행</Link>
+        </Button>
+        <Button asChild variant="outline" className="flex-1">
+          <Link href="/battle">배틀 시작</Link>
+        </Button>
         <Button asChild className="flex-1">
           <Link href="/homework">{t("goHomework")}</Link>
         </Button>
@@ -216,7 +232,7 @@ function StatCard({
 }: {
   icon: React.ElementType;
   label: string;
-  value: string;
+  value: React.ReactNode;
   sub: string;
 }) {
   return (
@@ -226,7 +242,7 @@ function StatCard({
           <Icon className="h-4 w-4" />
         </div>
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-xl font-bold">{value}</p>
+        <div className="text-xl font-bold">{value}</div>
         <p className="text-xs text-muted-foreground">{sub}</p>
       </CardContent>
     </Card>

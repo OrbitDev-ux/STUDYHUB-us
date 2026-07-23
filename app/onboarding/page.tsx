@@ -7,7 +7,7 @@ import { saveOnboardingInfo } from "./actions";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
-const GRADES = ["초4", "초5", "초6", "중1", "중2", "중3", "고1", "고2", "고3"] as const;
+const GRADES = ["초1", "초2", "초3", "초4", "초5", "초6", "중1", "중2", "중3", "고1", "고2", "고3"] as const;
 
 export async function generateMetadata() {
   const t = await getTranslations("onboarding");

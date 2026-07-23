@@ -7,14 +7,15 @@ import { NAV_ITEMS } from "./nav-items";
 import { cn } from "@/lib/utils/cn";
 import { Flame } from "lucide-react";
 import type { Profile } from "@/types";
+import { RatingName } from "@/components/battle/rating-identity";
 
-export function SideNav({ profile }: { profile: Profile | null }) {
+export function SideNav({ profile, battleRating }: { profile: Profile | null; battleRating: number }) {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const tc = useTranslations("common");
 
   return (
-    <aside className="hidden w-60 shrink-0 flex-col border-r border-border px-4 py-6 md:flex">
+    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-border px-4 py-6 md:flex">
       <Link href="/dashboard" className="mb-8 px-2 text-lg font-bold tracking-tight">
         StudyHub
       </Link>
@@ -28,7 +29,7 @@ export function SideNav({ profile }: { profile: Profile | null }) {
             ) : profile.nickname?.[0] ?? "?"}
           </div>
           <div className="min-w-0">
-            <p className="truncate font-medium">{profile.nickname}</p>
+            <p className="truncate"><RatingName nickname={profile.nickname} rating={battleRating} /></p>
             <p className="flex items-center gap-1 text-xs text-muted-foreground">
               <Flame className="h-3 w-3 text-warning" />
               {tc("streak")} {tc("daysSuffix", { days: profile.streak_days })}
@@ -37,7 +38,7 @@ export function SideNav({ profile }: { profile: Profile | null }) {
         </div>
       )}
 
-      <nav className="flex flex-col gap-1">
+      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-1">
         {NAV_ITEMS.map((item) => {
           const active = pathname.startsWith(item.href);
           return (

@@ -3,10 +3,11 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Flame, Medal, Sparkles } from "lucide-react";
+import { Trophy, Flame, Medal, Sparkles, Swords } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { PLANS, PLAN_LIMITS } from "@/lib/plan";
 import { getUserPlan } from "@/lib/supabase/compat";
+import { RatingBadge, RatingName } from "@/components/battle/rating-identity";
 
 export async function generateMetadata() {
   const t = await getTranslations("rank");
@@ -22,6 +23,11 @@ type LeaderboardRow = {
   streak_days: number;
 };
 
+type BattleLeaderboardRow = {
+  id: string; nickname: string; avatar_url: string | null;
+  rating: number; games: number; wins: number; losses: number; draws: number;
+};
+
 export default async function RankPage() {
   const supabase = await createClient();
   const {
@@ -33,9 +39,12 @@ export default async function RankPage() {
   const tc = await getTranslations("common");
   const tp = await getTranslations("plan");
 
-  const [{ data: topUsers }, { data: allBadges }, { data: myBadges }, currentPlan] = await Promise.all([
+  const [{ data: topUsers }, { data: battleLeaders }, { data: allBadges }, { data: myBadges }, currentPlan] = await Promise.all([
     supabase.rpc("get_leaderboard", { limit_count: 20 }) as unknown as Promise<{
       data: LeaderboardRow[] | null;
+    }>,
+    supabase.rpc("get_battle_leaderboard", { limit_count: 10 }) as unknown as Promise<{
+      data: BattleLeaderboardRow[] | null;
     }>,
     supabase.from("badges").select("*"),
     supabase.from("user_badges").select("badge_id").eq("user_id", user.id),
@@ -90,6 +99,23 @@ export default async function RankPage() {
                 </span>
                 <span className="font-semibold text-foreground">{t("xpValue", { xp: u.xp })}</span>
               </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Swords className="h-4 w-4 text-primary" /> 배틀 ELO 랭킹
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-1">
+          {(battleLeaders ?? []).length === 0 && <p className="text-sm text-muted-foreground">아직 배틀 기록이 없어요.</p>}
+          {(battleLeaders ?? []).map((row, index) => (
+            <div key={row.id} className={cn("flex items-center justify-between rounded-xl px-3 py-2.5 text-sm", row.id === user.id && "bg-accent")}>
+              <div className="flex items-center gap-3"><span className="w-6 text-center font-semibold text-muted-foreground">{index + 1}</span><RatingName nickname={row.nickname} rating={row.rating} />{row.id === user.id && <Badge variant="secondary" className="text-[10px]">{t("me")}</Badge>}</div>
+              <div className="flex items-center gap-3"><span className="text-xs text-muted-foreground">{row.wins}승 · {row.games}전</span><RatingBadge rating={row.rating} compact /></div>
             </div>
           ))}
         </CardContent>

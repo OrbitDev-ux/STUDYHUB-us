@@ -19,12 +19,12 @@ export function MobileNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
+              "flex min-w-0 flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium",
               active ? "text-primary" : "text-muted-foreground"
             )}
           >
             <item.icon className="h-5 w-5" />
-            {t(item.labelKey)}
+            <span className="max-w-full truncate px-0.5">{t(item.labelKey)}</span>
           </Link>
         );
       })}

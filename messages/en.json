@@ -28,12 +28,18 @@
   },
   "nav": {
     "dashboard": "Dashboard",
+    "streak": "Study Streak",
+    "practice": "Practice Bank",
+    "battle": "Quiz Battle",
+    "contests": "Contests",
     "homework": "Today's Homework",
     "planner": "Study Planner",
     "timer": "Timer",
     "wrongNotes": "Wrong Notes",
     "report": "AI Report",
     "rank": "Rank/Badges",
+    "forum": "Community Forum",
+    "messages": "Messages",
     "profile": "Profile"
   },
   "topbar": {
@@ -144,6 +150,9 @@
     "examDate": "Exam date (optional)",
     "submit": "Next: Start AI diagnostic",
     "grades": {
+      "초1": "Elementary 1",
+      "초2": "Elementary 2",
+      "초3": "Elementary 3",
       "초4": "Elementary 4",
       "초5": "Elementary 5",
       "초6": "Elementary 6",
