@@ -1,4 +1,4 @@
-import { LayoutDashboard, NotebookPen, CalendarClock, Timer, BookX, LineChart, Trophy, User, LibraryBig, CalendarDays, Swords, Medal, MessagesSquare, MessageCircle, Code2 } from "lucide-react";
+import { LayoutDashboard, NotebookPen, CalendarClock, Timer, BookX, LineChart, Trophy, User, LibraryBig, CalendarDays, Swords, Medal, MessagesSquare, MessageCircle, Code2, Settings } from "lucide-react";
 
 export const NAV_ITEMS = [
   { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
@@ -16,6 +16,7 @@ export const NAV_ITEMS = [
   { href: "/forum", labelKey: "forum", icon: MessagesSquare },
   { href: "/messages", labelKey: "messages", icon: MessageCircle },
   { href: "/profile", labelKey: "profile", icon: User },
+  { href: "/settings", labelKey: "settings", icon: Settings },
 ] as const;
 
 export const MOBILE_NAV_ITEMS = [

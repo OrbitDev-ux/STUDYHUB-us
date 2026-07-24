@@ -41,7 +41,8 @@
     "rank": "ランキング/バッジ",
     "forum": "コミュニティ",
     "messages": "メッセージ",
-    "profile": "プロフィール"
+    "profile": "プロフィール",
+    "settings": "設定"
   },
   "topbar": {
     "greeting": "こんにちは、<b>{nickname}</b>さん",

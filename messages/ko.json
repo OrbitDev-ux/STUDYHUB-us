@@ -41,7 +41,8 @@
     "rank": "랭킹/배지",
     "forum": "커뮤니티 포럼",
     "messages": "메시지",
-    "profile": "프로필"
+    "profile": "프로필",
+    "settings": "설정"
   },
   "topbar": {
     "greeting": "안녕하세요, <b>{nickname}</b>님",

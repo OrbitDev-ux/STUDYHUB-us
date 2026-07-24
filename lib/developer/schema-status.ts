@@ -22,6 +22,8 @@ export type DeveloperSchemaStatus = {
   ratingTierSettings: boolean;
   codingContests: boolean;
   bulkAuditOperations: boolean;
+  discordBotIntegration: boolean;
+  discordCodeLinking: boolean;
 };
 
 export function isMissingSchemaError(error: { code?: string; message?: string } | null | undefined) {
@@ -51,6 +53,8 @@ export async function getDeveloperSchemaStatus(admin: SupabaseClient): Promise<D
     ratingTierSettings,
     codingContests,
     bulkAuditOperations,
+    discordBotIntegration,
+    discordCodeLinking,
   ] = await Promise.all([
     admin.from("questions").select("id,grade_level,status").limit(1),
     admin.from("contests").select("id,publication_status").limit(1),
@@ -85,6 +89,8 @@ export async function getDeveloperSchemaStatus(admin: SupabaseClient): Promise<D
       p_action: "archive",
       p_reason: "schema capability probe",
     }),
+    admin.from("discord_bot_status").select("id,last_seen_at,guild_count,command_count").limit(1),
+    admin.from("discord_link_codes").select("id,expires_at,used_at").limit(1),
   ]);
   return {
     questionMetadata: !questionMetadata.error,
@@ -106,5 +112,7 @@ export async function getDeveloperSchemaStatus(admin: SupabaseClient): Promise<D
     ratingTierSettings: !ratingTierSettings.error,
     codingContests: !codingContests.error,
     bulkAuditOperations: !bulkAuditOperations.error || !isMissingSchemaError(bulkAuditOperations.error),
+    discordBotIntegration: !discordBotIntegration.error,
+    discordCodeLinking: !discordCodeLinking.error,
   };
 }

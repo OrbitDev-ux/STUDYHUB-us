@@ -3,17 +3,26 @@
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { cookies, headers } from "next/headers";
-import { randomBytes } from "crypto";
-import { DISCORD_OAUTH_STATE_COOKIE } from "@/lib/discord/oauth";
+import { cookies } from "next/headers";
+import { createHash, randomBytes } from "crypto";
+import { DISCORD_OAUTH_STATE_COOKIE, getDiscordOAuthRedirectUri } from "@/lib/discord/oauth";
 import { notifyMaintenanceModeChange } from "@/lib/discord/webhook";
 import { planLimits, isPlan } from "@/lib/plan";
 import { getUserPlan, isMissingColumnError } from "@/lib/supabase/compat";
 import { isDeveloperRole } from "@/lib/developer/roles";
+import { sendDiscordDM } from "@/lib/discord/bot";
+import { removeDiscordRatingRoles } from "@/lib/discord/rating-role";
 
 export interface AccountActionState {
   status: "idle" | "success" | "error";
   message: string;
+}
+
+export interface DiscordLinkCodeState {
+  status: "idle" | "success" | "error";
+  message: string;
+  code?: string;
+  expiresAt?: string;
 }
 
 /** 로그인 사용자를 요구하는 서버 액션들의 공통 진입부 — 없으면 로그인 페이지로 보낸다. */
@@ -92,11 +101,16 @@ export async function signOutOtherSessions(): Promise<AccountActionState> {
 
 /** Discord OAuth 연동 시작 (Supabase의 identity linking이 아닌, 별도 Discord 봇 연동용 OAuth) */
 export async function startDiscordLink() {
-  const requestHeaders = await headers();
-  const origin = (requestHeaders.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const clientId = process.env.DISCORD_CLIENT_ID;
-  if (!clientId) throw new Error("Discord OAuth 설정이 누락되었습니다.");
-  const redirectUri = encodeURIComponent(`${origin}/api/discord/callback`);
+  if (!clientId) redirect("/settings?error=discord_config_missing");
+
+  let redirectUri: string;
+  try {
+    redirectUri = getDiscordOAuthRedirectUri();
+  } catch (error) {
+    console.error("[discord/oauth] Invalid redirect URI configuration:", error);
+    redirect("/settings?error=discord_config_invalid");
+  }
 
   // OAuth 로그인 CSRF 방지용 state. 콜백에서 쿠키 값과 대조해 검증한다.
   // (state 없이는 공격자가 자기 Discord 계정으로 받은 code를 피해자에게 콜백 URL로
@@ -110,15 +124,79 @@ export async function startDiscordLink() {
     path: "/",
   });
 
-  const url = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify&state=${state}`;
-  redirect(url);
+  const authorizeUrl = new URL("https://discord.com/oauth2/authorize");
+  authorizeUrl.searchParams.set("client_id", clientId);
+  authorizeUrl.searchParams.set("redirect_uri", redirectUri);
+  authorizeUrl.searchParams.set("response_type", "code");
+  authorizeUrl.searchParams.set("scope", "identify");
+  authorizeUrl.searchParams.set("state", state);
+  redirect(authorizeUrl.toString());
 }
 
 export async function unlinkDiscord() {
   const { supabase, user } = await requireUser();
 
-  await supabase.from("discord_links").delete().eq("user_id", user.id);
+  const { data: link } = await supabase.from("discord_links")
+    .select("discord_user_id").eq("user_id", user.id).maybeSingle();
+  if (link?.discord_user_id) {
+    await removeDiscordRatingRoles(link.discord_user_id).catch(() => false);
+  }
+  const { error } = await supabase.from("discord_links").delete().eq("user_id", user.id);
+  if (error) throw new Error(`Discord 연동 해제 실패: ${error.message}`);
   revalidatePath("/settings");
+}
+
+export async function sendDiscordBotTest() {
+  const { supabase, user } = await requireUser();
+  const { data: link } = await supabase.from("discord_links")
+    .select("discord_user_id").eq("user_id", user.id).maybeSingle();
+  if (!link?.discord_user_id) redirect("/settings?discord=test_not_linked");
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+  const delivered = await sendDiscordDM(
+    link.discord_user_id,
+    `✅ StudyHub Bot 연결 테스트에 성공했습니다.${siteUrl ? `\n${siteUrl}/dashboard` : ""}`,
+  );
+  redirect(`/settings?discord=${delivered ? "test_sent" : "test_failed"}`);
+}
+
+const DISCORD_LINK_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+function newDiscordLinkCode() {
+  return [...randomBytes(8)]
+    .map((byte) => DISCORD_LINK_CODE_ALPHABET[byte % DISCORD_LINK_CODE_ALPHABET.length])
+    .join("");
+}
+
+export async function generateDiscordLinkCode(
+  _previous: DiscordLinkCodeState,
+  _formData: FormData,
+): Promise<DiscordLinkCodeState> {
+  const { supabase } = await requireUser();
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const code = newDiscordLinkCode();
+    const codeHash = createHash("sha256").update(code).digest("hex");
+    const { data, error } = await supabase.rpc("create_discord_link_code", {
+      p_code_hash: codeHash,
+    });
+    if (!error) {
+      return {
+        status: "success",
+        message: "Discord에서 10분 안에 아래 명령을 실행하세요.",
+        code,
+        expiresAt: String(data),
+      };
+    }
+    if (/schema cache|could not find|does not exist/i.test(error.message)) {
+      return { status: "error", message: "코드 연동 DB 업데이트가 필요합니다. 관리자에게 문의해주세요." };
+    }
+    if (/banned user/i.test(error.message)) {
+      return { status: "error", message: "이용 정지된 계정은 Discord를 연결할 수 없습니다." };
+    }
+    if (error.code !== "23505") {
+      return { status: "error", message: `연동 코드 생성 실패: ${error.message}` };
+    }
+  }
+  return { status: "error", message: "안전한 코드를 만들지 못했습니다. 잠시 후 다시 시도해주세요." };
 }
 
 /**

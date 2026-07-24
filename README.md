@@ -49,7 +49,7 @@ npm install
 
 ### 2. Supabase 프로젝트 생성
 1. [supabase.com](https://supabase.com)에서 새 프로젝트 생성
-2. SQL Editor에서 `supabase/migrations/0001_init.sql`부터 `0033_dynamic_ratings_coding_contests_bulk_audit.sql`까지 번호 순서대로 실행
+2. SQL Editor에서 `supabase/migrations/0001_init.sql`부터 `0035_discord_code_linking.sql`까지 번호 순서대로 실행
    (기본 스키마/RLS → 레벨·XP·배지·코인 → 점검 모드 → 숙제/플랜 → Discord → 스키마 복구 → 로그인/가입 rate limiting → 프로필 이미지 Storage → 플래너 보상 및 세션 판정 강화)
    `0010`은 일부 운영 DB에서 중간 마이그레이션이 누락된 경우를 복구하는 멱등
    마이그레이션이므로, 이미 최신 상태인 DB에서도 안전하게 실행할 수 있습니다. `0014`는
@@ -79,6 +79,10 @@ npm install
    `0032`는 대회 시작 전 Register와 참가자별 Rated/Unrated 선택·정산을 추가합니다.
    `0033`은 관리자 편집형 0~5000 Rating 계급·색상, 예정 대회 수정, 고정 Input Output Judge
    대회, 서버 시각 기반 시작 전 카운트다운과 Super Admin 감사 로그 선택 일괄 작업을 추가합니다.
+   `0034`는 STUDYHUBBOT 온라인 상태, Rating 역할 즉시 동기화와 중요 알림 DM을 위한
+   Supabase Realtime 웹↔봇 브리지를 추가합니다.
+   `0035`는 웹에서 생성하고 Discord `/연동코드` 명령으로 사용하는 해시 기반 10분
+   일회용 계정 연결 코드와 입력 시도 제한을 추가합니다.
    별도의 코드 작성칸 없이 서버에는 사용자의 최종 출력 답안만 저장됩니다.
 3. Authentication > Providers에서 Google, Discord OAuth 활성화 (선택)
 4. Project Settings > API에서 URL / anon key / service_role key 확인
@@ -98,8 +102,11 @@ npm install
    숙제·플래너·피드백이 생성될 때마다 DM으로 알려줍니다. Discord 계정이 연동돼
    있어야 하고, 봇이 해당 유저와 공통 서버에 있어야 DM 전송이 가능합니다
    (Discord API 제약). 플랜이 Basic/Pro로 바뀌면 이미 연동된 계정의
-   `discord_links.premium_role_granted`도 자동으로 갱신됩니다 (실제 길드 역할
-   부여 자체는 여전히 별도 봇 백엔드의 몫입니다).
+   `discord_links.premium_role_granted`도 자동으로 갱신됩니다. 나란히 있는
+   `STUDYHUBBOT`을 실행하면 Rating 역할·중요 알림·웹 명령 상호작용도 활성화됩니다.
+   웹과 봇에 동일한 `DISCORD_GUILD_ID`/`GUILD_ID`, 봇 토큰과
+   `DISCORD_RATING_ROLE_PREFIX`를 설정하면 OAuth 연동 즉시 웹 Rating 티어
+   역할이 지급되며 연동 해제 시 바로 회수됩니다.
 
 ### 3. 환경 변수 설정
 ```bash
@@ -110,6 +117,12 @@ cp .env.example .env.local
 - `AUTH_EMAIL_CONFIRMATION_DISABLED=true` — 임시로 인증 메일 없이 가입 즉시 자동 확인/로그인. 이메일 인증을 다시 켤 때는 `false`로 변경
 - `ANTHROPIC_API_KEY` — [console.anthropic.com](https://console.anthropic.com)에서 발급
 - `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` — Discord 연동 기능을 쓸 경우
+- `DISCORD_REDIRECT_URI` — Discord Developer Portal의 OAuth2 > Redirects에 등록한
+  Callback URL과 완전히 동일한 값. 로컬 기본값은
+  `http://localhost:3000/api/discord/callback`, 배포 환경은
+  `https://<서비스 도메인>/api/discord/callback`
+- `DISCORD_BOT_TOKEN` / `DISCORD_GUILD_ID` — 연동 직후 Rating 역할을 즉시 지급할 경우
+- `DISCORD_RATING_ROLE_PREFIX` — 봇과 웹이 공유하는 Rating 역할 접두사(기본 `StudyHub · `)
 - `CRON_SECRET` — 임의의 랜덤 문자열 (크론 라우트 인증용)
 - `DEVELOPER_ACCESS_CODE` — 선택 사항. 설정하면 `/developer/login`에서 관리자 계정 외에 추가 접근 코드를 요구
 - `DEVELOPER_SESSION_SECRET` — 개발자 전용 8시간 세션 서명값. 미설정 시 `SUPABASE_SERVICE_ROLE_KEY`로 안전하게 대체
@@ -171,7 +184,7 @@ docker compose up --build
 
 이 저장소는 실제 서비스로 배포 가능한 수준의 **동작하는 스캐폴드**입니다. 알림 센터, 배지 자동 지급, AI 재시도/타임아웃, 프로필 이미지 업로드는 구현되어 있습니다. 다음 항목은 외부 서비스 계약이나 운영 인프라가 필요한 범위입니다:
 
-- Discord 봇을 통한 실제 역할(role) 자동 지급 (현재는 계정 연동까지만 구현, 역할 부여는 `DISCORD_BOT_TOKEN` 기반 별도 워커 필요)
+- Discord 봇 프로세스의 상시 운영, 재시작 정책과 로그/가용성 모니터링
 - 브라우저 기반 E2E 테스트와 배포 후 합성 모니터링
 - AI 호출 비용·품질 모니터링과 운영 대시보드
 

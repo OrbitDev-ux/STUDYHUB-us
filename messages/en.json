@@ -41,7 +41,8 @@
     "rank": "Rank/Badges",
     "forum": "Community Forum",
     "messages": "Messages",
-    "profile": "Profile"
+    "profile": "Profile",
+    "settings": "Settings"
   },
   "topbar": {
     "greeting": "Hi, <b>{nickname}</b>",

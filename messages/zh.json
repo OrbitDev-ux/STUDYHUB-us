@@ -41,7 +41,8 @@
     "rank": "排行/徽章",
     "forum": "社区论坛",
     "messages": "消息",
-    "profile": "个人资料"
+    "profile": "个人资料",
+    "settings": "设置"
   },
   "topbar": {
     "greeting": "你好，<b>{nickname}</b>",

@@ -193,6 +193,8 @@ const SCHEMA_LABELS: Record<string, string> = {
   ratingTierSettings: "전역 Rating 계급 설정",
   codingContests: "Output Judge 대회",
   bulkAuditOperations: "감사 로그 선택 일괄 작업",
+  discordBotIntegration: "STUDYHUBBOT Realtime 연동",
+  discordCodeLinking: "Discord 일회용 코드 연동",
 };
 
 export default async function DeveloperGuidePage() {
@@ -346,7 +348,7 @@ export default async function DeveloperGuidePage() {
     <section id="database" className="scroll-mt-32 space-y-4">
       <SectionTitle icon={Database} title="DB 마이그레이션·복구·오류 대응" description="새 마이그레이션은 파일 번호 순서대로 적용하고 각 단계의 기능 상태를 확인합니다." />
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="border-zinc-800 bg-zinc-900 text-zinc-100"><CardHeader><CardTitle className="text-base">마이그레이션 적용 절차</CardTitle></CardHeader><CardContent><Checklist title="Supabase SQL Editor" numbered tone="default" items={["운영 DB와 프로젝트 이름을 확인", "아직 적용되지 않은 가장 낮은 번호부터 SQL 파일을 하나씩 실행", "오류가 발생하면 다음 파일을 실행하지 않고 오류 전문과 번호 기록", "완료 후 Overview와 이 화면의 DB 기능 배지를 새로고침", "관련 화면에서 읽기와 테스트 데이터 쓰기를 각각 한 번 검증", "Audit Log 및 사용자 알림이 예상대로 생성되는지 확인"]} /><p className="mt-4 rounded-lg bg-zinc-950 p-3 text-xs text-zinc-500">현재 개발자 콘솔 전체 기능은 `0021`부터 `0033`까지 번호 순서대로 적용해야 합니다. `0027`은 최초 Super Admin, `0028`은 밴·영구 삭제·랭킹 제외, `0029~0030`은 고정 Input Output Judge, `0031`은 Rated 코딩 배틀, `0032`는 대회 Register와 개인별 Rated/Unrated 정산, `0033`은 동적 Rating 계급·Output Judge 대회·감사 로그 선택 일괄 작업을 활성화합니다.</p></CardContent></Card>
+        <Card className="border-zinc-800 bg-zinc-900 text-zinc-100"><CardHeader><CardTitle className="text-base">마이그레이션 적용 절차</CardTitle></CardHeader><CardContent><Checklist title="Supabase SQL Editor" numbered tone="default" items={["운영 DB와 프로젝트 이름을 확인", "아직 적용되지 않은 가장 낮은 번호부터 SQL 파일을 하나씩 실행", "오류가 발생하면 다음 파일을 실행하지 않고 오류 전문과 번호 기록", "완료 후 Overview와 이 화면의 DB 기능 배지를 새로고침", "관련 화면에서 읽기와 테스트 데이터 쓰기를 각각 한 번 검증", "Audit Log 및 사용자 알림이 예상대로 생성되는지 확인"]} /><p className="mt-4 rounded-lg bg-zinc-950 p-3 text-xs text-zinc-500">현재 개발자 콘솔 전체 기능은 `0021`부터 `0035`까지 번호 순서대로 적용해야 합니다. `0027`은 최초 Super Admin, `0028`은 밴·영구 삭제·랭킹 제외, `0029~0030`은 고정 Input Output Judge, `0031`은 Rated 코딩 배틀, `0032`는 대회 Register와 개인별 Rated/Unrated 정산, `0033`은 동적 Rating 계급·Output Judge 대회·감사 로그 선택 일괄 작업, `0034`는 STUDYHUBBOT 상태·Realtime 역할 및 중요 알림 동기화, `0035`는 해시 기반 10분 일회용 Discord 코드 연동을 활성화합니다.</p></CardContent></Card>
         <Card className="border-zinc-800 bg-zinc-900 text-zinc-100"><CardHeader><CardTitle className="text-base">자주 발생하는 오류</CardTitle></CardHeader><CardContent className="space-y-3">{[
           ["Could not find function ... schema cache", "해당 RPC 마이그레이션 적용 여부를 확인하고 SQL의 `notify pgrst, 'reload schema'`까지 실행됐는지 확인합니다."],
           ["column/table does not exist", "마이그레이션 번호가 건너뛰어졌는지 확인합니다. 이전 번호부터 순서대로 적용합니다."],

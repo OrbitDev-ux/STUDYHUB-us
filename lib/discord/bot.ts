@@ -6,22 +6,24 @@ import type { createAdminClient } from "@/lib/supabase/server";
  * DISCORD_BOT_TOKEN이 없으면 조용히 아무것도 하지 않는다. 알림 실패가 크론
  * 작업 자체(숙제/플랜/피드백 생성)를 막으면 안 되므로 에러를 던지지 않는다.
  */
-export async function sendDiscordDM(discordUserId: string, content: string): Promise<void> {
+export async function sendDiscordDM(discordUserId: string, content: string): Promise<boolean> {
   const botToken = process.env.DISCORD_BOT_TOKEN;
-  if (!botToken) return;
+  if (!botToken) return false;
 
   const headers = { Authorization: `Bot ${botToken}` };
 
   const dmChannelRes = await postDiscordJSON("https://discord.com/api/v10/users/@me/channels", headers, {
     recipient_id: discordUserId,
   });
-  if (!dmChannelRes) return;
+  if (!dmChannelRes) return false;
 
   try {
     const dmChannel = await dmChannelRes.json();
-    await postDiscordJSON(`https://discord.com/api/v10/channels/${dmChannel.id}/messages`, headers, { content });
+    const message = await postDiscordJSON(`https://discord.com/api/v10/channels/${dmChannel.id}/messages`, headers, { content });
+    return Boolean(message);
   } catch {
     // DM 채널 응답 파싱 실패는 무시 (알림 실패가 호출부를 막지 않는다).
+    return false;
   }
 }
 
