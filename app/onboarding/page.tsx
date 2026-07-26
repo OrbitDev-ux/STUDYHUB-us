@@ -14,13 +14,18 @@ export async function generateMetadata() {
   return { title: t("pageTitle") };
 }
 
-export default async function OnboardingPage() {
+export default async function OnboardingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const params = await searchParams;
   const t = await getTranslations("onboarding");
   const tc = await getTranslations("common");
 
@@ -80,6 +85,11 @@ export default async function OnboardingPage() {
               <Label htmlFor="exam_date">{t("examDate")}</Label>
               <Input id="exam_date" name="exam_date" type="date" />
             </div>
+            {params.error && (
+              <p className="text-sm text-destructive">
+                {params.error === "invalid_input" ? t("invalidInputError") : t("saveError")}
+              </p>
+            )}
             <Button type="submit" className="mt-2">
               {t("submit")}
             </Button>

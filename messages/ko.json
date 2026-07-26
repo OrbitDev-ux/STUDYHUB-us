@@ -151,6 +151,8 @@
     "targetScorePlaceholder": "예: 전 과목 A, 상위 10%",
     "examDate": "시험 날짜 (선택)",
     "submit": "다음: AI 진단평가 시작하기",
+    "invalidInputError": "입력 내용을 다시 확인해주세요.",
+    "saveError": "저장 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.",
     "grades": {
       "초1": "초등 1학년",
       "초2": "초등 2학년",
@@ -395,7 +397,7 @@
   },
   "plan": {
     "free": "Free",
-    "basic": "Basic",
+    "basic": "Plus",
     "pro": "Pro",
     "compareTitle": "플랜 비교",
     "homeworkLimitLabel": "숙제 문제 수",

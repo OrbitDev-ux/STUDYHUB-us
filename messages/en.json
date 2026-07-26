@@ -151,6 +151,8 @@
     "targetScorePlaceholder": "e.g. All A's, top 10%",
     "examDate": "Exam date (optional)",
     "submit": "Next: Start AI diagnostic",
+    "invalidInputError": "Please check your input and try again.",
+    "saveError": "Something went wrong while saving. Please try again shortly.",
     "grades": {
       "초1": "Elementary 1",
       "초2": "Elementary 2",
@@ -395,7 +397,7 @@
   },
   "plan": {
     "free": "Free",
-    "basic": "Basic",
+    "basic": "Plus",
     "pro": "Pro",
     "compareTitle": "Compare Plans",
     "homeworkLimitLabel": "Homework Questions",

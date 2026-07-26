@@ -39,7 +39,7 @@ export async function saveOnboardingInfo(formData: FormData) {
     .eq("id", user.id);
 
   if (error) {
-    redirect(`/onboarding?error=${encodeURIComponent(error.message)}`);
+    redirect("/onboarding?error=save_failed");
   }
 
   redirect("/onboarding/diagnostic");

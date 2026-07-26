@@ -49,8 +49,8 @@ npm install
 
 ### 2. Supabase 프로젝트 생성
 1. [supabase.com](https://supabase.com)에서 새 프로젝트 생성
-2. SQL Editor에서 `supabase/migrations/0001_init.sql`부터 `0035_discord_code_linking.sql`까지 번호 순서대로 실행
-   (기본 스키마/RLS → 레벨·XP·배지·코인 → 점검 모드 → 숙제/플랜 → Discord → 스키마 복구 → 로그인/가입 rate limiting → 프로필 이미지 Storage → 플래너 보상 및 세션 판정 강화)
+2. SQL Editor에서 `supabase/migrations/0001_init.sql`부터 `0037_grant_authenticated_table_access.sql`까지 번호 순서대로 실행
+   (기본 스키마/RLS → 레벨·XP·배지·코인 → 점검 모드 → 숙제/플랜 → Discord → 스키마 복구 → 로그인/가입 rate limiting → 프로필 이미지 Storage → 플래너 보상 및 세션 판정 강화 → ... → 온라인 저지/배틀/대회/포럼/개발자 콘솔 → Discord 코드 연동 → authenticated/anon 테이블 GRANT 복구)
    `0010`은 일부 운영 DB에서 중간 마이그레이션이 누락된 경우를 복구하는 멱등
    마이그레이션이므로, 이미 최신 상태인 DB에서도 안전하게 실행할 수 있습니다. `0014`는
    초1~고3 학년별 문제은행 풀이 기록과 최초 정답 XP 지급 함수를 추가합니다.

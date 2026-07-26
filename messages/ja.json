@@ -151,6 +151,8 @@
     "targetScorePlaceholder": "例：全科目A、上位10%",
     "examDate": "試験日（任意）",
     "submit": "次へ：AI診断評価を始める",
+    "invalidInputError": "入力内容をご確認ください。",
+    "saveError": "保存中に問題が発生しました。しばらくしてからもう一度お試しください。",
     "grades": {
       "초1": "小学1年生",
       "초2": "小学2年生",
@@ -395,8 +397,8 @@
   },
   "plan": {
     "free": "フリー",
-    "basic": "ベーシック",
-    "pro": "プロ",
+    "basic": "Plus",
+    "pro": "Pro",
     "compareTitle": "プラン比較",
     "homeworkLimitLabel": "宿題の問題数",
     "reportLimitLabel": "AIレポート保存期間",

@@ -151,6 +151,8 @@
     "targetScorePlaceholder": "例：全科A，前10%",
     "examDate": "考试日期（可选）",
     "submit": "下一步：开始AI诊断评估",
+    "invalidInputError": "请检查输入内容后重试。",
+    "saveError": "保存时出现问题，请稍后重试。",
     "grades": {
       "초1": "小学1年级",
       "초2": "小学2年级",
@@ -395,8 +397,8 @@
   },
   "plan": {
     "free": "免费版",
-    "basic": "基础版",
-    "pro": "专业版",
+    "basic": "Plus",
+    "pro": "Pro",
     "compareTitle": "方案对比",
     "homeworkLimitLabel": "作业题目数",
     "reportLimitLabel": "AI报告保存期限",
