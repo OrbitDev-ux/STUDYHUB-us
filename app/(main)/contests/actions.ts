@@ -1,16 +1,10 @@
 "use server";
 
-import { randomInt } from "crypto";
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
-import { generatePracticeSet, isGradeLevel } from "@/lib/practice/question-bank";
 import { resolvePracticeQuestion, resolvePracticeQuestions } from "@/lib/practice/question-resolver";
 import type { SubjectId } from "@/types";
-import { isDeveloperRole } from "@/lib/developer/roles";
 import { judgeOutputsMatch } from "@/lib/online-judge/output";
-
-const SUBJECTS: SubjectId[] = ["math", "english", "social", "science"];
 
 export type ContestStanding = {
   user_id: string; nickname: string; avatar_url: string | null; rating: number;
@@ -33,35 +27,6 @@ export type ContestState = {
   eligible: boolean; canParticipate: boolean; canRegister: boolean; ratedAvailable: boolean;
   registrationMode: "rated" | "unrated" | null;
 };
-
-export async function createContest(formData: FormData) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (!isDeveloperRole(profile?.role)) throw new Error("관리자만 대회를 만들 수 있습니다.");
-
-  const title = String(formData.get("title") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
-  const grade = String(formData.get("grade_level") ?? "");
-  const subject = String(formData.get("subject_id") ?? "") as SubjectId;
-  const startsAtRaw = String(formData.get("starts_at") ?? "");
-  const duration = Math.min(240, Math.max(10, Number(formData.get("duration_minutes") ?? 60)));
-  const startsAt = new Date(`${startsAtRaw}:00+09:00`);
-  if (title.length < 2 || title.length > 100 || description.length > 2000 || !isGradeLevel(grade) || !SUBJECTS.includes(subject) || Number.isNaN(startsAt.getTime())) {
-    throw new Error("대회 입력값을 확인해주세요.");
-  }
-  const keys = generatePracticeSet(grade, subject).map((question) => question.key);
-  for (let index = keys.length - 1; index > 0; index--) {
-    const other = randomInt(index + 1); [keys[index], keys[other]] = [keys[other]!, keys[index]!];
-  }
-  const { data, error } = await createAdminClient().from("contests").insert({
-    title, description, grade_level: grade, subject_id: subject, question_keys: keys.slice(0, 10),
-    starts_at: startsAt.toISOString(), ends_at: new Date(startsAt.getTime() + duration * 60000).toISOString(), created_by: user.id,
-  }).select("id").single();
-  if (error || !data) throw new Error(`대회 생성 실패: ${error?.message ?? "unknown"}`);
-  redirect(`/contests/${data.id}`);
-}
 
 export async function getContestState(contestId: string): Promise<{ state?: ContestState; error?: string }> {
   const supabase = await createClient();
