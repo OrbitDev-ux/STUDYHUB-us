@@ -3,6 +3,10 @@ const ANTHROPIC_MODEL = "claude-sonnet-4-6";
 
 const GLM_API_URL = "https://api.z.ai/api/paas/v4/chat/completions";
 const GLM_MODEL = "glm-5.2-lite";
+
+const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
 const AI_TIMEOUT_MS = 60_000;
 const AI_MAX_ATTEMPTS = 3;
 
@@ -13,8 +17,11 @@ interface AICallOptions<T> {
   fallback?: () => T;
 }
 
-function getProvider(): "anthropic" | "glm" {
-  return process.env.AI_PROVIDER?.trim().toLowerCase() === "glm" ? "glm" : "anthropic";
+type AIProvider = "anthropic" | "glm" | "gemini";
+
+function getProvider(): AIProvider {
+  const provider = process.env.AI_PROVIDER?.trim().toLowerCase();
+  return provider === "glm" || provider === "gemini" ? provider : "anthropic";
 }
 
 async function fetchAI(url: string, init: RequestInit): Promise<Response> {
@@ -38,18 +45,19 @@ async function fetchAI(url: string, init: RequestInit): Promise<Response> {
 }
 
 /**
- * AI_PROVIDER 환경변수(anthropic 기본값 / glm)에 따라 Anthropic Messages API 또는
- * GLM(Z.ai) Chat Completions API를 호출하고 JSON 응답만 강제로 받아 파싱합니다.
- * 서버 전용 함수입니다 (API 키는 절대 클라이언트에 노출 금지).
+ * AI_PROVIDER 환경변수(anthropic 기본값 / glm / gemini)에 따라 Anthropic Messages API,
+ * GLM(Z.ai) Chat Completions API, 또는 Google Gemini API를 호출하고 JSON 응답만
+ * 강제로 받아 파싱합니다. 서버 전용 함수입니다 (API 키는 절대 클라이언트에 노출 금지).
  */
 export async function callAIForJSON<T>({ system, prompt, maxTokens = 2000, fallback }: AICallOptions<T>): Promise<T> {
   const jsonSystem = `${system}\n\n반드시 순수 JSON만 응답하세요. 마크다운 코드블록(\`\`\`)이나 설명 문장을 절대 포함하지 마세요.`;
 
   try {
+    const provider = getProvider();
     const text =
-      getProvider() === "glm"
-        ? await callGLM(jsonSystem, prompt, maxTokens)
-        : await callAnthropic(jsonSystem, prompt, maxTokens);
+      provider === "glm" ? await callGLM(jsonSystem, prompt, maxTokens)
+      : provider === "gemini" ? await callGemini(jsonSystem, prompt, maxTokens)
+      : await callAnthropic(jsonSystem, prompt, maxTokens);
     const cleaned = text.replace(/```json|```/g, "").trim();
     return JSON.parse(cleaned) as T;
   } catch (error) {
@@ -124,4 +132,34 @@ async function callGLM(system: string, prompt: string, maxTokens: number): Promi
   const content = data.choices?.[0]?.message?.content;
   if (!content) throw new Error("AI 응답에 텍스트가 없습니다.");
   return content;
+}
+
+async function callGemini(system: string, prompt: string, maxTokens: number): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY가 설정되지 않았습니다. .env.local에 키를 추가해주세요.");
+  }
+
+  const res = await fetchAI(`${GEMINI_API_URL}?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: system }] },
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        maxOutputTokens: maxTokens,
+        responseMimeType: "application/json",
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`AI 호출 실패 (${res.status}): ${text}`);
+  }
+
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error("AI 응답에 텍스트가 없습니다.");
+  return text;
 }

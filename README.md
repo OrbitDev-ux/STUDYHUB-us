@@ -10,7 +10,7 @@ AI가 실력을 진단하고, 예상 등급을 계산하고, 취약점을 분석
 | Backend | Next.js Server Actions, Route Handlers |
 | Database | Supabase PostgreSQL (Row Level Security) |
 | Auth | Supabase Auth (Email/Password, Google OAuth, Discord OAuth) |
-| AI | Anthropic API (`claude-sonnet-4-6`, 기본값) 또는 GLM API (`glm-5.2-lite`, Z.ai) — `AI_PROVIDER` 환경변수로 전환 |
+| AI | Google Gemini API (`gemini-2.5-flash`, 기본값) — Anthropic API(`claude-sonnet-4-6`), GLM API(`glm-5.2-lite`, Z.ai)로도 전환 가능 — `AI_PROVIDER` 환경변수로 전환 |
 | 배포 | Vercel, Docker |
 
 ## 폴더 구조
@@ -31,7 +31,7 @@ studyhub/
 │   ├── shared/                 # 네비게이션, 테마, OAuth 버튼
 │   ├── homework/ planner/ timer/
 ├── lib/
-│   ├── ai/                     # Anthropic API 래퍼 + 기능별 프롬프트(진단/숙제/플래너/피드백)
+│   ├── ai/                     # Gemini/Anthropic/GLM 공용 래퍼 + 기능별 프롬프트(진단/숙제/플래너/피드백)
 │   └── supabase/               # 브라우저/서버/미들웨어 클라이언트
 ├── supabase/migrations/0001_init.sql   # 전체 DB 스키마 + RLS 정책 + 시드 데이터
 ├── docs/01_PLANNING_AND_DB.md          # 기획 및 ERD 문서
@@ -115,7 +115,8 @@ cp .env.example .env.local
 `.env.local`을 채워주세요:
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 - `AUTH_EMAIL_CONFIRMATION_DISABLED=true` — 임시로 인증 메일 없이 가입 즉시 자동 확인/로그인. 이메일 인증을 다시 켤 때는 `false`로 변경
-- `ANTHROPIC_API_KEY` — [console.anthropic.com](https://console.anthropic.com)에서 발급
+- `GEMINI_API_KEY` — [aistudio.google.com/apikey](https://aistudio.google.com/apikey)에서 발급 (기본 AI 제공자)
+- `AI_PROVIDER` — `gemini`(기본) / `anthropic` / `glm` 중 선택. `anthropic`이면 `ANTHROPIC_API_KEY`, `glm`이면 `GLM_API_KEY`가 필요
 - `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` — Discord 연동 기능을 쓸 경우
 - `DISCORD_REDIRECT_URI` — Discord Developer Portal의 OAuth2 > Redirects에 등록한
   Callback URL과 완전히 동일한 값. 로컬 기본값은
