@@ -40,14 +40,31 @@ export async function insertHomeworkItems(
   homeworkId: string,
   items: GeneratedHomeworkItem[]
 ): Promise<void> {
-  for (const [i, item] of items.entries()) {
-    const unitId = await resolveOrCreateUnitId(admin, item.subject_id, item.unit_name);
+  // 문항마다 순차로 왕복하면 10문제 기준 30회 이상의 요청이 발생해 페이지 로딩을
+  // 막는다. (subject_id, unit_name) 조합별로 한 번만 조회/생성한 뒤 questions/
+  // homework_items는 배치 insert로 한 번에 저장한다.
+  const uniqueUnitKeys = new Map<string, { subjectId: string; unitName: string }>();
+  for (const item of items) {
+    uniqueUnitKeys.set(`${item.subject_id}::${item.unit_name}`, {
+      subjectId: item.subject_id,
+      unitName: item.unit_name,
+    });
+  }
 
-    const { data: question, error: questionError } = await admin
-      .from("questions")
-      .insert({
+  const unitEntries = await Promise.all(
+    [...uniqueUnitKeys.entries()].map(async ([key, { subjectId, unitName }]) => {
+      const unitId = await resolveOrCreateUnitId(admin, subjectId, unitName);
+      return [key, unitId] as const;
+    })
+  );
+  const unitIdByKey = new Map(unitEntries);
+
+  const { data: questions, error: questionError } = await admin
+    .from("questions")
+    .insert(
+      items.map((item) => ({
         subject_id: item.subject_id,
-        unit_id: unitId,
+        unit_id: unitIdByKey.get(`${item.subject_id}::${item.unit_name}`),
         type: item.type,
         difficulty: item.difficulty,
         content: item.content,
@@ -55,21 +72,22 @@ export async function insertHomeworkItems(
         answer: item.answer,
         explanation: item.explanation,
         source: "ai_generated",
-      })
-      .select("id")
-      .single();
+      }))
+    )
+    .select("id");
 
-    if (questionError || !question) {
-      throw new Error(`숙제 문제 저장 실패: ${questionError?.message ?? "unknown error"}`);
-    }
+  if (questionError || !questions || questions.length !== items.length) {
+    throw new Error(`숙제 문제 저장 실패: ${questionError?.message ?? "unknown error"}`);
+  }
 
-    const { error: itemError } = await admin.from("homework_items").insert({
+  const { error: itemError } = await admin.from("homework_items").insert(
+    items.map((item, i) => ({
       homework_id: homeworkId,
-      question_id: question.id,
+      question_id: questions[i]!.id,
       subject_id: item.subject_id,
       category: item.category,
       order_index: i,
-    });
-    if (itemError) throw new Error(`숙제 항목 저장 실패: ${itemError.message}`);
-  }
+    }))
+  );
+  if (itemError) throw new Error(`숙제 항목 저장 실패: ${itemError.message}`);
 }
