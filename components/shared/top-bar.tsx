@@ -13,7 +13,7 @@ import { RatingBadge } from "@/components/battle/rating-identity";
 import { MessageInboxButton } from "./message-inbox-button";
 import { useRealtimePresence } from "./realtime-presence-provider";
 
-export function TopBar({ profile, notifications, battleRating, userId, unreadMessages }: { profile: Profile | null; notifications: NotificationRow[]; battleRating: number; userId: string; unreadMessages: number }) {
+export function TopBar({ profile, notifications, battleRating, userId, unreadMessages }: { profile: Pick<Profile, "nickname" | "xp" | "coins"> | null; notifications: NotificationRow[]; battleRating: number; userId: string; unreadMessages: number }) {
   const { theme, setTheme } = useTheme();
   const t = useTranslations("topbar");
   const tc = useTranslations("common");

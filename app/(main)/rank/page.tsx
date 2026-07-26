@@ -11,6 +11,7 @@ import { getUserPlan } from "@/lib/supabase/compat";
 import { RatingBadge, RatingName } from "@/components/battle/rating-identity";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar } from "@/components/ui/avatar";
 import { normalizeRatingTiers, ratingTier } from "@/lib/battle/rating";
 
 export async function generateMetadata() {
@@ -129,10 +130,7 @@ export default async function RankPage({ searchParams }: { searchParams: Promise
                     }}
                     title={`${tier.name} · Rating ${row.rating}`}
                   >
-                    {row.avatar_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={row.avatar_url} alt="" className="h-full w-full object-cover" />
-                    ) : row.nickname[0]}
+                    <Avatar src={row.avatar_url} size={36} fallback={row.nickname[0]} />
                   </Link>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -186,10 +184,7 @@ export default async function RankPage({ searchParams }: { searchParams: Promise
                     style={{ borderColor: tier.color, color: tier.color }}
                     title={`${tier.name} · Rating ${u.rating}`}
                   >
-                    {u.avatar_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={u.avatar_url} alt="" className="h-full w-full object-cover" />
-                    ) : u.nickname?.[0] ?? "?"}
+                    <Avatar src={u.avatar_url} size={32} fallback={u.nickname?.[0] ?? "?"} />
                   </Link>
                   <RatingName nickname={u.nickname} rating={u.rating} userId={u.id} />
                   {u.id === user.id && (

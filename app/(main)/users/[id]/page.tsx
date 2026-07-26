@@ -8,6 +8,7 @@ import { RatingHistoryList } from "@/components/battle/rating-history-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/avatar";
 import { normalizeRatingTiers, ratingTier } from "@/lib/battle/rating";
 import { getDetailedRatingHistory } from "@/lib/battle/rating-history";
 
@@ -84,10 +85,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         <div className="-mt-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-end gap-4">
             <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 bg-background text-3xl font-bold" style={{ borderColor: tier.color }}>
-              {profile.avatar_url
-                // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
-                : profile.nickname[0]}
+              <Avatar src={profile.avatar_url} size={96} fallback={profile.nickname[0]} />
             </div>
             <div className="pb-1">
               <h1 className="text-2xl"><RatingName nickname={profile.nickname} rating={profile.rating} className="text-2xl" /></h1>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -13,10 +14,10 @@ export function StudyChart({ history }: { history: HistoryPoint[] }) {
   const tc = useTranslations("common");
 
   // history는 최신순(date desc)으로 오므로 차트는 시간순으로 뒤집는다.
-  const data = [...history].reverse().map((h) => ({
+  const data = useMemo(() => [...history].reverse().map((h) => ({
     date: h.date.slice(5), // MM-DD
     minutes: h.study_minutes,
-  }));
+  })), [history]);
 
   return (
     <div className="h-48 w-full">

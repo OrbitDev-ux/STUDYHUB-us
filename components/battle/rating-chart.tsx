@@ -1,19 +1,23 @@
 "use client";
 
+import { useMemo } from "react";
 import { CartesianGrid, Line, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis, ComposedChart } from "recharts";
 import type { RatingPoint } from "@/lib/battle/rating-history-types";
 import { useRatingTier, useRatingTiers } from "@/components/battle/rating-tier-provider";
 
 export type { RatingPoint } from "@/lib/battle/rating-history-types";
 
+const dateFormatter = new Intl.DateTimeFormat("ko-KR", { month: "short", day: "numeric", year: "2-digit" });
+const fullDateFormatter = new Intl.DateTimeFormat("ko-KR", { dateStyle: "long", timeStyle: "short" });
+
 export function RatingChart({ history }: { history: RatingPoint[] }) {
   const tiers = useRatingTiers();
-  const data = history.map((point, index) => ({
+  const data = useMemo(() => history.map((point, index) => ({
     ...point,
     index,
-    date: new Intl.DateTimeFormat("ko-KR", { month: "short", day: "numeric", year: "2-digit" }).format(new Date(point.created_at)),
-    fullDate: new Intl.DateTimeFormat("ko-KR", { dateStyle: "long", timeStyle: "short" }).format(new Date(point.created_at)),
-  }));
+    date: dateFormatter.format(new Date(point.created_at)),
+    fullDate: fullDateFormatter.format(new Date(point.created_at)),
+  })), [history]);
   const values = data.map((point) => point.rating);
   const min = Math.max(0, Math.floor((Math.min(1200, ...values) - 150) / 100) * 100);
   const max = Math.min(5000, Math.ceil((Math.max(1400, ...values) + 150) / 100) * 100);

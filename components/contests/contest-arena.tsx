@@ -18,7 +18,6 @@ export function ContestArena({ initial }: { initial: ContestState }) {
   const [judgeVerdict, setJudgeVerdict] = useState<"accepted" | "wrong_answer" | null>(null);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
-  const [nowMs, setNowMs] = useState(() => Date.now() + (new Date(initial.serverNow).getTime() - Date.now()));
   const refresh = useCallback(async () => { const result = await getContestState(initial.id); if (result.state) setState(result.state); if (result.error) setError(result.error); }, [initial.id]);
   useEffect(() => {
     if (feedback) return;
@@ -43,14 +42,6 @@ export function ContestArena({ initial }: { initial: ContestState }) {
   const question = useMemo(() => state.questions.find((item) => !state.answeredKeys.includes(item.key)) ?? null, [state]);
   const judgeProblem = useMemo(() => state.judgeProblems.find((item) => !state.answeredKeys.includes(`oj:${item.id}`)) ?? null, [state]);
   const answeredJudgeCount = state.answeredKeys.filter((key) => key.startsWith("oj:")).length;
-  const remaining = Math.max(0, Math.ceil((new Date(state.endsAt).getTime() - nowMs) / 1000));
-  useEffect(() => {
-    const serverOffset = new Date(state.serverNow).getTime() - Date.now();
-    const tick = () => setNowMs(Date.now() + serverOffset);
-    tick();
-    const timer = window.setInterval(tick, 1000);
-    return () => window.clearInterval(timer);
-  }, [state.serverNow]);
 
   function answer(choice: string) {
     if (!question || isPending || feedback) return;
@@ -98,7 +89,7 @@ export function ContestArena({ initial }: { initial: ContestState }) {
       : !state.canParticipate ? <Card><CardContent className="py-12 text-center"><p className="font-semibold">{state.eligible ? "Registration이 마감되었습니다." : `${state.gradeLevel} 대상 대회입니다.`}</p><p className="mt-2 text-sm text-muted-foreground">{state.eligible ? "시작 전에 Register한 참가자만 문제를 제출할 수 있습니다. 리더보드는 계속 볼 수 있습니다." : "프로필 학년과 일치할 때 참가할 수 있어요."}</p></CardContent></Card>
       : state.contestMode === "output_judge" && judgeProblem && state.phase === "active" ? <Card>
         <CardHeader className="gap-3">
-          <div className="flex flex-wrap items-center justify-between gap-2"><div className="flex gap-2"><Badge variant="outline"><Code2 className="mr-1 h-3 w-3" />Output Judge</Badge><Badge variant="warning">Level {judgeProblem.difficulty}</Badge></div><div className="flex items-center gap-2"><Badge variant="secondary"><Clock3 className="mr-1 h-3 w-3" />{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}</Badge><span className="text-sm font-semibold">{answeredJudgeCount + 1}/{state.judgeProblems.length}</span></div></div>
+          <div className="flex flex-wrap items-center justify-between gap-2"><div className="flex gap-2"><Badge variant="outline"><Code2 className="mr-1 h-3 w-3" />Output Judge</Badge><Badge variant="warning">Level {judgeProblem.difficulty}</Badge></div><div className="flex items-center gap-2"><RemainingBadge endsAt={state.endsAt} serverNow={state.serverNow} /><span className="text-sm font-semibold">{answeredJudgeCount + 1}/{state.judgeProblems.length}</span></div></div>
           <Progress value={(answeredJudgeCount / Math.max(1, state.judgeProblems.length)) * 100} />
           <CardTitle className="pt-2 text-xl">{judgeProblem.title}</CardTitle>
         </CardHeader>
@@ -114,7 +105,7 @@ export function ContestArena({ initial }: { initial: ContestState }) {
         </CardContent>
       </Card>
       : !question || state.phase === "finished" ? <Card><CardContent className="flex flex-col items-center gap-3 py-12 text-center"><Trophy className="h-10 w-10 text-warning" /><h2 className="text-xl font-bold">{state.phase === "finished" ? "대회가 종료되었습니다" : "모든 문제를 제출했습니다"}</h2><p className="text-muted-foreground">{state.score}점 · {state.solved}문제 정답</p></CardContent></Card>
-      : <Card><CardHeader className="gap-3"><div className="flex items-center justify-between"><div className="flex gap-2"><Badge variant="outline">{question.unitName}</Badge><Badge variant="warning">난이도 {question.difficulty}</Badge></div><div className="flex items-center gap-2"><Badge variant="secondary"><Clock3 className="mr-1 h-3 w-3" />{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}</Badge><span className="text-sm font-semibold">{state.answeredKeys.length + 1}/{state.questions.length}</span></div></div><Progress value={(state.answeredKeys.length / state.questions.length) * 100} /><CardTitle className="whitespace-pre-line pt-2 text-lg leading-relaxed">{question.content}</CardTitle></CardHeader><CardContent className="flex flex-col gap-3">
+      : <Card><CardHeader className="gap-3"><div className="flex items-center justify-between"><div className="flex gap-2"><Badge variant="outline">{question.unitName}</Badge><Badge variant="warning">난이도 {question.difficulty}</Badge></div><div className="flex items-center gap-2"><RemainingBadge endsAt={state.endsAt} serverNow={state.serverNow} /><span className="text-sm font-semibold">{state.answeredKeys.length + 1}/{state.questions.length}</span></div></div><Progress value={(state.answeredKeys.length / state.questions.length) * 100} /><CardTitle className="whitespace-pre-line pt-2 text-lg leading-relaxed">{question.content}</CardTitle></CardHeader><CardContent className="flex flex-col gap-3">
         {question.choices.map((choice, index) => <Button key={`${choice}-${index}`} variant="outline" disabled={isPending || Boolean(feedback)} onClick={() => answer(choice)} className="h-auto min-h-12 justify-start whitespace-normal py-3 text-left"><span className="mr-3 rounded-full bg-secondary px-2 py-1 text-xs">{index + 1}</span>{choice}</Button>)}
         {isPending && <Loader2 className="mx-auto h-5 w-5 animate-spin" />}{feedback && <div className={`rounded-xl border p-4 ${feedback.correct ? "border-success/40 bg-success/5" : "border-destructive/40 bg-destructive/5"}`}><p className="flex items-center gap-2 font-semibold">{feedback.correct ? <CheckCircle2 className="h-5 w-5 text-success" /> : <XCircle className="h-5 w-5 text-destructive" />}{feedback.correct ? "정답! +100점" : `오답 · 정답은 ${feedback.answer}`}</p><p className="mt-2 text-sm text-muted-foreground">{feedback.explanation}</p><Button onClick={next} className="mt-4 w-full">다음 문제</Button></div>}{error && <p className="text-sm text-destructive">{error}</p>}
       </CardContent></Card>}
@@ -188,4 +179,18 @@ function ContestCountdown({ startsAt, serverNow }: { startsAt: string; serverNow
 
 function TimeUnit({ value, label }: { value: number; label: string }) {
   return <span className="min-w-10"><span>{String(value).padStart(2, "0")}</span><span className="mt-1 block text-[8px] font-medium tracking-wider text-muted-foreground">{label}</span></span>;
+}
+
+// 1초마다 자체적으로만 리렌더되는 별도 컴포넌트로 분리해, 남은 시간 표시가
+// ContestArena 전체(순위표 등)를 매초 다시 그리지 않도록 한다.
+function RemainingBadge({ endsAt, serverNow }: { endsAt: string; serverNow: string }) {
+  const [remaining, setRemaining] = useState(() => Math.max(0, Math.ceil((new Date(endsAt).getTime() - new Date(serverNow).getTime()) / 1000)));
+  useEffect(() => {
+    const offset = new Date(serverNow).getTime() - Date.now();
+    const tick = () => setRemaining(Math.max(0, Math.ceil((new Date(endsAt).getTime() - (Date.now() + offset)) / 1000)));
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [endsAt, serverNow]);
+  return <Badge variant="secondary"><Clock3 className="mr-1 h-3 w-3" />{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}</Badge>;
 }

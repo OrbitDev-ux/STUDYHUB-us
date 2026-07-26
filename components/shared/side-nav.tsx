@@ -9,8 +9,9 @@ import { Flame } from "lucide-react";
 import type { Profile } from "@/types";
 import { RatingName } from "@/components/battle/rating-identity";
 import { useRatingTier } from "@/components/battle/rating-tier-provider";
+import { Avatar } from "@/components/ui/avatar";
 
-export function SideNav({ profile, battleRating }: { profile: Profile | null; battleRating: number }) {
+export function SideNav({ profile, battleRating }: { profile: Pick<Profile, "avatar_url" | "nickname" | "streak_days"> | null; battleRating: number }) {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const tc = useTranslations("common");
@@ -34,10 +35,7 @@ export function SideNav({ profile, battleRating }: { profile: Profile | null; ba
             className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background font-semibold"
             style={{ boxShadow: `0 0 0 2px ${tier.color}, 0 0 16px ${tier.color}35` }}
           >
-            {profile.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
-            ) : profile.nickname?.[0] ?? "?"}
+            <Avatar src={profile.avatar_url} size={36} fallback={profile.nickname?.[0] ?? "?"} />
           </div>
           <div className="min-w-0">
             <p className="truncate"><RatingName nickname={profile.nickname} rating={battleRating} /></p>

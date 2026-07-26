@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { memo, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { ArrowLeft, Ban, Flag, Loader2, Send, ShieldAlert, X } from "lucide-react";
@@ -135,6 +135,12 @@ export function DirectChat({ initial, myUserId }: { initial: ChatState; myUserId
     });
   }
 
+  const handleReport = useCallback((message: ChatMessage) => {
+    setReporting(message);
+    setReportReason("");
+    setError("");
+  }, []);
+
   function submitReport() {
     if (!reporting || reportReason.trim().length < 3) return;
     setError("");
@@ -173,22 +179,7 @@ export function DirectChat({ initial, myUserId }: { initial: ChatState; myUserId
         {notice && <p className="rounded-xl border border-success/30 bg-success/10 p-3 text-sm text-success">{notice}</p>}
         <div className="flex h-[56vh] flex-col overflow-y-auto rounded-xl bg-secondary/40 p-3 sm:p-4">
           {chat.messages.length === 0 && <p className="m-auto text-center text-sm text-muted-foreground">첫 메시지를 보내보세요.<br /><span className="text-xs">불편한 메시지는 해당 말풍선의 신고 버튼으로 접수할 수 있습니다.</span></p>}
-          {chat.messages.map((message, index) => {
-            const mine = message.senderId === myUserId;
-            const previous = chat.messages[index - 1];
-            const showDate = !previous || new Date(previous.createdAt).toDateString() !== new Date(message.createdAt).toDateString();
-            const optimistic = message.id.startsWith("sending-");
-            return <div key={message.id}>
-              {showDate && <div className="my-4 flex items-center gap-3"><span className="h-px flex-1 bg-border" /><time className="text-[10px] text-muted-foreground">{new Date(message.createdAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "short" })}</time><span className="h-px flex-1 bg-border" /></div>}
-              <div className={`group mb-2 flex items-end gap-1.5 ${mine ? "justify-end" : "justify-start"}`}>
-                {!mine && <button type="button" onClick={() => { setReporting(message); setReportReason(""); setError(""); }} className="mb-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground opacity-60 transition hover:bg-destructive/10 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100" aria-label="메시지 신고" title="메시지 신고"><Flag className="h-3.5 w-3.5" /></button>}
-                <div className={`max-w-[82%] rounded-2xl px-3.5 py-2 text-sm shadow-sm ${mine ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-background"}`}>
-                  <p className="whitespace-pre-wrap break-words leading-5">{message.content}</p>
-                  <p className={`mt-1 flex items-center justify-end gap-1 text-[9px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{new Date(message.createdAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}{mine && <span>· {optimistic ? <span className="inline-flex items-center gap-1"><Loader2 className="h-2.5 w-2.5 animate-spin" />전송 중</span> : message.readAt ? "읽음" : "전송됨"}</span>}</p>
-                </div>
-              </div>
-            </div>;
-          })}
+          <MessageList messages={chat.messages} myUserId={myUserId} onReport={handleReport} />
           {opponentTyping && <div className="mb-2 mr-auto rounded-2xl rounded-bl-md bg-background px-4 py-3 shadow-sm"><span className="flex gap-1"><i className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.2s]" /><i className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.1s]" /><i className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground" /></span></div>}
           <div ref={bottom} />
         </div>
@@ -227,3 +218,34 @@ export function DirectChat({ initial, myUserId }: { initial: ChatState; myUserId
     </div>}
   </>;
 }
+
+// opponentTyping 등 부모 상태가 바뀔 때마다 메시지 최대 200개의 날짜 비교/포맷을
+// 다시 계산하지 않도록 messages/myUserId/onReport가 바뀔 때만 리렌더되게 분리한다.
+const MessageList = memo(function MessageList({
+  messages,
+  myUserId,
+  onReport,
+}: {
+  messages: ChatMessage[];
+  myUserId: string;
+  onReport: (message: ChatMessage) => void;
+}) {
+  return <>
+    {messages.map((message, index) => {
+      const mine = message.senderId === myUserId;
+      const previous = messages[index - 1];
+      const showDate = !previous || new Date(previous.createdAt).toDateString() !== new Date(message.createdAt).toDateString();
+      const optimistic = message.id.startsWith("sending-");
+      return <div key={message.id}>
+        {showDate && <div className="my-4 flex items-center gap-3"><span className="h-px flex-1 bg-border" /><time className="text-[10px] text-muted-foreground">{new Date(message.createdAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "short" })}</time><span className="h-px flex-1 bg-border" /></div>}
+        <div className={`group mb-2 flex items-end gap-1.5 ${mine ? "justify-end" : "justify-start"}`}>
+          {!mine && <button type="button" onClick={() => onReport(message)} className="mb-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground opacity-60 transition hover:bg-destructive/10 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100" aria-label="메시지 신고" title="메시지 신고"><Flag className="h-3.5 w-3.5" /></button>}
+          <div className={`max-w-[82%] rounded-2xl px-3.5 py-2 text-sm shadow-sm ${mine ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-background"}`}>
+            <p className="whitespace-pre-wrap break-words leading-5">{message.content}</p>
+            <p className={`mt-1 flex items-center justify-end gap-1 text-[9px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{new Date(message.createdAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}{mine && <span>· {optimistic ? <span className="inline-flex items-center gap-1"><Loader2 className="h-2.5 w-2.5 animate-spin" />전송 중</span> : message.readAt ? "읽음" : "전송됨"}</span>}</p>
+          </div>
+        </div>
+      </div>;
+    })}
+  </>;
+});

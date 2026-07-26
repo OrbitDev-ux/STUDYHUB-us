@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Avatar } from "@/components/ui/avatar";
 
 export const metadata = { title: "Developer Rating Events" };
 
@@ -189,10 +190,7 @@ export default async function DeveloperRatingsPage({
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex min-w-0 items-center gap-3">
                 <Link href={`/users/${event.user_id}`} className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-800 font-bold">
-                  {profile?.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
-                  ) : nickname[0]}
+                  <Avatar src={profile?.avatar_url} size={40} fallback={nickname[0]} />
                 </Link>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2"><RatingName nickname={nickname} rating={event.rating} userId={event.user_id} /><Badge variant="outline">{event.event_type || event.source}</Badge>{protectedEvent && <Badge variant="secondary">Protected</Badge>}</div>

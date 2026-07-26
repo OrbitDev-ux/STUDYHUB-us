@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Avatar } from "@/components/ui/avatar";
 
 export const metadata = { title: "문제풀이 배틀 시작" };
 
@@ -161,10 +162,7 @@ export default async function BattlePlayPage({
             return <div key={target.id} className="rounded-xl border border-border p-4">
               <div className="flex items-center gap-3">
                 <Link href={`/users/${target.id}`} className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary font-bold">
-                  {target.avatar_url
-                    // eslint-disable-next-line @next/next/no-img-element
-                    ? <img src={target.avatar_url} alt="" className="h-full w-full object-cover" />
-                    : target.nickname[0]}
+                  <Avatar src={target.avatar_url} size={40} fallback={target.nickname[0]} />
                 </Link>
                 <div className="min-w-0 flex-1"><RatingName nickname={target.nickname} rating={targetRating} userId={target.id} className="truncate" /><p className="text-xs text-muted-foreground">{target.grade_level || "학년 미설정"} · Rating {targetRating}</p></div>
               </div>

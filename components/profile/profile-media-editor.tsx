@@ -6,6 +6,7 @@ import { Camera, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { useRatingTier } from "@/components/battle/rating-tier-provider";
+import { Avatar } from "@/components/ui/avatar";
 
 const BUCKET = "profile-media";
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -110,10 +111,7 @@ export function ProfileMediaEditor({
           style={{ boxShadow: `0 0 0 3px ${tier.color}` }}
           aria-label={t("changeAvatar")}
         >
-          {avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatar} alt="" className="h-full w-full object-cover" />
-          ) : nickname?.[0] ?? "?"}
+          <Avatar src={avatar} size={96} fallback={nickname?.[0] ?? "?"} />
           <span className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
             {uploading === "avatar" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
           </span>

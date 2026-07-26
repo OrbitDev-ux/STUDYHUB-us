@@ -14,7 +14,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   if (!user) redirect("/login");
 
   const [{ data: profile }, { data: notifications }, { data: battleRating }, { count: unreadMessages }, { data: appSettings }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).single(),
+    supabase.from("profiles").select("avatar_url, nickname, streak_days, xp, coins, onboarding_completed").eq("id", user.id).single(),
     supabase
       .from("notifications")
       .select("id, type, title, body, read, created_at")

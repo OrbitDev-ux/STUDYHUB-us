@@ -34,7 +34,7 @@ export default async function DashboardPage() {
   const weekStart = todayKST(new Date(Date.now() - 6 * 86400000));
   const [{ data: profile }, { data: stats }, { data: todaySessions }, { data: homework }, { data: recentDiagnostics }, { data: weekSessions }, { data: todayPlan }, { data: practiceAttempts }, { data: battleRating }, ratingHistory] =
     await Promise.all([
-      supabase.from("profiles").select("*").eq("id", user.id).single(),
+      supabase.from("profiles").select("nickname, streak_days, target_study_minutes").eq("id", user.id).single(),
       supabase.from("user_subject_stats").select("*").eq("user_id", user.id),
       supabase.from("study_sessions").select("focus_minutes").eq("user_id", user.id).gte("started_at", `${today}T00:00:00+09:00`),
       supabase

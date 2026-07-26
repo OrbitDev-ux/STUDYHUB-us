@@ -9,6 +9,7 @@ import { RatingBadge, RatingName, RatingProgress, RatingScale } from "@/componen
 import { RatingChart } from "@/components/battle/rating-chart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/avatar";
 
 export const metadata = { title: "Rating 상세 현황" };
 
@@ -61,10 +62,7 @@ export default async function RatingHistoryDetailPage({
   return <div className="flex flex-col gap-6">
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div><Button asChild variant="ghost" size="sm" className="-ml-3 mb-2"><Link href="/dashboard"><ArrowLeft className="h-4 w-4" />대시보드</Link></Button><h1 className="flex items-center gap-2 text-2xl font-bold"><Gauge className="h-6 w-6" style={{ color: tier.color }} />Rating 상세 현황</h1><p className="mt-1 text-sm text-muted-foreground">획득 점수, 반영 사유, Rating 변화와 티어 이동을 이벤트별로 확인합니다.</p></div>
-      <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3" style={{ borderColor: tier.color }}><div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-secondary font-bold" style={{ boxShadow: `0 0 0 2px ${tier.color}` }}>{profile?.avatar_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
-      ) : profile?.nickname?.[0] ?? "?"}</div><div><RatingName nickname={profile?.nickname ?? "사용자"} rating={currentRating} /><p className="text-xs text-muted-foreground">{profile?.grade_level || "학년 미설정"} · {tier.name}</p></div><RatingBadge rating={currentRating} /></div>
+      <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3" style={{ borderColor: tier.color }}><div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-secondary font-bold" style={{ boxShadow: `0 0 0 2px ${tier.color}` }}><Avatar src={profile?.avatar_url} size={40} fallback={profile?.nickname?.[0] ?? "?"} /></div><div><RatingName nickname={profile?.nickname ?? "사용자"} rating={currentRating} /><p className="text-xs text-muted-foreground">{profile?.grade_level || "학년 미설정"} · {tier.name}</p></div><RatingBadge rating={currentRating} /></div>
     </div>
 
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
